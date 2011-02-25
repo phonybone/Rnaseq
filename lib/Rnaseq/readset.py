@@ -1,0 +1,5 @@
+#-*-python-*-
+
+class Readset:
+    pass
+
