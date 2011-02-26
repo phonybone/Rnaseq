@@ -1,7 +1,7 @@
 class dict_like:
     attrs={}                            # sub classes override this
 
-    def __init__(self,arghash):
+    def __init__(self,**arghash):
         # first set args named in attrs; this allows unnamed attrs to have default values as defined in attrs
         for attr,v in self.attrs.items():
             if arghash.has_key(attr):
@@ -29,7 +29,9 @@ class dict_like:
         self.__dict__[attr]=val
         return self
 
+    # WARNING! This lets you get around the restriction that the object can contain only keys found in attrs!
     def update(self,d):
         self.__dict__.update(d)
         return self
     
+

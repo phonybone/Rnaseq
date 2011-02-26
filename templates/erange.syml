@@ -1,4 +1,10 @@
 name: ERANGE
-steps: ['fq_all2std','bowtie','rds','erange']
-# fixme: would like to have a better syntax than a yaml list
-# fixme: conflict between steps, above, and what we really want pipeline.steps to be, which is a list of Step objects
+#steps: fq_all2std bowtie rds erange
+steps: fq_all2std bowtie 
+
+fq_all2std:
+  input: ${readset.export_file}
+
+bowite:
+  input: ${fq_all2std.output[0]}
+  output: ${input}.bowtie

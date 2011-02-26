@@ -1,0 +1,9 @@
+name: bowtie
+description: align the reads to the ref. geneome (using bowtie)
+usage: ${exe} ${ewbt} ${args} ${input} ${output}
+exe: bowtie
+ewbt: ${org}_spliced_${readlen}
+args: -k 11 --best -n 1
+
+#inputs: ["$$(['export2fasta']['outputs'][0])"]
+#outputs: ["$$(['export2fasta']['outputs'][0]).bowtie"]

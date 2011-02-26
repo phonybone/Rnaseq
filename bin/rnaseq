@@ -1,27 +1,34 @@
 #-*-python-*-
 
 # The main rnaseq entry point
+# fixme: right now it's just a testbed for development
 
 import getopt
 import sys, os
 import yaml
+from warn import *
 
+# Try to load the rnaseq modules:
 try:
     from Rnaseq import *
 except Exception as e:
     needed_dir=os.path.normpath(os.path.abspath(__file__)+"/../../lib")
-    sys.stderr.write("Unable to import Rnaseq.  Perhaps you need to add "+needed_dir+" to your PYTHONPATH?\n")
-    sys.stderr.write("(%s)\n" % e)
-    sys.exit(1)
+    warn("Unable to import Rnaseq.  Perhaps you need to add "+needed_dir+" to your PYTHONPATH?\n")
+    # warn(yaml.dump(e))
+    die("(%s)\n" % e)
 
 def main():
     parse_cmdline()                     
     pipeline_name=sys.argv[1]
     #    readset_path=sys.argv[2]
 
-    pipeline=Pipeline({'name': pipeline_name}).load()
+    try: 
+        pipeline=Pipeline('name': pipeline_name).load()
+    except IOError as e:
+        die("Unknown pipeline or step '%s'" % pipeline_name)
+        
     print "pipeline: ",yaml.dump(pipeline)
-    print pipeline.steps[0]
+    print pipeline.steps[0].name
     
     print "yay!"
 

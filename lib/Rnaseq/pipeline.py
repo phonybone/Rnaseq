@@ -1,28 +1,38 @@
 #-*-python-*-
-from dict_like import *
-import yaml
 
-class Pipeline(dict_like):
+import yaml
+import re
+
+from warn import warn,die
+from dict_like import *
+from templated import *
+from step import *
+
+class Pipeline(dict_like, templated):
     attrs={'name':None,
            'steps':[],
            }
 
-    # class vars
-    template_dir='/proj/hoodlab/share/vcassen/rna-seq/rnaseq/templates' # fixme
-    
     def __init__(self,args):
         self.name=args['name']
         self.steps=[]
 
-    def template(self):
-        template_file="%s/%s.syml" % (self.template_dir, self.name)
-        f=open(template_file)
-        tmpl=f.read()
-        f.close()
-        return tmpl
-    
     def load(self):
-        tmpl=self.template()
-        self.update(yaml.load(tmpl))
-        return self
+        templated.load(self)
 
+        # load steps.  (We're going to replace the current steps field, which holds a string of stepnames,
+        # with a list of step objects
+        stepnames=re.split('[,\s]+',self.steps)
+        steps=[]                   # just to make sure
+        for sn in stepnames:
+            step=Step('name': sn)
+
+            try: step.load()
+            except IOError as ioe: die("Unable to load step %s" % sn, ioe)
+            
+            steps.append(step)
+            
+        self.steps=steps
+
+        return self
+    

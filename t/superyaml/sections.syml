@@ -1,0 +1,9 @@
+this: that
+this_color: ===(['color'])
+color: red
+these: ${these}
+fart: ${fart}
+
+section1:
+  flintstones: ['fred','wilma','betty','barney']
+  color: ===(['this_color'])
