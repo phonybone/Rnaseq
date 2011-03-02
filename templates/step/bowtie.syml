@@ -1,0 +1,5 @@
+name: bowtie
+description: align the reads to the ref. geneome (using bowtie)
+usage: '%(exe)s %(ewbt)s %(args)s %(input)s %(output)s'
+exe: bowtie
+

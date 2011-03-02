@@ -1,7 +1,7 @@
 import sys
-import exceptions
+import exceptions, traceback
 
-__all__=["warn","die"]
+__all__=["warn","die","UserError","ProgrammerGoof"]
 
 def warn(*a):
     args=list(a)                        # so we can append to an empty list if need be
@@ -12,8 +12,20 @@ def warn(*a):
 
 def die(*args):
     warn(*args)
+    if __debug__:
+        print >>sys.stderr, "Traceback:"
+        traceback.print_stack()
     sys.exit(1)
 
+
+class UserError(Exception):
+    pass
+
+class ProgrammerGoof(Exception):
+    pass
+
+
+########################################################################
 # testing
 if __name__ == "__main__":
 

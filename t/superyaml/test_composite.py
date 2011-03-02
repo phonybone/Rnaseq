@@ -1,3 +1,4 @@
+# This is meant to test combining more than one syml file
 import os, yaml, unittest
 from superyaml import *
 from warn import *

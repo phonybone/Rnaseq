@@ -1,0 +1,13 @@
+name: ERANGE
+steps: fq_all2std bowtie 
+
+fq_all2std:
+  args: solexa2fastq
+  input: ${export_file}
+  output: ${export_file}.faq
+
+bowtie:
+  ewbt: ${org}_spliced_${readlen}
+  args: -k 11 --best -n 1
+  input: ${export_file}.faq
+  output: ${export_file}.bowtie

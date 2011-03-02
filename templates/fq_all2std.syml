@@ -1,5 +1,0 @@
-fq_all2std_defaults:
-  usage: ${interpreter} ${exe} ${command} ${input} ${output}
-  interpreter: /path/to/perl
-  exe: /path/to/fq_all2std.pl
-

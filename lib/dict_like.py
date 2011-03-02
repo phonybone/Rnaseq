@@ -1,3 +1,6 @@
+import yaml
+from warn import *
+
 class dict_like:
     attrs={}                            # sub classes override this
 
@@ -8,6 +11,9 @@ class dict_like:
                 self[attr]=arghash[attr]
             else: 
                 self[attr]=self.attrs[attr]
+        # print "dict_like:__init__: args are %s" % yaml.dump(arghash)
+        # print "dict_like:__init__: self is %s (%s)" % (yaml.dump(self), type(self))
+
 
     def __getitem__(self,attr):
         return self.__dict__[attr]
@@ -31,7 +37,35 @@ class dict_like:
 
     # WARNING! This lets you get around the restriction that the object can contain only keys found in attrs!
     def update(self,d):
+        if (not isinstance(d,dict)):
+            if (isinstance(d,dict_like)):
+                d=d.attrs_dict()
+            else:
+                raise ProgrammerGoof("%s: not a dict or dict_like" % d)
+
         self.__dict__.update(d)
         return self
     
+    # like update, but doesn't clobber existing keys
+    def merge(self,d):
+        if (not isinstance(d,dict)):    # fixme: dry error
+            if (isinstance(d,dict_like)):
+                d=d.attrs_dict()
+            else:
+                raise ProgrammerGoof("%s: not a dict or dict_like" % d)
+
+        for (k,v) in d.items():
+            if (k not in self.__dict__): self[k]=v
+
+        return self
+
+    def __str__(self):
+        s=''
+        for k,v in self.__dict__.items():
+            if isinstance(k, str):
+                s+="%s: %s\n" % (k,v)
+            else:
+                s += "%s: %s" % (k,yaml.dump(v))
+        return s
+
 

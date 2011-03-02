@@ -14,29 +14,37 @@ try:
 except Exception as e:
     needed_dir=os.path.normpath(os.path.abspath(__file__)+"/../../lib")
     warn("Unable to import Rnaseq.  Perhaps you need to add "+needed_dir+" to your PYTHONPATH?\n")
-    # warn(yaml.dump(e))
+    warn(yaml.dump(e))
     die("(%s)\n" % e)
 
 def main():
     parse_cmdline()                     
     pipeline_name=sys.argv[1]
-    #    readset_path=sys.argv[2]
+    readset_path=sys.argv[2]
+    readset=Readset(name=readset_path).load()
+
+    globals=templated(name='globals', filename='config/globals.yml').load()
+    print "globals:\n%s" % globals
 
     try: 
-        pipeline=Pipeline('name': pipeline_name).load()
+        pipeline=Pipeline(name=pipeline_name)
+        assert pipeline.name==pipeline_name
+        pipeline.load(readset)
     except IOError as e:
-        die("Unknown pipeline or step '%s'" % pipeline_name)
+        die("Unable to load pipeline or step '%s'" % pipeline_name, e)
         
-    print "pipeline: ",yaml.dump(pipeline)
-    print pipeline.steps[0].name
+    # print "pipeline: ",yaml.dump(pipeline)
+    # print ', '.join(x.name for x in pipeline.steps) # I'm beginning to comprehend lists
+    # print "step0: ",yaml.dump(pipeline.steps[0])
+    print pipeline.steps[0].sh_cmd()
     
     print "yay!"
 
 
 ########################################################################
 
-def parse_cmdline():
-    pass                                # fixme: implement this
+def parse_cmdline():                    # fixme: implement this
+    pass
 
 
 ########################################################################
