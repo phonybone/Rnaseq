@@ -38,8 +38,8 @@ class dict_like:
     # WARNING! This lets you get around the restriction that the object can contain only keys found in attrs!
     def update(self,d):
         if (not isinstance(d,dict)):
-            if (isinstance(d,dict_like)):
-                d=d.attrs_dict()
+            if (isinstance(d,dict_like)): # dict_like instances are not instances of dict
+                d=d.attrs_dict()        # get the dict part of a dict_like object
             else:
                 raise ProgrammerGoof("%s: not a dict or dict_like" % d)
 
@@ -60,12 +60,12 @@ class dict_like:
         return self
 
     def __str__(self):
-        s=''
+        s="%s:\n" % self.__class__
         for k,v in self.__dict__.items():
             if isinstance(k, str):
                 s+="%s: %s\n" % (k,v)
             else:
-                s += "%s: %s" % (k,yaml.dump(v))
+                s += "%s: c=%s:%s" % (k,v.__class_,yaml.dump(v))
         return s
 
 

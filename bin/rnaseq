@@ -3,9 +3,7 @@
 # The main rnaseq entry point
 # fixme: right now it's just a testbed for development
 
-import getopt
-import sys, os
-import yaml
+import sys, os, yaml, optparse
 from warn import *
 
 # Try to load the rnaseq modules:
@@ -17,34 +15,64 @@ except Exception as e:
     warn(yaml.dump(e))
     die("(%s)\n" % e)
 
+# global variables:
+options=''                              # reset by parse_cmdline()
+
 def main():
-    parse_cmdline()                     
-    pipeline_name=sys.argv[1]
-    readset_path=sys.argv[2]
-    readset=Readset(name=readset_path).load()
-
-    globals=templated(name='globals', filename='config/globals.yml').load()
-    print "globals:\n%s" % globals
-
+    argv=parse_cmdline()                # not to be confused with sys.argv
+    pipeline_name=argv[1]               # fixme: currently letting this barf if argv values not defined
+    readset_path=argv[2] 
+    readset=Readset(name=readset_path).load() 
+    
+    globals=read_globals()
+    #print "globals is %s" % globals
+    
     try: 
         pipeline=Pipeline(name=pipeline_name)
         assert pipeline.name==pipeline_name
         pipeline.load(readset)
+        pipeline.update(globals)
     except IOError as e:
         die("Unable to load pipeline or step '%s'" % pipeline_name, e)
         
     # print "pipeline: ",yaml.dump(pipeline)
     # print ', '.join(x.name for x in pipeline.steps) # I'm beginning to comprehend lists
     # print "step0: ",yaml.dump(pipeline.steps[0])
-    print pipeline.steps[0].sh_cmd()
+    print "\nbowtie sh_script is:\n%s" % pipeline.steps[1].sh_cmd()
     
-    print "yay!"
+    print "rnaseq: yay!"
 
 
 ########################################################################
 
-def parse_cmdline():                    # fixme: implement this
-    pass
+# what to return? probably parsed argv
+def parse_cmdline():                    
+    usage="usage: %s [options] <pipeline> <readset>" % sys.argv[0] # fixme: form might be different; might be more like git
+    parser=optparse.OptionParser(usage)
+
+    parser.add_option("-f","--config", dest="config", help="specify alternative config file",
+                      default=os.path.normpath(os.path.abspath(__file__)+"/../../config/config.yml"))
+    parser.add_option('--cluster', dest='use_cluster', action='store_true', default=False)
+
+    (values, argv)=parser.parse_args(sys.argv)
+    global options
+    options=values
+    return argv                         # return remaining argv values
+
+
+########################################################################
+
+def read_globals():
+    try: 
+        config_file=options.config
+        f=open(config_file)
+        yml=f.read()
+        f.close()
+        globals=yaml.load(yml)
+        return globals
+    except IOError as ioe:
+        warn("error trying to load global config file:")
+        die(UserError(ioe))
 
 
 ########################################################################

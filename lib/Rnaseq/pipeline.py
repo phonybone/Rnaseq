@@ -21,7 +21,7 @@ class Pipeline(dict_like, templated):
         self.type='pipeline'
 
 
-    def stepByName(self,stepname):
+    def stepWithName(self,stepname):
         for step in self.steps:
             if step.name==stepname: return step 
         return None
@@ -34,7 +34,7 @@ class Pipeline(dict_like, templated):
         stepnames=re.split('[,\s]+',self.steps)
         steps=[]                   # just to make sure
         for sn in stepnames:
-            step=Step(name=sn)
+            step=Step(name=sn, pipeline=self)
             
             # load the step's template and self.update with the values:
             try:
@@ -42,6 +42,7 @@ class Pipeline(dict_like, templated):
             except IOError as ioe:
                 die("Unable to load step %s" % sn, ioe)
             step.merge(readset)
+            # print "pipeline.load: step after merge(readset) is %s" % step
 
             # add in items from step sections in <pipeline.syml>
             if self[step.name] == None:

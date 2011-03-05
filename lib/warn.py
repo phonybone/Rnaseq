@@ -12,7 +12,7 @@ def warn(*a):
 
 def die(*args):
     warn(*args)
-    if __debug__:
+    if __debug__ and not isinstance(args[0],UserError):
         print >>sys.stderr, "Traceback:"
         traceback.print_stack()
     sys.exit(1)

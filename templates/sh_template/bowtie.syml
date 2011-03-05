@@ -1,2 +1,5 @@
+# sh_template/bowtie.syml
 export BOWTIE_INDEX=${genomes_dir}/${org}
 ${sh_cmd}
+
+${hash['this']}
