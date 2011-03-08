@@ -1,0 +1,7 @@
+db: 
+  db_name: provenance.sqlite3
+  tablename: provenance
+
+cmds:
+  create_table: CreateTable
+  insert: InsertProv

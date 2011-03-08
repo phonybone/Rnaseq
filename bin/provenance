@@ -1,0 +1,62 @@
+#!/usr/bin/env python
+#-*-python-*-
+
+# Implement CRUD operations on a provenance database.
+
+from Rnaseq.prov import *
+import sqlite3, yaml, optparse, os, sys
+
+
+def main():
+    usage="usage: %s <cmd> <args> [opts]"
+    argv=parse_cmdline(usage)       # not to be confused with sys.argv
+    try:
+        cmd=argv[1]
+        #print "cmd is %s" % cmd
+    except IndexError as ie:
+        die(UserError(usage))
+        
+    config=read_config(options.config)
+    options.conf=config
+    
+    dbh=sqlite3.connect("db/%s" % config['db']['db_name'])
+    #print "connected to db/%s" % config['db']['db_name']
+    
+    pcf=ProvCmdFactory()
+    add_cmds(pcf)
+    cmd=pcf.new_cmd(cmd)
+    cmd.run(dbh=dbh,argv=argv)
+    
+    print "\ndone"
+
+# parse command line opts.  return a list of un-processed args
+def parse_cmdline(usage):                    
+    parser=optparse.OptionParser(usage)
+
+    parser.add_option("-f","--config", dest="config", help="specify alternative config file",
+                      default=os.path.normpath(os.path.abspath(__file__)+"/../../config/prov.conf.yml"))
+
+    parser.add_option("--force", dest="force", help="force excecution of commands even if they overwrite data",
+                      action="store_true", default=False)
+
+
+    (values, argv)=parser.parse_args(sys.argv)
+    global options
+    options=values
+    optparse.options=values
+    return argv                         # return remaining argv values
+
+
+def read_config(config_file):
+    f=open(config_file)
+    yml=f.read()
+    f.close()
+    return yaml.load(yml)
+
+
+def add_cmds(pcf):
+    for name,klass in options.conf['cmds'].items():
+        pcf.add_cmd(name,klass)
+
+
+main()
