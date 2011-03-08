@@ -15,6 +15,8 @@ class dict_like:
         # print "dict_like:__init__: self is %s (%s)" % (yaml.dump(self), type(self))
 
 
+########################################################################
+
     def __getitem__(self,attr):
         return self.__dict__[attr]
 
@@ -22,7 +24,18 @@ class dict_like:
         self.__dict__[attr]=val
         return val
     
-    def attrs_dict(self):
+    def __str__(self):
+        s="%s:\n" % self.__class__
+        for k,v in self.__dict__.items():
+            if isinstance(k, str):
+                s+="%s: %s\n" % (k,v)
+            else:
+                s += "%s: c=%s:%s" % (k,v.__class_,yaml.dump(v))
+        return s
+
+########################################################################
+
+    def attributes(self):
         return self.__dict__
     
     # add a new attribute to an object:
@@ -35,11 +48,19 @@ class dict_like:
         self.__dict__[attr]=val
         return self
 
+    def has_attr(self,attr):
+        return self.__dict__.has_key(attr)
+
+    def has_key(self,attr):
+        return self.__dict__.has_key(attr)
+    
+########################################################################
+    
     # WARNING! This lets you get around the restriction that the object can contain only keys found in attrs!
     def update(self,d):
         if (not isinstance(d,dict)):
             if (isinstance(d,dict_like)): # dict_like instances are not instances of dict
-                d=d.attrs_dict()        # get the dict part of a dict_like object
+                d=d.attributes()        # get the dict part of a dict_like object
             else:
                 raise ProgrammerGoof("%s: not a dict or dict_like" % d)
 
@@ -50,7 +71,7 @@ class dict_like:
     def merge(self,d):
         if (not isinstance(d,dict)):    # fixme: dry error
             if (isinstance(d,dict_like)):
-                d=d.attrs_dict()
+                d=d.attributes()
             else:
                 raise ProgrammerGoof("%s: not a dict or dict_like" % d)
 
@@ -58,14 +79,5 @@ class dict_like:
             if (k not in self.__dict__): self[k]=v
 
         return self
-
-    def __str__(self):
-        s="%s:\n" % self.__class__
-        for k,v in self.__dict__.items():
-            if isinstance(k, str):
-                s+="%s: %s\n" % (k,v)
-            else:
-                s += "%s: c=%s:%s" % (k,v.__class_,yaml.dump(v))
-        return s
 
 

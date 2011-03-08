@@ -16,12 +16,17 @@ except Exception as e:
     die("(%s)\n" % e)
 
 # global variables:
-options=''                              # reset by parse_cmdline()
+options={}                              # reset by parse_cmdline()
 
 def main():
-    argv=parse_cmdline()                # not to be confused with sys.argv
-    pipeline_name=argv[1]               # fixme: currently letting this barf if argv values not defined
-    readset_path=argv[2] 
+    usage="usage: %s [options] <pipeline> <readset>" % sys.argv[0] # fixme: form might be different; might be more like git
+    argv=parse_cmdline(usage)       # not to be confused with sys.argv
+    try: 
+        pipeline_name=argv[1]
+        readset_path=argv[2]
+    except IndexError as ie:
+        die(UserError(usage))
+
     readset=Readset(name=readset_path).load() 
     
     globals=read_globals()
@@ -35,10 +40,7 @@ def main():
     except IOError as e:
         die("Unable to load pipeline or step '%s'" % pipeline_name, e)
         
-    # print "pipeline: ",yaml.dump(pipeline)
-    # print ', '.join(x.name for x in pipeline.steps) # I'm beginning to comprehend lists
-    # print "step0: ",yaml.dump(pipeline.steps[0])
-    print "\nbowtie sh_script is:\n%s" % pipeline.steps[1].sh_cmd()
+    print pipeline.sh_script()
     
     print "rnaseq: yay!"
 
@@ -46,12 +48,11 @@ def main():
 ########################################################################
 
 # what to return? probably parsed argv
-def parse_cmdline():                    
-    usage="usage: %s [options] <pipeline> <readset>" % sys.argv[0] # fixme: form might be different; might be more like git
+def parse_cmdline(usage):                    
     parser=optparse.OptionParser(usage)
 
     parser.add_option("-f","--config", dest="config", help="specify alternative config file",
-                      default=os.path.normpath(os.path.abspath(__file__)+"/../../config/config.yml"))
+                      default=os.path.normpath(os.path.abspath(__file__)+"/../../config/rnaseq.conf.yml"))
     parser.add_option('--cluster', dest='use_cluster', action='store_true', default=False)
 
     (values, argv)=parser.parse_args(sys.argv)

@@ -3,7 +3,7 @@
 import yaml
 import re
 
-from warn import warn,die
+from warn import *
 from dict_like import *
 from templated import *
 from step import *
@@ -45,8 +45,9 @@ class Pipeline(dict_like, templated):
             # print "pipeline.load: step after merge(readset) is %s" % step
 
             # add in items from step sections in <pipeline.syml>
-            if self[step.name] == None:
-                die("no section '%s' (sn=%s) in %s???" % (step.name, sn, self))
+            if not self.has_attr(step.name) or self[step.name] == None:
+                die(ConfigError("Missing section: '%s' is listed as a step name in %s, but section with that name is absent." %
+                                (step.name, self.template_file())))
 
             try:
                 # print "pipeline: self[%s] is\n%s" % (step.name, self[step.name])
@@ -63,3 +64,11 @@ class Pipeline(dict_like, templated):
 
         return self
     
+    # return an entire shell script that runs the pipeline
+    def sh_script(self,**args):
+        script="#!/bin/sh\n\n"
+        for step in self.steps:
+            script+="# %s\n" % step.name
+            script+=step.sh_cmd()
+            script+="\n"
+        return script

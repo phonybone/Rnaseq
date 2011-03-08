@@ -1,7 +1,7 @@
 import sys
 import exceptions, traceback
 
-__all__=["warn","die","UserError","ProgrammerGoof"]
+__all__=["warn","die","UserError","ProgrammerGoof","ConfigError","MissingArgError"]
 
 def warn(*a):
     args=list(a)                        # so we can append to an empty list if need be
@@ -12,18 +12,26 @@ def warn(*a):
 
 def die(*args):
     warn(*args)
-    if __debug__ and not isinstance(args[0],UserError):
-        print >>sys.stderr, "Traceback:"
-        traceback.print_stack()
+    if __debug__:
+        if isinstance(args[0],RnaseqException) and args[0].show_traceback:
+            print >>sys.stderr, "Traceback:"
+            traceback.print_stack()
     sys.exit(1)
 
+class RnaseqException(Exception):
+    show_traceback=True
 
-class UserError(Exception):
+class UserError(RnaseqException):
+    show_traceback=False
+
+class ConfigError(RnaseqException):
+    show_traceback=False
+
+class ProgrammerGoof(RnaseqException):
     pass
 
-class ProgrammerGoof(Exception):
+class MissingArgError(ProgrammerGoof):
     pass
-
 
 ########################################################################
 # testing
