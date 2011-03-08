@@ -3,5 +3,6 @@ db:
   tablename: provenance
 
 cmds:
-  create_table: CreateTable
-  insert: InsertProv
+  create_table: create_table.py
+  insert: insert_prov.py
+  ls: list_files.py

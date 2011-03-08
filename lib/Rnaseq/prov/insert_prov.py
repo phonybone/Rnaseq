@@ -15,7 +15,8 @@ class InsertProv(ProvCmd):
             sql="INSERT INTO %s (path, author) VALUES ('%s', '%s')" % (tablename, path, author)
             dbh.execute(sql)
             dbh.commit()
-            
+            print "%s inserted" % path
+
         except KeyError as e:
             die(MissingArgError(str(e)))
         except IndexError as e:
@@ -23,3 +24,4 @@ class InsertProv(ProvCmd):
         except OperationalError as oe:
             die(str(oe))
             
+#print __file__, "checking in"

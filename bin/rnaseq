@@ -11,9 +11,11 @@ try:
     from Rnaseq import *
 except Exception as e:
     needed_dir=os.path.normpath(os.path.abspath(__file__)+"/../../lib")
-    warn("Unable to import Rnaseq.  Perhaps you need to add "+needed_dir+" to your PYTHONPATH?\n")
-    warn(yaml.dump(e))
-    die("(%s)\n" % e)
+    sys.stderr.write("Unable to import Rnaseq.  Perhaps you need to add "+needed_dir+" to your PYTHONPATH?\n")
+    sys.stderr.write(yaml.dump(e))
+    sys.stderr.write("(%s)\n" % e)
+    sys.exit(1)
+
 
 # global variables:
 options={}                              # reset by parse_cmdline()

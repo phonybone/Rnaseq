@@ -3,8 +3,18 @@
 
 # Implement CRUD operations on a provenance database.
 
-from Rnaseq.prov import *
-import sqlite3, yaml, optparse, os, sys
+import sqlite3, yaml, optparse, os, sys, re
+
+# Try to load the rnaseq modules:
+try:
+    from Rnaseq.prov import *
+except Exception as e:
+    needed_dir=os.path.normpath(os.path.abspath(__file__)+"/../../lib")
+    sys.stderr.write("Unable to import Rnaseq.  Perhaps you need to add "+needed_dir+" to your PYTHONPATH?\n")
+    sys.stderr.write(yaml.dump(e))
+    sys.stderr.write("(%s)\n" % e)
+    sys.exit(1)
+
 
 
 def main():
@@ -54,9 +64,10 @@ def read_config(config_file):
     return yaml.load(yml)
 
 
+# add all the command-line cmds in the conf file:
 def add_cmds(pcf):
-    for name,klass in options.conf['cmds'].items():
-        pcf.add_cmd(name,klass)
+    for name,file in options.conf['cmds'].items():
+        pcf.add_cmd(name,file)
 
 
 main()
