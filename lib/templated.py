@@ -60,7 +60,7 @@ class templated(dict_like):
         except ValueError as ve:
             mgroup=re.match('File \[(.*)\] not found', str(ve))
             if mgroup:
-                die(UserError("error: %s %s not found" % (self.type, mgroup.group(1))))
+                die(UserError("template error: %s %s not found" % (self.type, mgroup.group(1))))
             else:
                 raise ve
         

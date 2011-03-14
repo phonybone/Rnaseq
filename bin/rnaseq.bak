@@ -56,10 +56,10 @@ def parse_cmdline(usage):
                       default=os.path.normpath(os.path.abspath(__file__)+"/../../config/rnaseq.conf.yml"))
     parser.add_option('--cluster', dest='use_cluster', action='store_true', default=False)
 
-    (values, args)=parser.parse_args(sys.argv)
+    (values, argv)=parser.parse_args(sys.argv)
     global options
     options=values
-    return args                         # return remaining argv values
+    return argv                         # return remaining argv values
 
 
 ########################################################################

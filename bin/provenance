@@ -32,9 +32,9 @@ def main():
     dbh=sqlite3.connect("db/%s" % config['db']['db_name'])
     #print "connected to db/%s" % config['db']['db_name']
     
-    pcf=ProvCmdFactory()
-    add_cmds(pcf)
-    cmd=pcf.new_cmd(cmd)
+    cf=CmdFactory(program='provenance')
+    cf.add_cmds(options.conf['cmds'])
+    cmd=cf.new_cmd(cmd)
     cmd.run(dbh=dbh,argv=argv)
     
     print "\ndone"
@@ -63,11 +63,6 @@ def read_config(config_file):
     f.close()
     return yaml.load(yml)
 
-
-# add all the command-line cmds in the conf file:
-def add_cmds(pcf):
-    for name,file in options.conf['cmds'].items():
-        pcf.add_cmd(name,file)
 
 
 main()

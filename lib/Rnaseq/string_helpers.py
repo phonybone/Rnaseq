@@ -1,8 +1,5 @@
-__all__=['extract']
+import re
+from string import capwords
 
-def extract(s,d):
-    mg=re.findall('%\((\w+)\)',s)
-    d2={}
-    for m in mg:
-        d2[m]=d[m]                      # throws KeyError
-    return s % d2
+def dash2camel_case(str):
+    return re.sub('_','',capwords(str,'_'))

@@ -1,12 +1,12 @@
 #-*-python-*-
 from warn import *
-from Rnaseq.prov.prov_cmd import *
+from Rnaseq.command import *
 from sqlite3 import OperationalError
 import optparse, os, time
 
 # usage: provenance ls [glob]
 
-class ListFiles(ProvCmd):
+class ListFiles(Command):
     def run(self, **args):
         try:
             dbh=args['dbh']

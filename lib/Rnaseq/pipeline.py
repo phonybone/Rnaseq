@@ -65,10 +65,20 @@ class Pipeline(dict_like, templated):
         return self
     
     # return an entire shell script that runs the pipeline
-    def sh_script(self,**args):
+    def sh_script(self):
         script="#!/bin/sh\n\n"
         for step in self.steps:
             script+="# %s\n" % step.name
             script+=step.sh_cmd()
             script+="\n"
         return script
+
+    def working_dir(self):
+        try:
+            readset=self.readset
+            readsfile=readset.reads_file
+        except KeyError as ke:
+            raise UserError(ke)
+
+        try:
+            working_dir=read
