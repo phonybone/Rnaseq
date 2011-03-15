@@ -14,14 +14,15 @@ class Load(Command):
             options=args['options']
             readset_name=options.readset_name
             pipeline_name=options.pipeline_name
+            if readset_name==None or pipeline_name==None:
+                raise UserError(Rnaseq.usage)
 
-            print "readset_name is %s" % readset_name
             readset=Readset(name=readset_name).load() 
-            print "readset is %s" % yaml.dump(readset)
             pipeline=Pipeline(name=pipeline_name)
             pipeline.load(readset)
             pipeline.update(options.config)
-            print "%s loaded with %s" % (pipeline_name, readset_name)
+
+            print "pipeline.working_dir() is %s" % pipeline.working_dir()
 
         except KeyError as e:
             die(MissingArgError(str(e)))

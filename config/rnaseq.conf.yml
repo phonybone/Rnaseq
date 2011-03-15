@@ -1,6 +1,6 @@
 # some general values:
 rnaseq:
-  root_dir: /proj/hoodlab/share/vcassen/rna-seq/rnaseq
+  root_dir: /Users/victorcassen/random/isb/Rnaseq
   genomes_dir: /jdrf/data_var/solexa/genomes
   domain: ${root_dir}/templates
 

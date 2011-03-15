@@ -1,5 +1,4 @@
-import sys
-import exceptions, traceback
+import sys, exceptions, traceback
 
 __all__=["warn","die","UserError","ProgrammerGoof","ConfigError","MissingArgError"]
 

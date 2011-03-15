@@ -5,7 +5,7 @@
 # templates are also processed through evoque, so they can contain ${substitutions}.  see load().
 # It's getting messy the template does not contain yaml.
 
-import yaml, re
+import yaml, re, os
 from dict_like import dict_like
 from evoque import *
 from evoque.domain import Domain
@@ -14,7 +14,9 @@ from warn import *
 
 class templated(dict_like):
     # class vars
-    template_dir='/proj/hoodlab/share/vcassen/rna-seq/rnaseq/templates' # fixme; get value from a config file
+    template_dir=os.path.normpath(os.path.abspath(__file__)+"/../../templates")
+
+
     attrs={'name':None,
            'type':None,
            'filename':None,             # alternate to template_filename

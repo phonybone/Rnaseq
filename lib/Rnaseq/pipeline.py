@@ -1,7 +1,6 @@
 #-*-python-*-
 
-import yaml
-import re
+import yaml, re, time, os
 
 from warn import *
 from dict_like import *
@@ -73,12 +72,31 @@ class Pipeline(dict_like, templated):
             script+="\n"
         return script
 
+    # get the working directory for the pipeline.
+    # first ,check to see if the readset defines a working_dir
+    # second, see if the pipeline itself defines a pipeline (it shouldn't)
+    # each of the first two can be a directory, or a "policy".
+    # valid policies include "timestamp" (and nothing else, for the moment)
+    # If nothing found, use default found in config file under "default_working_dir"
     def working_dir(self):
         try:
             readset=self.readset
             readsfile=readset.reads_file
+            base_dir=os.path.dirname(readsfile)
         except KeyError as ke:
             raise UserError(ke)
 
         try:
-            working_dir=read
+            wd=os.path.join(working_dir, self.working_dir)
+            return wd
+        except:
+            pass
+
+        try:
+            wd=os.path.join(working_dir, readset.working_dir)
+            return wd
+        except:
+            pass
+
+        default='rnaseq_'+time.strftime("%d%b%y.%H%M%S")
+        return os.path.join(base_dir, default)
