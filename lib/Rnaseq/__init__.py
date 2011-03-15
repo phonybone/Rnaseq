@@ -7,7 +7,8 @@ from pipeline import *
 from step import *
 from readset import *
 from cmd_factory import *
-from options import *
+#from options import *
+import sys, optparse
 
 class Rnaseq():
     options={}

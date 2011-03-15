@@ -27,6 +27,7 @@ class Pipeline(dict_like, templated):
 
     def load(self,readset):
         templated.load(self, vars=readset)
+        self.readset=readset
 
         # load steps.  (We're going to replace the current steps field, which holds a string of stepnames,
         # with a list of step objects
@@ -84,18 +85,19 @@ class Pipeline(dict_like, templated):
             readsfile=readset.reads_file
             base_dir=os.path.dirname(readsfile)
         except KeyError as ke:
+            print "ke is %s" % ke
             raise UserError(ke)
 
         try:
-            wd=os.path.join(working_dir, self.working_dir)
+            wd=os.path.join(base_dir, self['working_dir'])
             return wd
-        except:
+        except KeyError as ie:
             pass
 
         try:
-            wd=os.path.join(working_dir, readset.working_dir)
+            wd=os.path.join(base_dir, readset['working_dir'])
             return wd
-        except:
+        except KeyError as ie:
             pass
 
         default='rnaseq_'+time.strftime("%d%b%y.%H%M%S")
