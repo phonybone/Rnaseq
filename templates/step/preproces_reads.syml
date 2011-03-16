@@ -1,5 +1,0 @@
-name: preprocess
-description: pre-process reads file; multiple options
-interpreter: ${perl}
-exe: preprocessReads.pl
-usage: ${interpreter} ${exe} ${args} -i ${input} -o ${output}

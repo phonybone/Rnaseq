@@ -7,6 +7,11 @@ from dict_like import *
 from templated import *
 from step import *
 
+# todo/fixme:
+# pipelines should verify that the step list in the .syml file exactly matches
+# all the steps found (ie, all present and accounted for, no extras)
+
+
 class Pipeline(dict_like, templated):
     attrs={'name':None,
            'type':'pipeline',
