@@ -3,6 +3,7 @@ rnaseq:
   root_dir: /Users/victorcassen/random/isb/Rnaseq
   genomes_dir: /jdrf/data_var/solexa/genomes
   domain: ${root_dir}/templates
+  bin_dir: /tools/bin
 
 # database
 db: 

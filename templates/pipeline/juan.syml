@@ -1,5 +1,5 @@
 name: Juan's pipeline
-steps: preprocess filterQuality filterVectors filterLowComplex ribosomal_mit remove_erccs repeats_consensus 
+steps: preprocess filterQuality filterVectors filterLowComplex ribosomal_mit remove_erccs repeats_consensus echo
 
 preprocess:
   input: ${readsfile}
@@ -37,3 +37,6 @@ repeats_consensus:
   input: ${readsfile}.ercc_OK.fq
   output: ${readsfile}.repeat_OK.fq
   filtered: ${readsfile}.bowtie_repeat_BAD.sam
+
+echo:
+  dummy: pass

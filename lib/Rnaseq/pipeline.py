@@ -75,6 +75,9 @@ class Pipeline(dict_like, templated):
             
         self.steps=steps
 
+        # Check to see that the list of step names and the steps themselves match; dies on errors
+        self.verifySteps(stepnames)
+
         return self
     
     # return an entire shell script that runs the pipeline
@@ -116,4 +119,25 @@ class Pipeline(dict_like, templated):
         default='rnaseq_'+time.strftime("%d%b%y.%H%M%S")
         return os.path.join(base_dir, default)
 
+
+    #  check to see that all defined steps are listed, and vice verse:
+    def verifySteps(self, stepnames):
+        a=set(stepnames)
+        b=set(self.attributes().keys())-set(self.attrs.keys()) # whee! set subtraction!
+        if a==b: return True            # set equality! we just love over-ridden operators
+
+        msg='Config Error: '
+        name_no_step=a-b                # more set subtraction!
+        if len(name_no_step)>0:
+            msg+="The following steps were listed as part of %s, but no defining section was found: %s" % (self.name, ", ".join(list(name_no_step)))
+            
+        step_no_name=b-a                # more set subtraction!
+        if len(step_no_name)>0:
+            msg+="The following steps were defined as part of %s, but not listed: %s" % (self.name, ", ".join(list(step_no_name)))
+        
+        die(ConfigError(msg))
+
+
+
 #print __file__,"checking in; Rnaseq.__file__ is %s" % Rnaseq.__file__
+    

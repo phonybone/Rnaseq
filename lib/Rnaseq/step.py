@@ -42,6 +42,8 @@ class Step(dict_like, templated):
     # use the self.usage formatting string to create the command line that executes the script/program for
     # this step.  Return as a string.  Throws exceptions as die()'s.
     def sh_cmdline(self):
+        if self.usage==None:
+            self.usage=''
         try: 
             sh_cmd=self.usage % self
             self['sh_cmd']=sh_cmd
