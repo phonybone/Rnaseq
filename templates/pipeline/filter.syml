@@ -1,0 +1,26 @@
+name: Juan's pipeline (text filters only)
+steps: header export2fq filterQuality filterLowComplex 
+
+fart:
+  input: ${readfile}
+  output: ${readfile}
+
+header: 
+  pass:
+
+export2fq:
+  input: ${readsfile}
+  output: ${readsfile}.fq
+
+filterQuality:
+  input: ${readsfile}.fq
+  output: ${readsfile}.qual_OK.fq
+  filtered: ${readsfile}.bowtie_qual_BAD.fq
+  args: -v
+
+filterLowComplex:
+  input: ${readsfile}.vector_OK.fq
+  output: ${readsfile}.complex_OK.fq
+  filtered: ${readsfile}.bowtie_complex_BAD.fq
+  args: -v
+

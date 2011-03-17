@@ -1,0 +1,4 @@
+name: echo
+exe: echo
+args: hi there, cutie
+usage: '%(exe)s %(args)s'
