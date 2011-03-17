@@ -38,7 +38,7 @@ class templated(dict_like):
             else:
                 assert self.name, "no name in\n %s" % self
                 assert self.type, "no type in\n %s" % self
-                return "%s/%s.syml" % (self.type, self.name)
+                return "%s/%s.syml" % (self.type, self.name) # fixme: self.name is always the name of the template file?
         except KeyError as barf:
             # print "templated.template_file(): couldn't find key 'filename', so looking in default location"
             assert self.name, "no name in\n %s" % self
@@ -55,10 +55,23 @@ class templated(dict_like):
 
         # get the template and call evoque() on it.  This should yield a yaml string
         try: 
-            domain=Domain(self.template_dir)
+            domain=Domain(self.template_dir, errors=4) # errors=4 means raise errors as an exception
             template=domain.get_template(self.template_file())
             vars=args['vars'] if args.has_key('vars') else {} # consider default of self instead of {}?  Or is that stupid?
-            yaml_str=template.evoque(evoque_dict().update(vars))
+            #print "about to evoque: vars are:\n%s" % yaml.dump(vars)
+            ev=evoque_dict().update(vars)
+            try: 
+                yaml_str=template.evoque(ev)
+            except TypeError as te:
+                print "te is %s (%s)" % (te, type(te))
+                raise te
+
+            # why we want to keep this: evoque_dicts protect us against simple Key errors, but not
+            # errors of the type ${readset['missing_key']}
+            except KeyError as ke:
+                #print "ke is %s (%s)" % (ke, type(ke))
+                raise ConfigError(str(ke))
+            
         except ValueError as ve:
             mgroup=re.match('File \[(.*)\] not found', str(ve))
             if mgroup:

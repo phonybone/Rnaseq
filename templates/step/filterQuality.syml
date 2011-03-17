@@ -1,6 +1,6 @@
 name: filterQuality
 description: Remove sequences with low quality scores
-usage: '%(interpreter) %(exe)s %(args)s -i %(input)s -o %(output)s -b %(filtered)s'
+usage: '%(interpreter)s %(exe)s %(args)s -i %(input)s -o %(output)s -b %(filtered)s'
 interpreter: perl
 exe: filterQuality.pl
 

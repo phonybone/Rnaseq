@@ -7,7 +7,6 @@ from pipeline import *
 from step import *
 from readset import *
 from cmd_factory import *
-#from options import *
 import sys, optparse
 
 class Rnaseq():
@@ -23,7 +22,7 @@ class Rnaseq():
 
         parser.add_option("-r","--readset",  dest="readset_name",  help="readset name")
         parser.add_option("-p","--pipeline", dest="pipeline_name", help="pipeline name")
-        parser.add_option("-f","--config",   dest="config",        help="specify alternative config file",
+        parser.add_option("-f","--config",   dest="config_file",   help="specify alternative config file",
                           default=os.path.normpath(os.path.abspath(__file__)+"/../../../config/rnaseq.conf.yml"))
         parser.add_option('--cluster',       dest='use_cluster', action='store_true', default=False)
         
@@ -31,6 +30,7 @@ class Rnaseq():
         Rnaseq.options=values
 
         return args                         # return remaining argv values
+
 
 
 

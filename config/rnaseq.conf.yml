@@ -21,4 +21,4 @@ qsub:
   exe: /sge/bin/lx24-amd64/qsub
   template: qsub.template.generic
   ssh_cmd: ssh
-
+  nprocs: 4

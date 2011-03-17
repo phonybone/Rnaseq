@@ -1,6 +1,4 @@
 name: filterVectors
 description: filter vectors
-usage: '%(exe)s %(args)s --un %(output)s %(ewbt)s %(input)s  | perl -lane 'print unless($F[1] == 4) > $(filtered)s'
-exe: bowtie
 ewbt: UniVec_Core
-
+prototype: bowtie

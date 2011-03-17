@@ -3,3 +3,4 @@ description: align the reads to the ref. geneome (using bowtie)
 usage: '%(exe)s %(ewbt)s %(args)s %(input)s %(output)s'
 exe: bowtie
 sh_template: bowtie.tmpl
+args: '--quiet -p 4 -S --sam-nohead -k 1 -v 2 -q'

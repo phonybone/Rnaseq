@@ -1,6 +1,6 @@
 name: preprocess
 description: Perform basic operations including (barcoding, masking, removal) on a readset
-usage: '%(interpreter) %(exe)s %(args)s -i %(input)s -o %(output)s'
+usage: '%(interpreter)s %(exe)s -i %(input)s -o %(output)s'
 interpreter: perl
 exe: preprocessReads.pl
 

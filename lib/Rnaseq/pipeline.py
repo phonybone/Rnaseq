@@ -6,6 +6,7 @@ from warn import *
 from dict_like import *
 from templated import *
 from step import *
+import Rnaseq
 
 # todo/fixme:
 # pipelines should verify that the step list in the .syml file exactly matches
@@ -30,15 +31,20 @@ class Pipeline(dict_like, templated):
             if step.name==stepname: return step 
         return None
 
-    def load(self,readset):
-        templated.load(self, vars=readset)
-        self.readset=readset
+    def load(self):
+        vars=self.readset.attributes()
+        vars.update(Rnaseq.Rnaseq.config)
+        
+        #vars['readset']=self.readset
+        vars['readsfile']=self.readset.reads_file # fixme: might want to make reads_file a function, if iterated
+        templated.load(self, vars=vars)
 
         # load steps.  (We're going to replace the current steps field, which holds a string of stepnames,
         # with a list of step objects
         stepnames=re.split('[,\s]+',self.steps)
         steps=[]                   # just to make sure
         for sn in stepnames:
+            #print "step %s" % sn
             step=Step(name=sn, pipeline=self)
             
             # load the step's template and self.update with the values:
@@ -46,11 +52,13 @@ class Pipeline(dict_like, templated):
                 step.load()
             except IOError as ioe:
                 die("Unable to load step %s" % sn, ioe)
-            step.merge(readset)
+            step.merge(self.readset)
             # print "pipeline.load: step after merge(readset) is %s" % step
 
             # add in items from step sections in <pipeline.syml>
+            # fixme: self.
             if not self.has_attr(step.name) or self[step.name] == None:
+                print yaml.dump(self)
                 die(ConfigError("Missing section: '%s' is listed as a step name in %s, but section with that name is absent." %
                                 (step.name, self.template_file())))
 
@@ -107,3 +115,5 @@ class Pipeline(dict_like, templated):
 
         default='rnaseq_'+time.strftime("%d%b%y.%H%M%S")
         return os.path.join(base_dir, default)
+
+#print __file__,"checking in; Rnaseq.__file__ is %s" % Rnaseq.__file__

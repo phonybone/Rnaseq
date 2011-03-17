@@ -38,6 +38,9 @@ def main():
         cmd.run(dbh=Rnaseq.dbh, argv=argv, options=Rnaseq.options)
     except UserError as ue:
         die(ue)
+    except ConfigError as ce:
+        die("Config Error")
+        #die(ce)
     
     print "rnaseq: done"
 
@@ -46,7 +49,7 @@ def main():
 
 def read_config():
     try: 
-        config_file=Rnaseq.options.config
+        config_file=Rnaseq.options.config_file
         f=open(config_file)
         yml=f.read()
         f.close()

@@ -1,60 +1,39 @@
 name: Juan's pipeline
-steps: preprocess filterQuality filterVectors filterLowComplex ribosomal_mit remove_erccs repeats_consensus refseq_hg19 hg19 pSplices_hg19 mixSAM finish
-NPROC: 4
-bowtie_args: --quiet -p $(NPROC) -S --sam-nohead -k 1 -v 2 -q
+steps: preprocess filterQuality filterVectors filterLowComplex ribosomal_mit remove_erccs repeats_consensus 
 
 preprocess:
-input: ${readset}
-output: ${readset}.fq
+  input: ${readsfile}
+  output: ${readsfile}.fq
+  args: '-s 1:45'
 
 filterQuality:
-input: ${readset}.fq
-output: ${readset}.qual_OK.fq
-filtered: ${readset}.bowtie_qual_BAD.fq
-args: -v
+  input: ${readsfile}.fq
+  output: ${readsfile}.qual_OK.fq
+  filtered: ${readsfile}.bowtie_qual_BAD.fq
+  args: -v
 
 filterVectors:
-input: ${readset}.fQ
-output: ${readset}.vector_OK.fq
-args: $(bowtie_args)
-filtered: ${readset}.bowtie_vector_BAD.sam
+  input: ${readsfile}.fQ
+  output: ${readsfile}.vector_OK.fq
+  filtered: ${readsfile}.bowtie_vector_BAD.sam
 
 filterLowComplex:
-input: ${readset}.vector_OK.fq
-output: ${readset}.complex_OK.fq
-filtered: ${readset}.bowtie_complex_BAD.fq
-args: -v
+  input: ${readsfile}.vector_OK.fq
+  output: ${readsfile}.complex_OK.fq
+  filtered: ${readsfile}.bowtie_complex_BAD.fq
+  args: -v
 
 ribosomal_mit:
-input: ${readset}.complex_OK.fq
-output: ${readset}.riboMT_OK.fq
-filtered: ${readset}.bowtie_riboMT_BAD.sam
-args: $(bowtie_args)
+  input: ${readsfile}.complex_OK.fq
+  output: ${readsfile}.riboMT_OK.fq
+  filtered: ${readsfile}.bowtie_riboMT_BAD.sam
 
 remove_erccs:
-input: ${readset}.riboMT_OK.fq
-output: ${readset}.ercc_OK.fq
-filtered: ${readset}.bowtie_ercc_BAD.sam
-args: $(bowtie_args)
+  input: ${readsfile}.riboMT_OK.fq
+  output: ${readsfile}.ercc_OK.fq
+  filtered: ${readsfile}.bowtie_ercc_BAD.sam
 
 repeats_consensus:
-input: ${readset}.ercc_OK.fq
-output: ${readset}.repeat_OK.fq
-filtered: ${readset}.bowtie_repeat_BAD.sam
-args: $(bowtie_args)
-
-refseq_hg19:
-input: ${readset}.rpts
-output: ${readset}.rs_hg19
-
-hg19:
-input: ${readset}.rs_hg19
-output: ${readset}.hg19
-
-pSplices_hg19:
-input: ${readset}.hg19
-output: ${readset}.pSpc_hg19
-
-mixSAM finish:
-input: ${readset}.pSpc_hg19
-output: ${readset}.final
+  input: ${readsfile}.ercc_OK.fq
+  output: ${readsfile}.repeat_OK.fq
+  filtered: ${readsfile}.bowtie_repeat_BAD.sam

@@ -11,6 +11,14 @@ class Step(dict_like, templated):
            'pipeline':None,
            }
 
+
+    def load(self):
+        templated.load(self)
+        if self.has_attr('prototype'):
+            ptype=Step(name=self.prototype)
+            ptype.load()
+            self.merge(ptype)
+
     # If a step needs more than one line to invoke (eg bowtie: needs to set an environment variable),
     # define the set of commands in a template and set the 'sh_template' attribute to point to the template
     # within the templates/sh_templates subdir).  This routine fetches the template and calls evoque on it, and
@@ -24,6 +32,7 @@ class Step(dict_like, templated):
 
             vars=self.attributes()
             vars.update(self.pipeline['rnaseq'])
+            vars['readset']=self.pipeline.readset
             vars['sh_cmd']=self.sh_cmdline()
             
             return template.evoque(vars)
@@ -58,7 +67,7 @@ class Step(dict_like, templated):
 
     # current: return true if all of the step's outputs are older than all
     # of the steps inputs AND the step's exe:
-    def current(self):
+    def is_current(self):
         latest_input=0
         earliest_output=time.time()
 

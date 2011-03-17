@@ -26,15 +26,13 @@ class superyaml(dict_like):
     # return a dict derived from the template and vars:
     def load(self,template,vars):
         dp=os.path.dirname(template)
-
-        if not dp=='':
+        if dp != '':
             self.domain=dp
             
         filename=os.path.basename(template)
 
         try:
-            d=Domain(self.domain,
-                     quoting=None) 
+            d=Domain(self.domain, quoting=None) # fixme: what do we really want for quoting?
             t=Domain(self.domain).get_template(filename, quoting="str")
         except Exception as e:
             print "(domain is %s)" % self.domain
@@ -174,6 +172,7 @@ class superyaml(dict_like):
 ########################################################################
 
 
+print __file__,"checking in"
         
 #if __name__ == '__main__':
 #    import doctest
