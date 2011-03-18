@@ -1,0 +1,7 @@
+# check success of step ${last_step}:
+retcode=$$?
+if [ $$retcode != 0 ]; then
+  echo ${last_step} failed
+  exit $$retcode
+fi
+

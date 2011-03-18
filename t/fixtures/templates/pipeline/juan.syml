@@ -1,0 +1,42 @@
+name: Juan's pipeline
+steps: preprocess filterQuality filterVectors filterLowComplex ribosomal_mit remove_erccs repeats_consensus echo
+
+preprocess:
+  input: ${readsfile}
+  output: ${readsfile}.fq
+  args: '-s 1:45'
+
+filterQuality:
+  input: ${readsfile}.fq
+  output: ${readsfile}.qual_OK.fq
+  filtered: ${readsfile}.bowtie_qual_BAD.fq
+  args: -v
+
+filterVectors:
+  input: ${readsfile}.fQ
+  output: ${readsfile}.vector_OK.fq
+  filtered: ${readsfile}.bowtie_vector_BAD.sam
+
+filterLowComplex:
+  input: ${readsfile}.vector_OK.fq
+  output: ${readsfile}.complex_OK.fq
+  filtered: ${readsfile}.bowtie_complex_BAD.fq
+  args: -v
+
+ribosomal_mit:
+  input: ${readsfile}.complex_OK.fq
+  output: ${readsfile}.riboMT_OK.fq
+  filtered: ${readsfile}.bowtie_riboMT_BAD.sam
+
+remove_erccs:
+  input: ${readsfile}.riboMT_OK.fq
+  output: ${readsfile}.ercc_OK.fq
+  filtered: ${readsfile}.bowtie_ercc_BAD.sam
+
+repeats_consensus:
+  input: ${readsfile}.ercc_OK.fq
+  output: ${readsfile}.repeat_OK.fq
+  filtered: ${readsfile}.bowtie_repeat_BAD.sam
+
+echo:
+  dummy: pass

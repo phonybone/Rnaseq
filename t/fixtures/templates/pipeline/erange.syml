@@ -1,0 +1,14 @@
+name: ERANGE
+steps: fq_all2std bowtie 
+
+
+fq_all2std:
+  args: solexa2fastq
+  input: ${reads_file}
+  output: ${reads_file}.faq
+
+bowtie:
+  ewbt: ${org}_spliced_${readlen}
+  args: -k 11 --best -n 1
+  input: ${reads_file}.faq
+  output: ${reads_file}.bowtie

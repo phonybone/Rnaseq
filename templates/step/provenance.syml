@@ -1,0 +1,4 @@
+name: provenance
+usage: '%(interpreter)s %(exe)s %(cmd)s %(args)s %(flags)s'
+exe: provenance
+interpreter: python

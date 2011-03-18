@@ -1,0 +1,5 @@
+reads_file: /users/vcassen/links/samples/sandbox/s_6_export.txt
+org: mouse
+readlen: 75
+
+working_dir: some/path

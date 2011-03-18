@@ -1,0 +1,4 @@
+
+export BOWTIE_INDEX=${genomes_dir}/${org}
+${sh_cmd}
+

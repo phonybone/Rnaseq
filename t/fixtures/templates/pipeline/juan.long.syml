@@ -1,0 +1,59 @@
+name: Juan's pipeline
+steps: preprocess filterQuality filterVectors filterLowComplex ribosomal_mit remove_erccs repeats_consensus refseq_hg19 hg19 pSplices_hg19 mixSAM finish
+bowtie_args: --quiet -p ${qsub['nprocs']} -S --sam-nohead -k 1 -v 2 -q
+
+preprocess:
+  input: ${readset}
+  output: ${readset}.fq
+
+filterQuality:
+  input: ${readset}.fq
+  output: ${readset}.qual_OK.fq
+  filtered: ${readset}.bowtie_qual_BAD.fq
+  args: -v
+
+filterVectors:
+  input: ${readset}.fQ
+  output: ${readset}.vector_OK.fq
+  args: ${bowtie_args}
+  filtered: ${readset}.bowtie_vector_BAD.sam
+
+filterLowComplex:
+  input: ${readset}.vector_OK.fq
+  output: ${readset}.complex_OK.fq
+  filtered: ${readset}.bowtie_complex_BAD.fq
+  args: -v
+
+ribosomal_mit:
+  input: ${readset}.complex_OK.fq
+  output: ${readset}.riboMT_OK.fq
+  filtered: ${readset}.bowtie_riboMT_BAD.sam
+  args: ${bowtie_args}
+
+remove_erccs:
+  input: ${readset}.riboMT_OK.fq
+  output: ${readset}.ercc_OK.fq
+  filtered: ${readset}.bowtie_ercc_BAD.sam
+  args: ${bowtie_args}
+
+repeats_consensus:
+  input: ${readset}.ercc_OK.fq
+  output: ${readset}.repeat_OK.fq
+  filtered: ${readset}.bowtie_repeat_BAD.sam
+  args: ${bowtie_args}
+
+refseq_hg19:
+  input: ${readset}.rpts
+  output: ${readset}.rs_hg19
+
+hg19:
+  input: ${readset}.rs_hg19
+  output: ${readset}.hg19
+
+pSplices_hg19:
+  input: ${readset}.hg19
+  output: ${readset}.pSpc_hg19
+
+mixSAM finish:
+  input: ${readset}.pSpc_hg19
+  output: ${readset}.final

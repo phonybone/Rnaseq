@@ -1,0 +1,3 @@
+name: check_success
+sh_template: check_success.tmpl
+usage: 

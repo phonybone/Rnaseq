@@ -1,0 +1,5 @@
+name: remove_erccs
+description: remove 
+ewbt: ERCC_reference_081215
+prototype: bowtie
+

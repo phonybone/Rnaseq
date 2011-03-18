@@ -1,0 +1,5 @@
+name: fq_all2std
+usage: '%(interpreter)s %(exe)s %(args)s %(input)s %(output)s'
+interpreter: perl
+exe: fq_all2std.pl
+

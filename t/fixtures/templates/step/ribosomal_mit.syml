@@ -1,0 +1,5 @@
+name: ribosomal_mit
+description: remove rRNA/MT matches
+ewbt: human.GRCh37.61.rRNA-MT
+prototype: bowtie
+
