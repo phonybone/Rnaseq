@@ -23,7 +23,7 @@ class CmdFactory(object):
     # return an instance of ProvCmd class according to cmd type
     def new_cmd(self,cmd_type):
         if cmd_type not in self.cmds:
-            die(UserError("Unknown command '%s'" % cmd_type))
+            raise UserError("Unknown command '%s'" % cmd_type)
 
         cmd_file=self.cmds[cmd_type]
         cmd_file=re.sub('.py','',cmd_file)

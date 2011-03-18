@@ -19,8 +19,8 @@ class TestBad(TestCreate):
         try:
             p=Pipeline(name='test', readset=readset).load()
         except UserError as ue:
+            print "caught %s" % ue
             
-        print "p is %s" % p
 
 if __name__=='__main__':
     unittest.main()

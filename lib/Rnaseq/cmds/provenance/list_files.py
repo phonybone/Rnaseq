@@ -30,10 +30,10 @@ class ListFiles(Command):
                 print "%-50s\t%20s\t%s" % (path, mtime, author)
 
         except KeyError as e:
-            die(MissingArgError(str(e)))
+            raise MissingArgError(str(e))
         except IndexError as e:
-            die(UserError("Missing args in '%s' (insert needs <path> and <author>, in that order)" % " ".join(argv[1:3])))
-        except OperationalError as oe:
-            die(str(oe))
+            raise UserError("Missing args in '%s'" % " ".join(argv[1:3]))
+        #except OperationalError as oe:
+        #raise str(oe)
 
 #print __file__, "checking in"

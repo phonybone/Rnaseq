@@ -22,8 +22,8 @@ author VARCHAR[255] NOT NULL
             dbh.execute(sql)
             print "table %s created" % tablename
         except KeyError as e:
-            die(MissingArgError('dbh'))
-        except OperationalError as oe:
+            raise MissingArgError('dbh')
+        except OperationalError as oe:  # OperationalError a sql thing
             warn(str(oe) + " and --force not supplied")
         
     

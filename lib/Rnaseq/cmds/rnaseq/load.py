@@ -23,8 +23,8 @@ class Load(Command):
             print "pipeline.working_dir() is %s" % pipeline.working_dir()
 
         except KeyError as e:
-            die(MissingArgError("missing arg: %s" % str(e)))
+            raise MissingArgError("missing arg: %s" % str(e))
         except IndexError as e:
-            die(UserError("Missing args in load"))
+            raise UserError("Missing args in load")
 
 #print __file__, "checking in"

@@ -34,8 +34,8 @@ class RunPipeline(Command):
                 print "%s written" % output_file
 
         except KeyError as e:
-            die(MissingArgError(str(e)))
+            raise MissingArgError(str(e))
         except IndexError as e:
-            die(UserError("Missing args in load"))
+            raise UserError("Missing args in load")
 
 #print __file__, "checking in"

@@ -51,7 +51,7 @@ class Pipeline(dict_like, templated):
             try:
                 step.load()
             except IOError as ioe:
-                die("Unable to load step %s" % sn, ioe)
+                raise ConfigError("Unable to load step %s" % sn, ioe)
             step.merge(self.readset)
             # print "pipeline.load: step after merge(readset) is %s" % step
 
@@ -59,7 +59,7 @@ class Pipeline(dict_like, templated):
             # fixme: self.
             if not self.has_attr(step.name) or self[step.name] == None:
                 print yaml.dump(self)
-                die(ConfigError("Missing section: '%s' is listed as a step name in %s, but section with that name is absent." %
+                raise ConfigError("Missing section: '%s' is listed as a step name in %s, but section with that name is absent." 
                                 (step.name, self.template_file())))
 
             try:
@@ -67,7 +67,7 @@ class Pipeline(dict_like, templated):
                 step.update(self[step.name])
                 # print "pipeline: step %s is\n%s" %(step.name, step)
             except KeyError as e:
-                die("no %s in\n%s" % (step.name, yaml.dump(self.__dict__)))
+                raise ConfigError("no %s in\n%s" % (step.name, yaml.dump(self.__dict__)))
                 
             # print "pipeline: step %s:\n%s" % (step.name, yaml.dump(step))
             
@@ -135,7 +135,7 @@ class Pipeline(dict_like, templated):
         if len(step_no_name)>0:
             msg+="The following steps were defined as part of %s, but not listed: %s" % (self.name, ", ".join(list(step_no_name)))
         
-        die(ConfigError(msg))
+        raise ConfigError(msg)
 
 
 

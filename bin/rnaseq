@@ -62,4 +62,16 @@ def read_config():
 
 ########################################################################
 
-main()
+try:
+    main()
+
+except UserError as ue:
+    die(ue)
+
+except ProgrammerGoof as pg:
+    warn("An internal error occured:\n")
+    die (pg)
+
+except ConfigError as ce:
+    warn("A configuration error occured:\n")
+    die(ce)

@@ -18,10 +18,10 @@ class InsertProv(ProvCmd):
             print "%s inserted" % path
 
         except KeyError as e:
-            die(MissingArgError(str(e)))
+            raise MissingArgError(str(e))
         except IndexError as e:
-            die(UserError("Missing args in '%s' (insert needs <path> and <author>, in that order)" % " ".join(argv[1:3])))
-        except OperationalError as oe:
-            die(str(oe))
+            raise UserError("Missing args in '%s' (insert needs <path> and <author>, in that order)" % " ".join(argv[1:3]))
+        #except OperationalError as oe:
+        #raise str(oe)
             
 #print __file__, "checking in"

@@ -50,13 +50,13 @@ class Step(dict_like, templated):
             return sh_cmd
 
         except KeyError as e:
-            die(ConfigError("Missing value %s in\n%s" % (e.args, yaml.dump(self))))
+            raise ConfigError("Missing value %s in\n%s" % (e.args, yaml.dump(self)))
         except AttributeError as e:
-            die(ConfigError("Missing value %s in\n%s" % (e.args, yaml.dump(self))))
+            raise ConfigError("Missing value %s in\n%s" % (e.args, yaml.dump(self)))
         except ValueError as e:
             warn(e)
             warn("%s.usage: %s" % (self.name,self.usage))
-            die("%s.keys(): %s" % (self.name, ", ".join(self.__dict__.keys())))
+            raise "%s.keys(): %s" % (self.name, ", ".join(self.__dict__.keys()))
 
 
     # entry point to step's sh "presence"; calls appropriate functions, as above.
