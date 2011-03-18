@@ -8,6 +8,9 @@ import sys, yaml
 # This is sort of a test command, probably won't be used in production
 
 class ShellScript(Command):
+    def description(self):
+        return "generate a shell script determining the pipeline's excecution"
+    
     def run(self, **args):
         try:
             argv=args['argv']           # assume args=[path, author]

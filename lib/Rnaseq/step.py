@@ -3,10 +3,11 @@
 from dict_like import *
 from templated import *
 from warn import *
-import yaml, time
+import yaml, time, re
 
 class Step(dict_like, templated):
     attrs={'name':None,
+           'description':None,
            'type':'step',
            'pipeline':None,
            }
@@ -18,6 +19,7 @@ class Step(dict_like, templated):
             ptype=Step(name=self.prototype)
             ptype.load()
             self.merge(ptype)
+        return self
 
     # If a step needs more than one line to invoke (eg bowtie: needs to set an environment variable),
     # define the set of commands in a template and set the 'sh_template' attribute to point to the template
@@ -30,10 +32,10 @@ class Step(dict_like, templated):
             domain=Domain(template_dir)
             template=domain.get_template(self['sh_template'])
 
-            vars=self.attributes()
+            vars=self.attributes().copy()
             vars.update(self.pipeline['rnaseq'])
             vars['readset']=self.pipeline.readset
-            vars['sh_cmd']=self.sh_cmdline()
+            vars['sh_cmd']=self.sh_cmdline() 
             
             return template.evoque(vars)
         else:
@@ -45,9 +47,7 @@ class Step(dict_like, templated):
         if self.usage==None:
             self.usage=''
         try: 
-            sh_cmd=self.usage % self
-            self['sh_cmd']=sh_cmd
-            return sh_cmd
+            return self.usage % self   
 
         except KeyError as e:
             raise ConfigError("Missing value %s in\n%s" % (e.args, yaml.dump(self)))
@@ -60,20 +60,30 @@ class Step(dict_like, templated):
 
 
     # entry point to step's sh "presence"; calls appropriate functions, as above.
-    def sh_cmd(self):
-        script=self.sh_script()
-        if script!=None: return script
-        else: return self.sh_cmdline()+"\n"
+    def sh_cmd(self, **args):
+        script=''
+        if 'echo_name' in args and args['echo_name']:
+            script+="echo %s step\n" % self.name
+        sh_script=self.sh_script()
+        if sh_script!=None:  script+=sh_script
+        else: script+=self.sh_cmdline()+"\n"
+        return script
 
 ########################################################################
 
+    def inputs(self):
+        return re.split("[,\s]+",self.input)
+
+    def outputs(self):
+        return re.split("[,\s]+",self.output)
+    
     # current: return true if all of the step's outputs are older than all
     # of the steps inputs AND the step's exe:
     def is_current(self):
         latest_input=0
         earliest_output=time.time()
 
-        for input in self.inputs:
+        for input in self.inputs():
             try:
                 stat_info=os.stat(input)
                 if stat_info.st_mtime > latest_input:

@@ -43,6 +43,8 @@ class templated(dict_like):
             # print "templated.template_file(): couldn't find key 'filename', so looking in default location"
             assert self.name, "no name in\n %s" % self
             assert self.type, "no type in\n %s" % self
+            assert type(self.name)==type("string")
+            assert type(self.type)==type("string")
             return "%s/%s.syml" % (self.type, self.name)
             
 
@@ -74,6 +76,8 @@ class templated(dict_like):
             
         except ValueError as ve:
             mgroup=re.match('File \[(.*)\] not found', str(ve))
+            import traceback
+            traceback.print_exc()
             if mgroup:
                 raise UserError("template error: %s %s not found" % (self.type, mgroup.group(1)))
             else:

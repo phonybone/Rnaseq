@@ -1,9 +1,7 @@
-name: Juan's pipeline (text filters only)
+name: filters_only
+description: Juan's pipeline (text filters only)
 steps: header export2fq filterQuality filterLowComplex 
 
-fart:
-  input: ${readfile}
-  output: ${readfile}
 
 header: 
   pass:

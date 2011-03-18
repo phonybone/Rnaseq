@@ -1,6 +1,0 @@
-name: remove_erccs
-description: remove 
-usage: '%(exe)s %(args)s --un %(output)s %(ewbt)s %(input)s  | perl -lane 'print unless($F[1] == 4) > $(filtered)s'
-exe: bowtie
-ewbt: ERCC_reference_081215
-

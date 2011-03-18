@@ -5,6 +5,9 @@ from sqlite3 import OperationalError
 import optparse
 
 class InsertProv(ProvCmd):
+    def description(self):
+        return "insert a dataset (path) and authoring script into the database"
+    
     def run(self,**args):
         try:
             dbh=args['dbh']

@@ -6,6 +6,7 @@ from templated import templated
 
 class Readset(dict_like, templated):
     attrs={'name':None,
+           'description':None,
            'type':'readset',
            }
     

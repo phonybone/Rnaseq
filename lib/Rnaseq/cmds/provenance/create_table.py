@@ -5,6 +5,9 @@ from sqlite3 import OperationalError
 import optparse
 
 class CreateTable(ProvCmd):
+    def description(self):
+        return "create the provenance database table"
+    
     def run(self, **args):
         tablename=optparse.options.conf['db']['tablename']
         try:

@@ -8,6 +8,9 @@ import yaml
 # This is sort of a test command, probably won't be used in production
 
 class Load(Command):
+    def description(self):
+        return "load a pipeline and quit (debugging tool)"
+
     def run(self, **args):
         try:
             argv=args['argv']           # assume args=[path, author]
@@ -20,11 +23,11 @@ class Load(Command):
             pipeline=Pipeline(name=pipeline_name, readset=readset)
             pipeline.update(Rnaseq.config)
 
-            print "pipeline.working_dir() is %s" % pipeline.working_dir()
-
         except KeyError as e:
             raise MissingArgError("missing arg: %s" % str(e))
         except IndexError as e:
             raise UserError("Missing args in load")
+
+
 
 #print __file__, "checking in"

@@ -1,6 +1,6 @@
 #-*-python-*-
 
-import yaml, re, time, os
+import sys, yaml, re, time, os
 
 from warn import *
 from dict_like import *
@@ -15,6 +15,7 @@ import Rnaseq
 
 class Pipeline(dict_like, templated):
     attrs={'name':None,
+           'description':None,
            'type':'pipeline',
            'steps':[],
            'readset':None,
@@ -58,9 +59,9 @@ class Pipeline(dict_like, templated):
             # add in items from step sections in <pipeline.syml>
             # fixme: self.
             if not self.has_attr(step.name) or self[step.name] == None:
-                print yaml.dump(self)
-                raise ConfigError("Missing section: '%s' is listed as a step name in %s, but section with that name is absent." 
-                                (step.name, self.template_file())))
+                raise ConfigError("Missing section: '%s' is listed as a step name in %s, but section with that name is absent." % \
+                                  (step.name, self.template_file()))
+                                  
 
             try:
                 # print "pipeline: self[%s] is\n%s" % (step.name, self[step.name])
@@ -81,12 +82,56 @@ class Pipeline(dict_like, templated):
         return self
     
     # return an entire shell script that runs the pipeline
+    # warning: this will add a "current" check, which might become out of date if
+    # things change between when this script is created and when it is executed.
     def sh_script(self):
         script="#!/bin/sh\n\n"
+        check_step=Step(name='check_success', pipeline=self).load()
+        prov_step=Step(name='provenance', pipeline=self).load()
+        prov_step.cmd='insert'
+        prov_step.flags=''
+        
+        for step in self.steps:
+            # put in check_current step:
+            if (step.is_current()):
+                continue                # break out instead? fixme: think this through
+            
+            # actual step 
+            script+="# %s\n" % step.name
+            script+=step.sh_cmd(echo_name=True)
+            script+="\n"
+
+            # insert check success step:
+            check_step.last_step=step.name
+            script+=check_step.sh_cmd()
+
+            # record provenance for outputs:
+            for o in step.outputs():
+                prov_step.output=o
+                script+=prov_step.sh_cmd()
+                
+        return script
+
+    # return an entire shell script that runs the pipeline
+    def sh_script_old(self):
+        script="#!/bin/sh\n\n"
+        
         for step in self.steps:
             script+="# %s\n" % step.name
-            script+=step.sh_cmd()
+            script+=step.sh_cmd(echo_name=True)
             script+="\n"
+
+            # insert check success step:
+            check_step=Step(name='check_success', pipeline=self).load()
+            check_step.last_step=step.name
+            try:
+                check_block=check_step.sh_cmd()
+                script+=check_block
+            except TypeError as te:
+                print "Unexpected type error %s" % yaml.dump(te)
+                for thing in sys.exc_info():
+                    print "thing is %s" % thing
+                raise te
         return script
 
     # get the working directory for the pipeline.

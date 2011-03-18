@@ -7,6 +7,9 @@ import optparse, os, time
 # usage: provenance ls [glob]
 
 class ListFiles(Command):
+    def description(self):
+        return "list the contents of the provenance table (filter with fileglob)"
+
     def run(self, **args):
         try:
             dbh=args['dbh']

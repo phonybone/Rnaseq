@@ -14,6 +14,8 @@ db:
 cmds:
   load: load.py
   sh: shell_script.py
+  help: help.py
+  run: run_pipeline.py
 
 # "qsub" is the command used to submit a job to the cluster.  These items
 # all relate to the submissing of cluster jobs.
