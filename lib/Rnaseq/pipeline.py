@@ -93,23 +93,40 @@ class Pipeline(dict_like, templated):
         
         for step in self.steps:
             # put in check_current step:
-            if (step.is_current()):
+            # fixme: test this!!!
+            if (step.is_current() and not step.force):
+                print "%s is current, skipping" % step.name
                 continue                # break out instead? fixme: think this through
             
-            # actual step 
+            # actual step
             script+="# %s\n" % step.name
             script+=step.sh_cmd(echo_name=True)
             script+="\n"
 
             # insert check success step:
-            check_step.last_step=step.name
-            script+=check_step.sh_cmd()
+            if not ('skip_success_check' in step.attributes() and step.skip_success_check): # god python is annoying at times
+                check_step.last_step=step.name
+                script+=check_step.sh_cmd()
 
             # record provenance for outputs:
             for o in step.outputs():
                 prov_step.output=o
-                script+=prov_step.sh_cmd()
-                
+                prov_step.args=" ".join((o, step.exe)) # double (())'s to make it a tuple
+                try: 
+                    script+=prov_step.sh_cmd()
+                except RnaseqException as e:
+                    import traceback
+                    traceback.print_exc()
+                    print "pipeline.sh_script(), step %s: caught e is %s" % (step.name, e)
+                    raise e
+            script+="\n"
+            print "%s: done" % step.name
+
+        # record finish:
+        prov_step.cmd='update'
+        prov_step.args="-p %s\" --status finished" % self.name
+        script+=prov_step.sh_cmd()
+        
         return script
 
     # return an entire shell script that runs the pipeline

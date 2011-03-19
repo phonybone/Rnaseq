@@ -1,3 +1,5 @@
 name: header
 usage:
 sh_template: header.tmpl
+force: True
+skip_success_check: True

@@ -49,10 +49,11 @@ class Step(dict_like, templated):
         try: 
             return self.usage % self   
 
+        # fixme: you don't really know what you're doing in the is except blocks...
         except KeyError as e:
-            raise ConfigError("Missing value %s in\n%s" % (e.args, yaml.dump(self)))
+            raise ConfigError("Missing value %s in\n%s" % (e.args, self.name))
         except AttributeError as e:
-            raise ConfigError("Missing value %s in\n%s" % (e.args, yaml.dump(self)))
+            raise ConfigError("Missing value %s in\n%s" % (e.args, self.name))
         except ValueError as e:
             warn(e)
             warn("%s.usage: %s" % (self.name,self.usage))
@@ -72,9 +73,11 @@ class Step(dict_like, templated):
 ########################################################################
 
     def inputs(self):
+        if 'input' not in self.attributes(): return []
         return re.split("[,\s]+",self.input)
 
     def outputs(self):
+        if 'output' not in self.attributes(): return []
         return re.split("[,\s]+",self.output)
     
     # current: return true if all of the step's outputs are older than all
@@ -95,7 +98,7 @@ class Step(dict_like, templated):
             except OSError as ose:
                 return False            # missing/unaccessible inputs constitute not being current
 
-        for output in self.outputs:
+        for output in self.outputs():
             try:
                 stat_info=os.stat(output)
                 if (stat_info.st_mtime < earlist_output):

@@ -11,6 +11,7 @@ from evoque import *
 from evoque.domain import Domain
 from evoque_dict import evoque_dict     # not part of official evoque lib; my own addition
 from warn import *
+from evoque_helpers import evoque_no_quote
 
 class templated(dict_like):
     # class vars
@@ -57,7 +58,7 @@ class templated(dict_like):
 
         # get the template and call evoque() on it.  This should yield a yaml string
         try: 
-            domain=Domain(self.template_dir, errors=4) # errors=4 means raise errors as an exception
+            domain=Domain(self.template_dir, errors=4, quoting=evoque_no_quote) # errors=4 means raise errors as an exception
             template=domain.get_template(self.template_file())
             vars=args['vars'] if args.has_key('vars') else {} # consider default of self instead of {}?  Or is that stupid?
             #print "about to evoque: vars are:\n%s" % yaml.dump(vars)

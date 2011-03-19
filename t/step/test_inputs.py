@@ -17,6 +17,7 @@ class TestListExpansion(TestInputs):
         step=self.pipeline.stepWithName('export2fq')
         self.assertEqual(step.__class__, Step)
         self.assertEqual(step.inputs()[0], self.readset.reads_file)
+        self.assertEqual(step.outputs()[0], "%s.fq" % self.readset.reads_file)
 
 
 if __name__=='__main__':

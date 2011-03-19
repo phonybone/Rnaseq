@@ -38,6 +38,8 @@ class ShellScript(Command):
                 print "%s written" % output_file
 
         except KeyError as e:
+            import traceback
+            traceback.print_exc()
             raise MissingArgError(str(e))
         except IndexError as e:
             raise UserError("Missing args in load")
