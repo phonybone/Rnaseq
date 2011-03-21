@@ -24,7 +24,11 @@ class Rnaseq():
         parser.add_option("-f","--config",   dest="config_file",   help="specify alternative config file",
                           default=os.path.normpath(os.path.abspath(__file__)+"/../../../config/rnaseq.conf.yml"))
         parser.add_option("-p","--pipeline", dest="pipeline_name", help="pipeline name")
+        parser.add_option("--pipeline_script", dest="pipeline_scriptname", help="specify alternative name for pipeline shell script",
+                          default="rnaseq_pipeline.sh")
         parser.add_option("-r","--readset",  dest="readset_name",  help="readset name")
+
+
         
         (values, args)=parser.parse_args(sys.argv)
         Rnaseq.options=values

@@ -3,7 +3,14 @@
 
 # Implement CRUD operations on a provenance database.
 
-import sqlite3, yaml, optparse, os, sys, re
+# what happens if these fail?  Can that be user's responsbility?
+import yaml, optparse, os, sys, re
+from Rnaseq import Rnaseq
+
+try:
+    import sqlite3
+except:
+    from pysqlite2 import dbapi2 as sqlite3
 
 # Try to load the rnaseq modules:
 try:
@@ -26,14 +33,15 @@ def main():
     except IndexError as ie:
         die(UserError(usage))
         
-    config=read_config(options.config)
-    options.conf=config
-    
-    dbh=sqlite3.connect("db/%s" % config['db']['db_name'])
-    #print "connected to db/%s" % config['db']['db_name']
+    Rnaseq.config=read_config(options.config)
+
+    db_file=os.path.join(Rnaseq.config['rnaseq']['root_dir'], 'db', Rnaseq.config['db']['db_name'])
+    dbh=sqlite3.connect(db_file)
     
     cf=CmdFactory(program='provenance')
-    cf.add_cmds(options.conf['cmds'])
+    cf.add_cmds(Rnaseq.config['provenance']['cmds'])
+    
+        
     cmd=cf.new_cmd(cmd)
     cmd.run(dbh=dbh,argv=argv)
     
@@ -44,7 +52,7 @@ def parse_cmdline(usage):
     parser=optparse.OptionParser(usage)
 
     parser.add_option("-f","--config", dest="config", help="specify alternative config file",
-                      default=os.path.normpath(os.path.abspath(__file__)+"/../../config/prov.conf.yml"))
+                      default=os.path.normpath(os.path.abspath(__file__)+"/../../config/rnaseq.conf.yml"))
 
     parser.add_option("--force", dest="force", help="force excecution of commands even if they overwrite data",
                       action="store_true", default=False)

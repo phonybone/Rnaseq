@@ -11,7 +11,7 @@ from evoque import *
 from evoque.domain import Domain
 from evoque_dict import evoque_dict     # not part of official evoque lib; my own addition
 from warn import *
-from evoque_helpers import evoque_no_quote
+#from evoque_helpers import evoque_no_quote
 
 class templated(dict_like):
     # class vars
@@ -20,6 +20,7 @@ class templated(dict_like):
 
     attrs={'name':None,
            'type':None,
+           'suffix':'syml',
            'filename':None,             # alternate to template_filename
            }
     
@@ -39,14 +40,16 @@ class templated(dict_like):
             else:
                 assert self.name, "no name in\n %s" % self
                 assert self.type, "no type in\n %s" % self
-                return "%s/%s.syml" % (self.type, self.name) # fixme: self.name is always the name of the template file?
+                return "%s/%s.%s" % (self.type, self.name, self.suffix) # fixme: self.name is always the name of the template file?
         except KeyError as barf:
             # print "templated.template_file(): couldn't find key 'filename', so looking in default location"
             assert self.name, "no name in\n %s" % self
             assert self.type, "no type in\n %s" % self
+            assert self.suffix, "no suffix in\n %s" % self
             assert type(self.name)==type("string")
             assert type(self.type)==type("string")
-            return "%s/%s.syml" % (self.type, self.name)
+            assert type(self.suffix)==type("string")
+            return "%s/%s.%s" % (self.type, self.name, self.suffix)
             
 
 
@@ -58,7 +61,7 @@ class templated(dict_like):
 
         # get the template and call evoque() on it.  This should yield a yaml string
         try: 
-            domain=Domain(self.template_dir, errors=4, quoting=evoque_no_quote) # errors=4 means raise errors as an exception
+            domain=Domain(self.template_dir, errors=4, quoting=str) # errors=4 means raise errors as an exception
             template=domain.get_template(self.template_file())
             vars=args['vars'] if args.has_key('vars') else {} # consider default of self instead of {}?  Or is that stupid?
             #print "about to evoque: vars are:\n%s" % yaml.dump(vars)
@@ -100,7 +103,7 @@ class templated(dict_like):
         assert self.name
         assert self.type
 
-        domain=Domain(self.template_dir)
+        domain=Domain(self.template_dir, errors=4)
         tf=self.template_file()
         #print "templated: tf is %s" % tf
         template=domain.get_template(tf)

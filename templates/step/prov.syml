@@ -1,4 +1,0 @@
-name: prov
-usage: '%(interpreter) %(exe) %(cmd) %(args) %(flags)'
-exe: provenance
-interpreter: python

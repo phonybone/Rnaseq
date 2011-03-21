@@ -1,21 +1,19 @@
 # some general values:
 rnaseq:
-  root_dir: /Users/victorcassen/random/isb/Rnaseq
+  root_dir: /proj/hoodlab/share/vcassen/rna-seq/rnaseq
   genomes_dir: /jdrf/data_var/solexa/genomes
   domain: ${root_dir}/templates
-  bin_dir: /tools/bin
+  path: /tools/bin:/hpc/bin
+  cmds:
+    load: load.py
+    sh: shell_script.py
+    help: help.py
+    run: run_pipeline.py
 
 # database
 db: 
   db_name: provenance.sqlite3
   tablename: provenance
-
-# list of command understood by rnaseq and the file in which to find them
-cmds:
-  load: load.py
-  sh: shell_script.py
-  help: help.py
-  run: run_pipeline.py
 
 # "qsub" is the command used to submit a job to the cluster.  These items
 # all relate to the submissing of cluster jobs.
@@ -25,3 +23,9 @@ qsub:
   template: qsub.template.generic
   ssh_cmd: ssh
   nprocs: 4
+
+provenance:
+  cmds:
+    create_table: create_table.py
+    insert: insert_prov.py
+    ls: list_files.py

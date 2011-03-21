@@ -1,0 +1,13 @@
+#!/bin/tcsh
+
+#$$ -N ${name}
+#$$ -m bea
+#$$ -M ${readset.get_email()}
+#$$ -o ${out_filename}
+#$$ -e ${err_filename}
+#$$ -l h_rt=72:00:00
+#$$ -P solexatrans
+
+time /bin/sh ${cmd}
+
+

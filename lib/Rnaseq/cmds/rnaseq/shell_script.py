@@ -26,7 +26,8 @@ class ShellScript(Command):
             close_file=False
             try:
                 output_file=argv[2]     # [0] is program name, [1] is command
-                f=open(output_file,"w")
+                output_path=os.path.join(pipeline.working_dir(), output_file)
+                f=open(output_path, "w")
                 close_file=True
             except IndexError:
                 f=sys.stdout
@@ -35,7 +36,7 @@ class ShellScript(Command):
             f.write(script)
             if (close_file):
                 f.close()
-                print "%s written" % output_file
+                print "%s written" % output_path
 
         except KeyError as e:
             import traceback

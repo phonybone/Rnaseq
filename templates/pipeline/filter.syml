@@ -17,7 +17,7 @@ filterQuality:
   args: -v
 
 filterLowComplex:
-  input: ${readsfile}.vector_OK.fq
+  input: ${readsfile}.qual_OK.fq
   output: ${readsfile}.complex_OK.fq
   filtered: ${readsfile}.bowtie_complex_BAD.fq
   args: -v

@@ -17,6 +17,7 @@ class Pipeline(dict_like, templated):
     attrs={'name':None,
            'description':None,
            'type':'pipeline',
+           'suffix':'syml',
            'steps':[],
            'readset':None,
            }
@@ -77,7 +78,8 @@ class Pipeline(dict_like, templated):
         self.steps=steps
 
         # Check to see that the list of step names and the steps themselves match; dies on errors
-        self.verifySteps(stepnames)
+        self.verify_steps(stepnames)
+        self.verify_continuity(stepnames)
 
         return self
     
@@ -120,11 +122,10 @@ class Pipeline(dict_like, templated):
                     print "pipeline.sh_script(), step %s: caught e is %s" % (step.name, e)
                     raise e
             script+="\n"
-            print "%s: done" % step.name
 
         # record finish:
         prov_step.cmd='update'
-        prov_step.args="-p %s\" --status finished" % self.name
+        prov_step.args="-p %s --status finished" % self.name
         script+=prov_step.sh_cmd()
         
         return script
@@ -183,7 +184,7 @@ class Pipeline(dict_like, templated):
 
 
     #  check to see that all defined steps are listed, and vice verse:
-    def verifySteps(self, stepnames):
+    def verify_steps(self, stepnames):
         a=set(stepnames)
         b=set(self.attributes().keys())-set(self.attrs.keys()) # whee! set subtraction!
         if a==b: return True            # set equality! we just love over-ridden operators
@@ -200,6 +201,54 @@ class Pipeline(dict_like, templated):
         raise ConfigError(msg)
 
 
+    # check to see that all inputs and outputs connect up correctly (fixme: describe this more clearly)
+    def verify_continuity(self, stepnames):
+        step=self.stepWithName(stepnames[0])
+        errors=[]
+        dataset2stepname={}
+        
+        # first step: check that inputs exist on fs, prime dataset2stepname:
+        for input in step.inputs():
+            if not os.path.exists(input):
+                errors.append("missing inputs for %s: %s" % (step.name, input))
+        for output in step.outputs():
+            dataset2stepname[output]=step.name
+
+        # subsequent steps: check inputs exist in dataset2stepname, add outputs to dataset2stepname:
+        for sn in stepnames[1:]:        # skip first
+            step=self.stepWithName(sn)
+            for input in step.inputs():
+                if input not in dataset2stepname and not os.path.exists(input):
+                    errors.append("input %s (in step '%s') is not produced by any previous step and does not currently exist" % (input, step.name))
+            for output in step.outputs():
+                dataset2stepname[output]=step.name
+
+        # did we get any errors?
+        if len(errors) > 0:
+            raise ConfigError("continuity error in steps:\n" + "\n".join(errors))
+            
+            
+
+    def out_filename(self):
+        return os.path.join(self.working_dir(), "%s.out" % self.name)
+    def err_filename(self):
+        return os.path.join(self.working_dir(), "%s.err" % self.name)
+        
+
+    def write_qsub_script(self, script_filename, out_filename, err_filename):
+        qsub=templated(name='qsub', type='sh_template', suffix='tmpl')
+        vars=self.attributes()
+        vars['cmd']=script_filename
+        vars['out_filename']=out_filename
+        vars['err_filename']=err_filename
+        qsub_script=qsub.eval_tmpl(vars=vars)
+
+        qsub_script_file=os.path.join(self.working_dir(), "%s.qsub" % self.name)
+        f=open(qsub_script_file,"w")
+        f.write(qsub_script)
+        f.close()
+        warn("%s written" % qsub_script_file)
+        return qsub_script_file
 
 #print __file__,"checking in; Rnaseq.__file__ is %s" % Rnaseq.__file__
     

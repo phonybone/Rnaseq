@@ -1,10 +1,16 @@
 #-*-python-*-
 from warn import *
-from Rnaseq.prov.prov_cmd import *
-from sqlite3 import OperationalError
-import optparse
+from Rnaseq import Rnaseq
+from Rnaseq.command import *
 
-class InsertProv(ProvCmd):
+try:
+    import sqlite3
+except:
+    from pysqlite2 import dbapi2 as sqlite3
+
+
+
+class InsertProv(Command):
     def description(self):
         return "insert a dataset (path) and authoring script into the database"
     
@@ -14,11 +20,11 @@ class InsertProv(ProvCmd):
             argv=args['argv']           # assume args=[path, author]
             path=argv[2]                # [0] is script name, [1] is command
             author=argv[3]
-            tablename=optparse.options.conf['db']['tablename']
+            tablename=Rnaseq.config['db']['tablename']
             sql="INSERT INTO %s (path, author) VALUES ('%s', '%s')" % (tablename, path, author)
             dbh.execute(sql)
             dbh.commit()
-            print "%s inserted" % path
+            print "data %s inserted" % path
 
         except KeyError as e:
             raise MissingArgError(str(e))

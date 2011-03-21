@@ -1,8 +1,0 @@
-db: 
-  db_name: provenance.sqlite3
-  tablename: provenance
-
-cmds:
-  create_table: create_table.py
-  insert: insert_prov.py
-  ls: list_files.py

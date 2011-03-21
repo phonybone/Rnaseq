@@ -1,14 +1,16 @@
 #-*-python-*-
 
+import yaml, time, re
+import Rnaseq
 from dict_like import *
 from templated import *
 from warn import *
-import yaml, time, re
 
 class Step(dict_like, templated):
     attrs={'name':None,
            'description':None,
            'type':'step',
+           'suffix':'syml',
            'pipeline':None,
            }
 
@@ -46,10 +48,17 @@ class Step(dict_like, templated):
     def sh_cmdline(self):
         if self.usage==None:
             self.usage=''
-        try: 
+
+        try:
+            if os.path.abspath(self.exe)!=self.exe:
+                self.exe=os.path.join(Rnaseq.Rnaseq.config['rnaseq']['root_dir'], 'bin', self.exe)
+        except AttributeError as ae:
+            pass
+
+        try:
             return self.usage % self   
 
-        # fixme: you don't really know what you're doing in the is except blocks...
+        # fixme: you don't really know what you're doing in these except blocks...
         except KeyError as e:
             raise ConfigError("Missing value %s in\n%s" % (e.args, self.name))
         except AttributeError as e:

@@ -1,7 +1,7 @@
 name: rds
 description: take the results of a bowtie alignment and build databases needed by erange
 interpreter: ${python}
-exe: ${rnaseq_dir}/commoncode/makerdsfrombowtie.py
+exe: makerdsfrombowtie.py
 args: -forceRNA -index -cache 1000 -rawreadID -RNA ${genomes_dir}/${org}/knownGene.txt
 label: ${label}
 usage: ${interpreter} ${exe} ${label} ${inputs} ${outputs} ${args}

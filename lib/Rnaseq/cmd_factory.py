@@ -28,7 +28,7 @@ class CmdFactory(object):
         cmd_file=self.cmds[cmd_type]
         cmd_file=re.sub('.py','',cmd_file)
         cmd_dotpath="Rnaseq.cmds.%s.%s" % (self.program, cmd_file)
-
+        
         mod=__import__(cmd_dotpath)
         for comp in cmd_dotpath.split(".")[1:]:
             mod=getattr(mod,comp)
