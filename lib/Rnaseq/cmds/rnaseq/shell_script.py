@@ -14,14 +14,14 @@ class ShellScript(Command):
     def run(self, **args):
         try:
             argv=args['argv']           # assume args=[path, author]
-            options=Rnaseq.options
+            options=args['options']
             readset_name=options.readset_name
             pipeline_name=options.pipeline_name
 
             readset=Readset(name=readset_name).load() 
             pipeline=Pipeline(name=pipeline_name, readset=readset)
             pipeline.load()
-            pipeline.update(Rnaseq.config)
+            pipeline.update(RnaseqGlobals.config)
 
             close_file=False
             try:

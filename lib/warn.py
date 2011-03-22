@@ -1,4 +1,4 @@
-import sys, exceptions, traceback
+import sys, exceptions, traceback, yaml
 
 __all__=["warn","die","UserError","ProgrammerGoof","ConfigError","MissingArgError"]
 
@@ -11,14 +11,11 @@ def warn(*a):
 
 def die(*args):
     warn(*args)
-    if __debug__:
-        if isinstance(args[0],RnaseqException) and args[0].show_traceback:
-            print >>sys.stderr, "Traceback:"
-            traceback.print_stack()
     sys.exit(1)
 
 class RnaseqException(Exception):
     show_traceback=True
+
 
 class UserError(RnaseqException):
     show_traceback=False

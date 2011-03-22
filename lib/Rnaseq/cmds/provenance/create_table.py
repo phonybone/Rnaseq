@@ -1,6 +1,6 @@
 #-*-python-*-
 from warn import *
-from Rnaseq.prov.prov_cmd import *
+from Rnaseq.command import *
 from sqlite3 import OperationalError
 import optparse
 

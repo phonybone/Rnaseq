@@ -6,7 +6,8 @@ from warn import *
 from dict_like import *
 from templated import *
 from step import *
-import Rnaseq
+from RnaseqGlobals import RnaseqGlobals
+
 
 # todo/fixme:
 # pipelines should verify that the step list in the .syml file exactly matches
@@ -35,7 +36,7 @@ class Pipeline(dict_like, templated):
 
     def load(self):
         vars=self.readset.attributes()
-        vars.update(Rnaseq.Rnaseq.config)
+        vars.update(RnaseqGlobals.config)
         
         #vars['readset']=self.readset
         vars['readsfile']=self.readset.reads_file # fixme: might want to make reads_file a function, if iterated
@@ -96,9 +97,10 @@ class Pipeline(dict_like, templated):
         for step in self.steps:
             # put in check_current step:
             # fixme: test this!!!
-            if (step.is_current() and not step.force):
-                print "%s is current, skipping" % step.name
-                continue                # break out instead? fixme: think this through
+            if not RnaseqGlobals.option('force'):
+                if step.is_current() and not step.force:       # fixme: add --force check, but figure out how to access non-existant options first
+                    print "step %s is current, skipping" % step.name
+                    continue                # break out instead? fixme: think this through
             
             # actual step
             script+="# %s\n" % step.name
@@ -250,5 +252,4 @@ class Pipeline(dict_like, templated):
         warn("%s written" % qsub_script_file)
         return qsub_script_file
 
-#print __file__,"checking in; Rnaseq.__file__ is %s" % Rnaseq.__file__
     

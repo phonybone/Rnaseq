@@ -1,6 +1,6 @@
 #-*-python-*-
 from warn import *
-from Rnaseq import Rnaseq
+from RnaseqGlobals import RnaseqGlobals
 from Rnaseq.command import *
 import optparse, os, time
 
@@ -26,7 +26,7 @@ class ListFiles(Command):
             raise ke
 
         try:
-            tablename=Rnaseq.config['db']['tablename']
+            tablename=RnaseqGlobals.conf_value('db','tablename')
             sql="SELECT * FROM %s" % tablename
             if len(argv) > 2:
                 glob=argv[2]    # [0] is script name, [1] is command

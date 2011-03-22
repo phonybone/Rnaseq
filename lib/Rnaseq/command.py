@@ -6,6 +6,8 @@ class Command:
         raise ProgrammerGoof(str(self.__class__)+".run not implemented (abstract method)")
 
     def description(self):
-        return "no description provided"
-    
+        return "no description provided for %s" % self.__class__
+
+    def usage(self):
+        return "no usage provided for %s" % self.__class__
 

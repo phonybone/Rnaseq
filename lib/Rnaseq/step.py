@@ -2,6 +2,7 @@
 
 import yaml, time, re
 import Rnaseq
+from RnaseqGlobals import RnaseqGlobals
 from dict_like import *
 from templated import *
 from warn import *
@@ -12,6 +13,7 @@ class Step(dict_like, templated):
            'type':'step',
            'suffix':'syml',
            'pipeline':None,
+           'force': False,
            }
 
 
@@ -51,7 +53,7 @@ class Step(dict_like, templated):
 
         try:
             if os.path.abspath(self.exe)!=self.exe:
-                self.exe=os.path.join(Rnaseq.Rnaseq.config['rnaseq']['root_dir'], 'bin', self.exe)
+                self.exe=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'), 'bin', self.exe)
         except AttributeError as ae:
             pass
 
@@ -92,27 +94,31 @@ class Step(dict_like, templated):
     # current: return true if all of the step's outputs are older than all
     # of the steps inputs AND the step's exe:
     def is_current(self):
+        if self.force: return False
         latest_input=0
         earliest_output=time.time()
 
         for input in self.inputs():
             try:
-                stat_info=os.stat(input)
-                if stat_info.st_mtime > latest_input:
-                    latest_input=stat_info.st_mtime
-
-                stat_info=os.stat(self.exe)
-                if stat_info.st_mtime > latest_input:
-                    latest_input=stat_info.st_mtime
+                mtime=os.stat(input).st_mtime
             except OSError as ose:
                 return False            # missing/unaccessible inputs constitute not being current
+            
+            if mtime > latest_input:
+                latest_input=mtime
+
+            exe_file=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'), 'bin', self.exe)
+            exe_mtime=os.stat(exe_file).st_mtime
+            if exe_mtime > latest_input:
+                latest_input=exe_mtime
 
         for output in self.outputs():
             try:
                 stat_info=os.stat(output)
-                if (stat_info.st_mtime < earlist_output):
+                if (stat_info.st_mtime < earliest_output):
                     earliest_output=stat_info.st_mtime
             except OSError as ose:
                 return False            # missing/unaccessible outputs definitely constitute not being current
-            
+
+        #print "final: latest_input is %s, earliest_output is %s" % (latest_input, earliest_output)
         return latest_input<earliest_output

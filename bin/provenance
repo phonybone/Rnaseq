@@ -5,7 +5,7 @@
 
 # what happens if these fail?  Can that be user's responsbility?
 import yaml, optparse, os, sys, re
-from Rnaseq import Rnaseq
+from RnaseqGlobals import RnaseqGlobals
 
 try:
     import sqlite3
@@ -29,17 +29,16 @@ def main():
     argv=parse_cmdline(usage)       # not to be confused with sys.argv
     try:
         cmd=argv[1]
-        #print "cmd is %s" % cmd
     except IndexError as ie:
         die(UserError(usage))
         
-    Rnaseq.config=read_config(options.config)
+    RnaseqGlobals.config=read_config(options.config)
 
-    db_file=os.path.join(Rnaseq.config['rnaseq']['root_dir'], 'db', Rnaseq.config['db']['db_name'])
+    db_file=os.path.join(RnaseqGlobals.config['rnaseq']['root_dir'], 'db', RnaseqGlobals.config['db']['db_name'])
     dbh=sqlite3.connect(db_file)
     
     cf=CmdFactory(program='provenance')
-    cf.add_cmds(Rnaseq.config['provenance']['cmds'])
+    cf.add_cmds(RnaseqGlobals.config['provenance']['cmds'])
     
         
     cmd=cf.new_cmd(cmd)

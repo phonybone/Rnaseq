@@ -9,7 +9,7 @@ from warn import *
 # Try to load the rnaseq modules:
 try:
     from Rnaseq import *
-except Exception as e:
+except ImportError as e:
     needed_dir=os.path.normpath(os.path.abspath(__file__)+"/../../lib")
     sys.stderr.write("Unable to import Rnaseq.  Perhaps you need to add "+needed_dir+" to your PYTHONPATH?\n")
     sys.stderr.write(yaml.dump(e))
@@ -18,28 +18,28 @@ except Exception as e:
 
 
 def main():
-    Rnaseq.usage="usage: %s <cmd> [-p <pipeline>] [-r <readset>] [options]" % sys.argv[0] # fixme: form might be different; might be more like git
-    argv=Rnaseq.parse_cmdline()       # not to be confused with sys.argv
+    RnaseqGlobals.usage="usage: %s <cmd> [-p <pipeline>] [-r <readset>] [options]" % sys.argv[0] # fixme: form might be different; might be more like git
+    argv=RnaseqGlobals.parse_cmdline()       # not to be confused with sys.argv
 
     # read config file:
-    Rnaseq.config=read_config()
+    RnaseqGlobals.config=read_config()
 
     # establish database connection:
-    db_file=os.path.join(Rnaseq.config['rnaseq']['root_dir'], 'db', Rnaseq.config['db']['db_name'])
-    Rnaseq.dbh=sqlite3.connect(db_file)
+    db_file=os.path.join(RnaseqGlobals.config['rnaseq']['root_dir'], 'db', RnaseqGlobals.config['db']['db_name'])
+    RnaseqGlobals.dbh=sqlite3.connect(db_file)
 
     # get the command:
     try: 
         cmd=argv[1]
     except IndexError as ie:
-        die(UserError(Rnaseq.usage))
+        die(UserError(RnaseqGlobals.usage))
     cf=CmdFactory(program='rnaseq')
-    cf.add_cmds(Rnaseq.config['rnaseq']['cmds'])
+    cf.add_cmds(RnaseqGlobals.config['rnaseq']['cmds'])
     cmd=cf.new_cmd(cmd)
 
 
     # run the command
-    cmd.run(dbh=Rnaseq.dbh, argv=argv, options=Rnaseq.options)
+    cmd.run(dbh=RnaseqGlobals.dbh, argv=argv, options=RnaseqGlobals.options)
     
     print "rnaseq: done"
 
@@ -48,7 +48,7 @@ def main():
 
 def read_config():
     try: 
-        config_file=Rnaseq.options.config_file
+        config_file=RnaseqGlobals.options.config_file
         f=open(config_file)
         yml=f.read()
         f.close()
@@ -71,7 +71,7 @@ except ProgrammerGoof as pg:
     warn("An internal error occured:\n")
     import traceback
     traceback.print_exc()
-    die (pg)
+    sys.exit(1)
 
 except ConfigError as ce:
     warn("A configuration error occured:\n")

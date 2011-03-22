@@ -9,6 +9,7 @@ rnaseq:
     sh: shell_script.py
     help: help.py
     run: run_pipeline.py
+    touch: touch.py
 
 # database
 db: 

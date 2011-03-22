@@ -1,6 +1,6 @@
 #-*-python-*-
 from warn import *
-from Rnaseq import *
+from Rnaseq import RnaseqGlobals
 from Rnaseq.command import *
 import yaml
 
@@ -14,14 +14,15 @@ class Load(Command):
     def run(self, **args):
         try:
             argv=args['argv']           # assume args=[path, author]
-            readset_name=Rnaseq.options.readset_name
-            pipeline_name=Rnaseq.options.pipeline_name
+            options=argv['options']
+            readset_name=options.readset_name
+            pipeline_name=options.pipeline_name
             if readset_name==None or pipeline_name==None:
-                raise UserError(Rnaseq.usage)
+                raise UserError(RnaseqGlobals.usage)
 
             readset=Readset(name=readset_name).load() 
             pipeline=Pipeline(name=pipeline_name, readset=readset)
-            pipeline.update(Rnaseq.config)
+            pipeline.update(RnaseqGlobals.config)
 
         except KeyError as e:
             raise MissingArgError("missing arg: %s" % str(e))

@@ -14,21 +14,22 @@ class RunPipeline(Command):
     def run(self, **args):
         try:
             argv=args['argv']          
-            readset_name=Rnaseq.options.readset_name
-            pipeline_name=Rnaseq.options.pipeline_name
+            options=args['options']
+            readset_name=options.readset_name
+            pipeline_name=options.pipeline_name
             if readset_name==None or pipeline_name==None:
-                raise UserError(Rnaseq.usage)
+                raise UserError(RnaseqGlobals.usage)
 
             readset=Readset(name=readset_name).load() 
             pipeline=Pipeline(name=pipeline_name, readset=readset).load()
-            pipeline.update(Rnaseq.config)
+            pipeline.update(RnaseqGlobals.config)
             # code up to this point copied verbatim from load.py; would be nice if one command could call another?
             # and if commands could return values...
             
             # create and store the pipeline's shell script:
             # taken from code in shell_script.py...
             script=pipeline.sh_script()
-            script_filename=os.path.join(pipeline.working_dir(),Rnaseq.options.pipeline_scriptname)
+            script_filename=os.path.join(pipeline.working_dir(),options.pipeline_scriptname)
             try:
                 os.makedirs(pipeline.working_dir())
             except OSError:
@@ -40,9 +41,9 @@ class RunPipeline(Command):
             # if running on the cluster, generate a calling (qsub) script and invoke that;
             out_filename=pipeline.out_filename()
             err_filename=pipeline.err_filename()
-            if Rnaseq.options.use_cluster:
+            if options.use_cluster:
                 script_filename=pipeline.write_qsub_script(script_filename, out_filename, err_filename)
-                launcher=Rnaseq.config['qsub']['exe']
+                launcher=RnaseqGlobals.conf_value('qsub','exe')
                 print "qsub_filename is %s" % script_filename
             else:
                 # otherwise, just execute as a subprocess

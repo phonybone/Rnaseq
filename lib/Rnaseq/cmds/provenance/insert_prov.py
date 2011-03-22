@@ -1,6 +1,6 @@
 #-*-python-*-
 from warn import *
-from Rnaseq import Rnaseq
+from RnaseqGlobals import RnaseqGlobals
 from Rnaseq.command import *
 
 try:
@@ -20,7 +20,7 @@ class InsertProv(Command):
             argv=args['argv']           # assume args=[path, author]
             path=argv[2]                # [0] is script name, [1] is command
             author=argv[3]
-            tablename=Rnaseq.config['db']['tablename']
+            tablename=RnaseqGlobals.conf_value('db','tablename')
             sql="INSERT INTO %s (path, author) VALUES ('%s', '%s')" % (tablename, path, author)
             dbh.execute(sql)
             dbh.commit()
