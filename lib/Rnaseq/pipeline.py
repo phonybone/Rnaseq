@@ -53,7 +53,7 @@ class Pipeline(dict_like, templated):
             # load the step's template and self.update with the values:
             try:
                 step.load()
-            except IOError as ioe:
+            except IOError as ioe:      # IOError??? Where does this generate an IOError?
                 raise ConfigError("Unable to load step %s" % sn, ioe)
             step.merge(self.readset)
             # print "pipeline.load: step after merge(readset) is %s" % step
@@ -79,9 +79,14 @@ class Pipeline(dict_like, templated):
         self.steps=steps
 
         # Check to see that the list of step names and the steps themselves match; dies on errors
-        self.verify_steps(stepnames)
-        self.verify_continuity(stepnames)
-
+        errors=[]
+        errors.extend(self.verify_steps(stepnames))
+        errors.extend(self.verify_continuity(stepnames))
+        errors.extend(self.verify_exes(stepnames))
+        if len(errors)>0:
+            errors.append("Please link these executables from the %s/bin directory" % RnaseqGlobals.conf_value('rnaseq', 'root_dir'))
+            raise ConfigError("\n".join(errors))
+        
         return self
     
     # return an entire shell script that runs the pipeline
@@ -113,7 +118,7 @@ class Pipeline(dict_like, templated):
                 script+=check_step.sh_cmd()
 
             # record provenance for outputs:
-            for o in step.outputs():
+            for o in set(step.outputs())|set(step.creates()):
                 prov_step.output=o
                 prov_step.args=" ".join((o, step.exe)) # double (())'s to make it a tuple
                 try: 
@@ -187,20 +192,20 @@ class Pipeline(dict_like, templated):
 
     #  check to see that all defined steps are listed, and vice verse:
     def verify_steps(self, stepnames):
+        errors=[]
         a=set(stepnames)
         b=set(self.attributes().keys())-set(self.attrs.keys()) # whee! set subtraction!
-        if a==b: return True            # set equality! we just love over-ridden operators
+        if a==b: return errors            # set equality! we just love over-ridden operators
 
-        msg='Config Error: '
         name_no_step=a-b                # more set subtraction!
         if len(name_no_step)>0:
-            msg+="The following steps were listed as part of %s, but no defining section was found: %s" % (self.name, ", ".join(list(name_no_step)))
+            errors.append("The following steps were listed as part of %s, but no defining section was found: %s" % (self.name, ", ".join(list(name_no_step))))
             
         step_no_name=b-a                # more set subtraction!
         if len(step_no_name)>0:
-            msg+="The following steps were defined as part of %s, but not listed: %s" % (self.name, ", ".join(list(step_no_name)))
+            errors.append("The following steps were defined as part of %s, but not listed: %s" % (self.name, ", ".join(list(step_no_name))))
         
-        raise ConfigError(msg)
+        return errors
 
 
     # check to see that all inputs and outputs connect up correctly (fixme: describe this more clearly)
@@ -215,6 +220,9 @@ class Pipeline(dict_like, templated):
                 errors.append("missing inputs for %s: %s" % (step.name, input))
         for output in step.outputs():
             dataset2stepname[output]=step.name
+        for created in step.creates():
+            dataset2stepname[created]=step.name
+            print "added %s" % created
 
         # subsequent steps: check inputs exist in dataset2stepname, add outputs to dataset2stepname:
         for sn in stepnames[1:]:        # skip first
@@ -224,12 +232,28 @@ class Pipeline(dict_like, templated):
                     errors.append("input %s (in step '%s') is not produced by any previous step and does not currently exist" % (input, step.name))
             for output in step.outputs():
                 dataset2stepname[output]=step.name
+            for created in step.creates():
+                dataset2stepname[created]=step.name
 
-        # did we get any errors?
-        if len(errors) > 0:
-            raise ConfigError("continuity error in steps:\n" + "\n".join(errors))
+        return errors
             
+
+    def verify_exes(self, stepnames):
+        dirs=RnaseqGlobals.conf_value('rnaseq', 'path').split(":")
+        dirs.extend([os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'),'bin')])
             
+        errors=[]
+        for stepname in stepnames:
+            step=self.stepWithName(stepname)
+            for d in dirs:
+                if os.access(os.path.join(d,step.exe), os.R_OK): break
+            else:
+                errors.append("Missing executable in %s: %s" %(stepname, step.exe))
+
+        return errors
+
+    ########################################################################
+
 
     def out_filename(self):
         return os.path.join(self.working_dir(), "%s.out" % self.name)

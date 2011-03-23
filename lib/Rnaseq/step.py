@@ -91,6 +91,10 @@ class Step(dict_like, templated):
         if 'output' not in self.attributes(): return []
         return re.split("[,\s]+",self.output)
     
+    def creates(self):
+        if 'create' not in self.attributes(): return []
+        return re.split("[,\s]+",self.create)
+    
     # current: return true if all of the step's outputs are older than all
     # of the steps inputs AND the step's exe:
     def is_current(self):

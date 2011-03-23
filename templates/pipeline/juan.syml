@@ -1,5 +1,5 @@
-name: Juan's pipeline
-steps: preprocess filterQuality filterVectors filterLowComplex ribosomal_mit remove_erccs repeats_consensus echo
+name: pipeline de Juan
+steps: preprocess filterQuality filterVectors filterLowComplex ribosomal_mit remove_erccs repeats_consensus collect_filtered mapsplice cufflinks cuffcompare
 
 preprocess:
   input: ${readsfile}
@@ -13,7 +13,7 @@ filterQuality:
   args: -v
 
 filterVectors:
-  input: ${readsfile}.fQ
+  input: ${readsfile}.fq
   output: ${readsfile}.vector_OK.fq
   filtered: ${readsfile}.bowtie_vector_BAD.sam
 
@@ -38,5 +38,22 @@ repeats_consensus:
   output: ${readsfile}.repeat_OK.fq
   filtered: ${readsfile}.bowtie_repeat_BAD.sam
 
-echo:
-  dummy: pass
+collect_filtered:
+  input: ${readsfile}.ercc_OK.fq
+  output: ${readsfile}.bowtie_FILTERED.fq
+
+mapsplice:
+  input: ${readsfile}.bowtie_FILTERED.fq
+  output: ${readsfile}.mapsplice.sam
+  args: '-c ${genomes_dir}/${genome}.fa -B ${genomes_dir}/${org}/${genome} -t ${genomes_dir}/${org}/${genome}.pseudo.gtf -w ${readlen} -L 25 -Q fq -X ${qsub['nprocs']} --full-running --semi-canonical'
+
+cufflinks:
+  input: ${readsfile}.mapsplice.sam
+  output: ${readsfile}.cufflinks
+  create: ${readsfile}.cufflinks/transcripts.gtf
+  args: '-q -p ${qsub['nprocs']}'
+
+cuffcompare:
+  input: ${readsfile}.cufflinks/transcripts.gtf
+  output: ${readsfile}.cuff
+  args: "-r ${genomes_dir}/${genome}.gtf -s ${genomes_dir}/${genome}.fa"

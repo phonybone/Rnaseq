@@ -3,7 +3,7 @@ rnaseq:
   root_dir: /proj/hoodlab/share/vcassen/rna-seq/rnaseq
   genomes_dir: /jdrf/data_var/solexa/genomes
   domain: ${root_dir}/templates
-  path: /tools/bin:/hpc/bin
+  path: /tools/bin:/hpc/bin:/bin
   cmds:
     load: load.py
     sh: shell_script.py

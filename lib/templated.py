@@ -58,34 +58,28 @@ class templated(dict_like):
     # fixme: this is a good place to examine inserting superyaml code; but so far, no need
     # returns self
     def load(self, **args):
-
         # get the template and call evoque() on it.  This should yield a yaml string
+        domain=Domain(self.template_dir, errors=4, quoting=str) # errors=4 means raise errors as an exception
         try: 
-            domain=Domain(self.template_dir, errors=4, quoting=str) # errors=4 means raise errors as an exception
             template=domain.get_template(self.template_file())
-            vars=args['vars'] if args.has_key('vars') else {} # consider default of self instead of {}?  Or is that stupid?
-            #print "about to evoque: vars are:\n%s" % yaml.dump(vars)
-            ev=evoque_dict().update(vars)
-            try: 
-                yaml_str=template.evoque(ev)
-            except TypeError as te:
-                print "te is %s (%s)" % (te, type(te))
-                raise te
-
+        except ValueError as ve:
+            raise UserError("%s '%s': missing template file %s/%s" % (self.type, self.name, self.template_dir, self.template_file()))
+        
+        vars=args['vars'] if args.has_key('vars') else {} # consider default of self instead of {}?  Or is that stupid?
+        #print "about to evoque: vars are:\n%s" % yaml.dump(vars)
+        ev=evoque_dict().update(vars)
+        
+        try: 
+            yaml_str=template.evoque(ev)
             # why we want to keep this: evoque_dicts protect us against simple Key errors, but not
             # errors of the type ${readset['missing_key']}
-            except KeyError as ke:
-                #print "ke is %s (%s)" % (ke, type(ke))
-                raise ConfigError(str(ke))
-            
-        except ValueError as ve:
-            mgroup=re.match('File \[(.*)\] not found', str(ve))
-            import traceback
-            traceback.print_exc()
-            if mgroup:
-                raise UserError("template error: %s %s not found" % (self.type, mgroup.group(1)))
-            else:
-                raise ve
+        except KeyError as ke:
+            #print "ke is %s (%s)" % (ke, type(ke))
+            raise ConfigError("%s '%s': %s" % (self.type, self.name, ke))
+        except AttributeError as ae:
+            raise ConfigError("%s '%s': %s" % (self.type, self.name, ae))
+        except TypeError as ae:
+            raise ProgrammerGoof("%s '%s': %s" % (self.type, self.name, ae))
         
         # call yaml.load on the string produced above, then call self.update() on the resulting dict object
         #print "yaml_str:\n%s" % yaml_str
