@@ -1,0 +1,4 @@
+name: cufflinks
+sh_template: cufflinks.tmpl
+usage: '%(exe)s %(args)s -o %(output)s %(input)s'
+exe: cufflinks

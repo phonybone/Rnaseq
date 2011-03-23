@@ -1,0 +1,4 @@
+name: cuffcompare
+exe: cuffcompare
+usage: '%(exe)s %(args)s -o %(output)s %(input)s'
+genome: hs37.61

@@ -1,0 +1,2 @@
+grep chr ${readsfile}.mapsplice/alignments.sam | perl -lane '$$F[1] == 16 ? print "$$_\tXS:A:-" : print "$$_\tXS:A:+"' > ${readsfile}.mapsplice.sam
+rm -rf ${readsfile}.mapsplice

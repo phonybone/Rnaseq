@@ -1,0 +1,6 @@
+name: mapsplice
+usage: '%(interpreter)s %(exe)s %(args)s -u %(input)s -o %(output)s'
+exe: mapsplice_segments.py
+interpreter: python
+sh_template: mapsplice.tmpl
+genome: hs37.61
