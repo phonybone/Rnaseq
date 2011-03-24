@@ -1,0 +1,6 @@
+name: blat
+description: align the reads to the ref. geneome (using blat)
+usage: '%(exe)s %(index)s %(input)s %(args)s %(output)s'
+exe: blat
+sh_template: blat.tmpl
+args: -fastMap -q=DNA -t=DNA

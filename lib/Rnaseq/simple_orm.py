@@ -9,7 +9,7 @@ from warn import *
 
 class SimpleOrm(dict_like):
     connections={}
-    
+
     def __init__(self,**args):
         dict_like.__init__(self,**args)
         try:
@@ -21,10 +21,11 @@ class SimpleOrm(dict_like):
                 raise ProgrammerGoof("RnaseqGlobals not initialized")
             self.db_file=os.path.join(a,b)
 
-        self.connect()
+        self.connect()                  # should this really be called in the constructor?
         self.cursor=self.dbh.cursor()
         assert(self.columns)
 
+    # connect to the database, and cache the connection:
     def connect(self):
         try:
             connection=self.connections[self.db_file]
@@ -66,8 +67,9 @@ class SimpleOrm(dict_like):
         value_str=", ".join("'%s'" % x for x in values)
         return value_str
 
+    @classmethod
     def tablename(self):                # can be overridden, obviously
-        return str(self.__class__.__name__)
+        return str(self.__name__)
 
     def create_index(self,*fields,**args):
         try:
@@ -95,19 +97,15 @@ class SimpleOrm(dict_like):
 
         return info
 
-    # return a list of objects 
-    @classmethod
-    def fetch(self,**where):
-        sql="SELECT * FROM %s" % self.tablename()
-        if len(where)>0:
-            wheres=[]
-            for k,v in where.items():
-                where.append("%s='%s'" % (k,v))
-            where_clause=" WHERE "+(" AND ".join(wheres))
-            sql+=where_clause
-        print "sql is %s" % sql
-        for row in self.cursor:
-            print "row is %s" % row
             
         
+    
+    def table_exists(self):
+        try:
+            sql="SELECT COUNT(*) FROM %s" % self.tablename()
+            self.execute(sql)
+            return True
+        except sqlite.OperationalError:
+            return False
+
     

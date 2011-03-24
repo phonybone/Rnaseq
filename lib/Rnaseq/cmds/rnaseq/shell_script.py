@@ -11,7 +11,7 @@ class ShellScript(Command):
     def description(self):
         return "generate a shell script determining the pipeline's excecution"
     
-    def run(self, **args):
+    def run(self, *argv, **args):
         try:
             argv=args['argv']           # assume args=[path, author]
             options=args['options']

@@ -2,6 +2,6 @@
 retcode=$$?
 if [ $$retcode != 0 ]; then
   echo ${last_step} failed 1>&2
-  python ${root_dir}/bin/provenance update -p '${pipeline.name}' --status 'failed in step ${last_step}'
+#  python ${root_dir}/bin/provenance update -p '${pipeline.name}' --status 'failed in step ${last_step}'
   exit $$retcode
 fi

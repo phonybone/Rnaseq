@@ -1,5 +1,6 @@
 name: remove_erccs
 description: remove 
 ewbt: ERCC_reference_081215
-prototype: bowtie
+blat_index: ERCC_reference_081215.2bit
+prototype: ${aligner}
 

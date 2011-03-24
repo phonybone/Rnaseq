@@ -1,9 +1,10 @@
 # some general values:
 rnaseq:
   root_dir: /proj/hoodlab/share/vcassen/rna-seq/rnaseq
-  genomes_dir: /jdrf/data_var/solexa/genomes
+  genomes_dir: /proj/hoodlab/share/programs/indexes
   domain: ${root_dir}/templates
   path: /tools/bin:/hpc/bin:/bin:/proj/hoodlab/share/programs/cufflinks
+  aligner: bowtie
   cmds:
     load: load.py
     sh: shell_script.py
@@ -22,7 +23,7 @@ qsub:
   host: aegir
   exe: /sge/bin/lx24-amd64/qsub
   template: qsub.template.generic
-  ssh_cmd: ssh
+  ssh_cmd: /usr/bin/ssh
   nprocs: 4
 
 provenance:

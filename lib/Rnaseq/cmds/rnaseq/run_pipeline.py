@@ -11,7 +11,7 @@ class RunPipeline(Command):
     def description(self):
         return "load and run a pipeline"
     
-    def run(self, **args):
+    def run(self, *argv, **args):
         try:
             argv=args['argv']          
             options=args['options']
@@ -43,30 +43,47 @@ class RunPipeline(Command):
             err_filename=pipeline.err_filename()
             if options.use_cluster:
                 script_filename=pipeline.write_qsub_script(script_filename)
-                launcher=RnaseqGlobals.conf_value('qsub','exe')
+                cmd=self.qsub_launcher()
+                output=sys.stdout
+                err=sys.stderr
             else:
                 # otherwise, just execute as a subprocess
-                launcher='sh'
+                cmd=['sh']
                 output=open(out_filename, 'w')
                 err=open(err_filename, 'w')
 
 
-            cmd=[launcher, script_filename]
-            print "about to '%s' (not)" % " ".join(cmd)
-            #pipe=subprocess.Popen(cmd, stdout=output, stderr=err)
-            #retcode=pipe.wait()
-            if launcher=="sh":
+            cmd.append(script_filename)
+            print "launch cmd is '%s'" % " ".join(cmd)
+
+            pipe=subprocess.Popen(cmd, stdout=output, stderr=err)
+            retcode=pipe.wait()
+            if cmd[0]=="sh":
                 output.close()
                 err.close()
             retcode=0
             if retcode != 0:
                 raise UserError("pipeline failed with return code %d\nsee %s.out and %s.err for diagnostics (in %s)" % \
                                 (retcode, pipeline.name, pipeline.name, pipeline.working_dir()))
-            
 
         except KeyError as e:
             raise MissingArgError(str(e))
         except IndexError as e:
             raise UserError("Missing args in load")
+
+
+    def qsub_launcher(self):
+        # want to build list that looks like "ssh user@host /bin/qsub /working_dir/qsub_file
+        launcher=[]
+        launcher.append(RnaseqGlobals.conf_value('qsub','ssh_cmd'))
+
+        user=RnaseqGlobals.conf_value('qsub','user') or os.environ['USER']
+        host=RnaseqGlobals.conf_value('qsub','host')
+        launcher.append("%s@%s" % (user,host))
+                                   
+        launcher.append(RnaseqGlobals.conf_value('qsub','exe'))
+        return launcher
+
+        
 
 #print __file__, "checking in"

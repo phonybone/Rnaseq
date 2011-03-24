@@ -8,14 +8,13 @@ from templated import *
 from step import *
 from RnaseqGlobals import RnaseqGlobals
 import path_helpers
-from simple_orm import SimpleOrm
 
 # todo/fixme:
 # pipelines should verify that the step list in the .syml file exactly matches
 # all the steps found (ie, all present and accounted for, no extras)
 
 
-class Pipeline(templated, SimpleOrm):
+class Pipeline(templated, dict_like):
     attrs={'name':None,
            'description':None,
            'type':'pipeline',
@@ -29,7 +28,7 @@ class Pipeline(templated, SimpleOrm):
            }
 
     def __init__(self,**args):
-        SimpleOrm.__init__(self,**args)
+        dict_like.__init__(self,**args)
         templated.__init__(self,**args)
         self.type='pipeline'
 
@@ -183,6 +182,7 @@ class Pipeline(templated, SimpleOrm):
         a=set(stepnames)
         b=set(self.attributes().keys())-set(self.attrs.keys()) # whee! set subtraction!
         if a==b: return errors            # set equality! we just love over-ridden operators
+        # fixme: the above is really fragile, and might break if Pipeline inherits from anything else using dict_like (or other classes?)
 
         name_no_step=a-b                # more set subtraction!
         if len(name_no_step)>0:
