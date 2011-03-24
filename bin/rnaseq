@@ -3,8 +3,12 @@
 # The main rnaseq entry point
 # fixme: right now it's just a testbed for development
 
-import sys, os, yaml, optparse, sqlite3
+import sys, os, yaml, optparse
 from warn import *
+try:
+    import sqlite3
+except:
+    from pysqlite2 import dbapi2 as sqlite3
 
 # Try to load the rnaseq modules:
 try:
@@ -18,13 +22,11 @@ except ImportError as e:
 
 
 def main():
-    RnaseqGlobals.usage="usage: %s <cmd> [-p <pipeline>] [-r <readset>] [options]" % sys.argv[0] # fixme: form might be different; might be more like git
-    argv=RnaseqGlobals.parse_cmdline()       # not to be confused with sys.argv
-
-    # read config file:
-    RnaseqGlobals.config=read_config()
+    usage="usage: %s <cmd> [-p <pipeline>] [-r <readset>] [options]" % sys.argv[0] # fixme: form might be different; might be more like git
+    argv=RnaseqGlobals.initialize(usage)       # not to be confused with sys.argv
 
     # establish database connection:
+    # fixme: change to conf_value() calls
     db_file=os.path.join(RnaseqGlobals.config['rnaseq']['root_dir'], 'db', RnaseqGlobals.config['db']['db_name'])
     RnaseqGlobals.dbh=sqlite3.connect(db_file)
 
@@ -39,25 +41,12 @@ def main():
 
 
     # run the command
-    cmd.run(dbh=RnaseqGlobals.dbh, argv=argv, options=RnaseqGlobals.options)
+    cmd.run(argv, dbh=RnaseqGlobals.dbh, argv=argv, options=RnaseqGlobals.options)
     
     print "rnaseq: done"
 
 
 ########################################################################
-
-def read_config():
-    try: 
-        config_file=RnaseqGlobals.options.config_file
-        f=open(config_file)
-        yml=f.read()
-        f.close()
-        config=yaml.load(yml)
-        return config
-    except IOError as ioe:
-        warn("error trying to load global config file:")
-        die(UserError(ioe))
-
 
 ########################################################################
 

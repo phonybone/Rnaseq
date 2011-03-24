@@ -29,7 +29,7 @@ class RunPipeline(Command):
             # create and store the pipeline's shell script:
             # taken from code in shell_script.py...
             script=pipeline.sh_script()
-            script_filename=os.path.join(pipeline.working_dir(),options.pipeline_scriptname)
+            script_filename=os.path.join(pipeline.working_dir(), pipeline.scriptname())
             try:
                 os.makedirs(pipeline.working_dir())
             except OSError:
@@ -42,9 +42,8 @@ class RunPipeline(Command):
             out_filename=pipeline.out_filename()
             err_filename=pipeline.err_filename()
             if options.use_cluster:
-                script_filename=pipeline.write_qsub_script(script_filename, out_filename, err_filename)
+                script_filename=pipeline.write_qsub_script(script_filename)
                 launcher=RnaseqGlobals.conf_value('qsub','exe')
-                print "qsub_filename is %s" % script_filename
             else:
                 # otherwise, just execute as a subprocess
                 launcher='sh'
@@ -56,7 +55,7 @@ class RunPipeline(Command):
             print "about to '%s' (not)" % " ".join(cmd)
             #pipe=subprocess.Popen(cmd, stdout=output, stderr=err)
             #retcode=pipe.wait()
-            if launcher="sh":
+            if launcher=="sh":
                 output.close()
                 err.close()
             retcode=0

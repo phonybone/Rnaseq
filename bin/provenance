@@ -42,7 +42,7 @@ def main():
     
         
     cmd=cf.new_cmd(cmd)
-    cmd.run(dbh=dbh,argv=argv)
+    cmd.run(argv,dbh=dbh,argv=argv)
         
     print "\ndone"
 

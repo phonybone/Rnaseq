@@ -1,4 +1,5 @@
 reads_file: /users/vcassen/links/samples/sandbox/s_6_export.1K.txt
+description: this is a sample readset
 org: mouse
 readlen: 75
 working_dir: rnaseq_wf

@@ -3,7 +3,7 @@ rnaseq:
   root_dir: /proj/hoodlab/share/vcassen/rna-seq/rnaseq
   genomes_dir: /jdrf/data_var/solexa/genomes
   domain: ${root_dir}/templates
-  path: /tools/bin:/hpc/bin:/bin
+  path: /tools/bin:/hpc/bin:/bin:/proj/hoodlab/share/programs/cufflinks
   cmds:
     load: load.py
     sh: shell_script.py
@@ -30,3 +30,7 @@ provenance:
     create_table: create_table.py
     insert: insert_prov.py
     ls: list_files.py
+    update: update.py
+
+testing:
+  test_db: t/fixtures/dbs/simple_orm.db

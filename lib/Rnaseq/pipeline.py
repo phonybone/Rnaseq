@@ -7,24 +7,29 @@ from dict_like import *
 from templated import *
 from step import *
 from RnaseqGlobals import RnaseqGlobals
-
+import path_helpers
+from simple_orm import SimpleOrm
 
 # todo/fixme:
 # pipelines should verify that the step list in the .syml file exactly matches
 # all the steps found (ie, all present and accounted for, no extras)
 
 
-class Pipeline(dict_like, templated):
+class Pipeline(templated, SimpleOrm):
     attrs={'name':None,
            'description':None,
            'type':'pipeline',
            'suffix':'syml',
            'steps':[],
            'readset':None,
+           'columns':{'name':'VARCHAR[255]',
+                      'description':'TEXT',
+                      'status':'VARCHAR[255]'}
+
            }
 
     def __init__(self,**args):
-        dict_like.__init__(self,**args)
+        SimpleOrm.__init__(self,**args)
         templated.__init__(self,**args)
         self.type='pipeline'
 
@@ -84,7 +89,8 @@ class Pipeline(dict_like, templated):
         errors.extend(self.verify_continuity(stepnames))
         errors.extend(self.verify_exes(stepnames))
         if len(errors)>0:
-            errors.append("Please link these executables from the %s/bin directory" % RnaseqGlobals.conf_value('rnaseq', 'root_dir'))
+            errors.append("Please link these executables from the %s/bin directory, or make sure they are on the path defined in the config file." \
+                          % RnaseqGlobals.conf_value('rnaseq', 'root_dir'))
             raise ConfigError("\n".join(errors))
         
         return self
@@ -137,27 +143,8 @@ class Pipeline(dict_like, templated):
         
         return script
 
-    # return an entire shell script that runs the pipeline
-    def sh_script_old(self):
-        script="#!/bin/sh\n\n"
-        
-        for step in self.steps:
-            script+="# %s\n" % step.name
-            script+=step.sh_cmd(echo_name=True)
-            script+="\n"
-
-            # insert check success step:
-            check_step=Step(name='check_success', pipeline=self).load()
-            check_step.last_step=step.name
-            try:
-                check_block=check_step.sh_cmd()
-                script+=check_block
-            except TypeError as te:
-                print "Unexpected type error %s" % yaml.dump(te)
-                for thing in sys.exc_info():
-                    print "thing is %s" % thing
-                raise te
-        return script
+    def scriptname(self):
+        return path_helpers.sanitize(self.name)+".sh"
 
     # get the working directory for the pipeline.
     # first ,check to see if the readset defines a working_dir
@@ -246,8 +233,13 @@ class Pipeline(dict_like, templated):
         for stepname in stepnames:
             step=self.stepWithName(stepname)
             for d in dirs:
-                if os.access(os.path.join(d,step.exe), os.R_OK): break
-            else:
+                try:
+                    path=os.path.join(d,step.exe)
+                except AttributeError as ae:
+                    break
+                if os.access(path, os.X_OK) and not os.path.isdir(path): break
+                if 'interpreter' in step.attributes() and os.access(path, os.R_OK): break
+            else:                       # gets executed if for loop exits normally
                 errors.append("Missing executable in %s: %s" %(stepname, step.exe))
 
         return errors
@@ -256,20 +248,23 @@ class Pipeline(dict_like, templated):
 
 
     def out_filename(self):
-        return os.path.join(self.working_dir(), "%s.out" % self.name)
+        return path_helpers.sanitize(os.path.join(self.working_dir(), "%s.out" % self.name))
     def err_filename(self):
-        return os.path.join(self.working_dir(), "%s.err" % self.name)
+        return path_helpers.sanitize(os.path.join(self.working_dir(), "%s.err" % self.name))
         
 
-    def write_qsub_script(self, script_filename, out_filename, err_filename):
+    def write_qsub_script(self, script_filename, out_filename=None, err_filename=None):
+        if out_filename==None: out_filename=self.out_filename()
+        if err_filename==None: err_filename=self.err_filename()
         qsub=templated(name='qsub', type='sh_template', suffix='tmpl')
         vars=self.attributes()
+        vars['name']=path_helpers.sanitize(self.name)
         vars['cmd']=script_filename
         vars['out_filename']=out_filename
         vars['err_filename']=err_filename
         qsub_script=qsub.eval_tmpl(vars=vars)
 
-        qsub_script_file=os.path.join(self.working_dir(), "%s.qsub" % self.name)
+        qsub_script_file=path_helpers.sanitize(os.path.join(self.working_dir(), "%s.qsub" % self.name))
         f=open(qsub_script_file,"w")
         f.write(qsub_script)
         f.close()
@@ -277,3 +272,4 @@ class Pipeline(dict_like, templated):
         return qsub_script_file
 
     
+    ########################################################################

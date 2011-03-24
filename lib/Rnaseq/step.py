@@ -75,7 +75,7 @@ class Step(dict_like, templated):
     def sh_cmd(self, **args):
         script=''
         if 'echo_name' in args and args['echo_name']:
-            script+="echo %s step\n" % self.name
+            script+="echo step %s\n" % self.name
         sh_script=self.sh_script()
         if sh_script!=None:  script+=sh_script
         else: script+=self.sh_cmdline()+"\n"

@@ -13,6 +13,9 @@ except:
 # usage: provenance ls [glob]
 
 class ListFiles(Command):
+    def usage(self):
+        return "usage: ls [glob]"
+    
     def description(self):
         return "list the contents of the provenance table (filter with fileglob)"
 
@@ -20,7 +23,7 @@ class ListFiles(Command):
         try:
             dbh=args['dbh']
             argv=args['argv']           # assume args=[path, author]
-        except KeyError as ke:
+        except KeyError as ke:          # fixme
             print "caught ke"
             print ke
             raise ke

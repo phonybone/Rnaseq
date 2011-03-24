@@ -3,13 +3,19 @@
 import yaml, socket, os
 from dict_like import dict_like
 from templated import templated
+from simple_orm import SimpleOrm
 
-class Readset(dict_like, templated):
+class Readset(templated, SimpleOrm):
     attrs={'name':None,
            'description':None,
            'type':'readset',
            'suffix':'syml',
+           'columns':{'name':'VARCHAR[255]',
+                      'description':'TEXT'}
            }
+
+    def __init__(self,**args):
+        SimpleOrm.__init__(self,**args)
 
     def get_email(self):
         try:

@@ -5,6 +5,7 @@ class dict_like:
     attrs={}                            # sub classes override this
 
     def __init__(self,**arghash):
+        #print "dict_like.__init__ reached; self is %s" % self
         # first set args named in attrs; this allows unnamed attrs to have default values as defined in attrs
         for attr,v in self.attrs.items():
             if arghash.has_key(attr):
@@ -12,7 +13,7 @@ class dict_like:
             else: 
                 self[attr]=self.attrs[attr]
         # print "dict_like:__init__: args are %s" % yaml.dump(arghash)
-        # print "dict_like:__init__: self is %s (%s)" % (yaml.dump(self), type(self))
+        #print "dict_like:__init__: self is %s (%s)" % (yaml.dump(self), type(self))
 
 
 ########################################################################
@@ -53,6 +54,9 @@ class dict_like:
 
     def has_key(self,attr):
         return self.__dict__.has_key(attr)
+    
+    def attr_names(self):
+        return self.__dict__.keys()
     
 ########################################################################
     

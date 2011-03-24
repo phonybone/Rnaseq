@@ -1,11 +1,20 @@
 #-*-python-*-
-import os, sys, optparse
+import os, sys, optparse, yaml
 
 class RnaseqGlobals():
     options={}
     config={}
     dbh={}
     usage=''
+
+
+    @classmethod
+    def initialize(self, usage):
+        #print "initializing RnaseqGlobals"
+        self.usage=usage
+        argv=self.parse_cmdline()
+        self.read_config()
+        return argv
 
     # return parsed argv
     @classmethod
@@ -23,9 +32,30 @@ class RnaseqGlobals():
 
         
         (values, args)=parser.parse_args(sys.argv)
-        RnaseqGlobals.options=values
+        self.options=values
 
         return args                         # return remaining argv values
+
+
+    @classmethod
+    def read_config(self):
+        try: 
+            config_file=self.options.config_file
+        except AttributeError:
+            raise ProgrammerGoof("must call parse_cmdline() before you can call read_config()")
+        
+        try:
+            f=open(config_file)
+            yml=f.read()
+            f.close()
+            self.config=yaml.load(yml)
+
+        except IOError as ioe:
+            warn("error trying to load global config file:")
+            die(UserError(ioe))
+
+
+    
 
     @classmethod
     def conf_value(self,*args):
