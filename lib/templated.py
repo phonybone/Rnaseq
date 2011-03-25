@@ -66,7 +66,7 @@ class templated(dict_like):
             raise UserError("%s '%s': missing template file %s/%s" % (self.type, self.name, self.template_dir, self.template_file()))
         
         vars=args['vars'] if args.has_key('vars') else {} # consider default of self instead of {}?  Or is that stupid?
-        #print "about to evoque: vars are:\n%s" % yaml.dump(vars)
+        #print "%s.%s: about to evoque: vars are:\n%s" % (self.name, self.type, yaml.dump(vars))
         ev=evoque_dict().update(vars)
         
         try: 

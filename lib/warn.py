@@ -1,6 +1,6 @@
 import sys, exceptions, traceback, yaml
 
-__all__=["warn","die","UserError","ProgrammerGoof","ConfigError","MissingArgError"]
+#__all__=["warn","die","RnaseqException","UserError","ProgrammerGoof","ConfigError","MissingArgError","DummyException"]
 
 def warn(*a):
     args=list(a)                        # so we can append to an empty list if need be
@@ -16,7 +16,6 @@ def die(*args):
 class RnaseqException(Exception):
     show_traceback=True
 
-
 class UserError(RnaseqException):
     show_traceback=False
 
@@ -27,6 +26,9 @@ class ProgrammerGoof(RnaseqException):
     pass
 
 class MissingArgError(ProgrammerGoof):
+    pass
+
+class DummyException(ProgrammerGoof):
     pass
 
 ########################################################################

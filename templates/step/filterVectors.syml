@@ -2,4 +2,4 @@ name: filterVectors
 description: filter vectors
 ewbt: UniVec_Core
 blat_index: solexa_primers.2bit
-prototype: ${aligner}
+prototype: ${rnaseq['aligner']}

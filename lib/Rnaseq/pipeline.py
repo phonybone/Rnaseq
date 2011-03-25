@@ -20,11 +20,8 @@ class Pipeline(templated, dict_like):
            'type':'pipeline',
            'suffix':'syml',
            'steps':[],
+           'stepnames':[],
            'readset':None,
-           'columns':{'name':'VARCHAR[255]',
-                      'description':'TEXT',
-                      'status':'VARCHAR[255]'}
-
            }
 
     def __init__(self,**args):
@@ -42,21 +39,23 @@ class Pipeline(templated, dict_like):
         vars=self.readset.attributes()
         vars.update(RnaseqGlobals.config)
         
-        #vars['readset']=self.readset
         vars['readsfile']=self.readset.reads_file # fixme: might want to make reads_file a function, if iterated
+        # also fixme: should just add readset to vars, and let "clients" access it from there 
         templated.load(self, vars=vars)
 
         # load steps.  (We're going to replace the current steps field, which holds a string of stepnames,
         # with a list of step objects
-        stepnames=re.split('[,\s]+',self.steps)
+        self.stepnames=re.split('[,\s]+',self.stepnames)
         steps=[]                   # just to make sure
-        for sn in stepnames:
+        for sn in self.stepnames:
             #print "step %s" % sn
             step=Step(name=sn, pipeline=self)
-            
+
             # load the step's template and self.update with the values:
             try:
-                step.load()
+                vars=self.attributes()
+                vars.update(RnaseqGlobals.config)
+                step.load(vars=vars)
             except IOError as ioe:      # IOError??? Where does this generate an IOError?
                 raise ConfigError("Unable to load step %s" % sn, ioe)
             step.merge(self.readset)
@@ -81,12 +80,13 @@ class Pipeline(templated, dict_like):
             steps.append(step)
             
         self.steps=steps
+        
 
         # Check to see that the list of step names and the steps themselves match; dies on errors
         errors=[]
-        errors.extend(self.verify_steps(stepnames))
-        errors.extend(self.verify_continuity(stepnames))
-        errors.extend(self.verify_exes(stepnames))
+        errors.extend(self.verify_steps())
+        errors.extend(self.verify_continuity())
+        errors.extend(self.verify_exes())
         if len(errors)>0:
             errors.append("Please link these executables from the %s/bin directory, or make sure they are on the path defined in the config file." \
                           % RnaseqGlobals.conf_value('rnaseq', 'root_dir'))
@@ -177,10 +177,11 @@ class Pipeline(templated, dict_like):
 
 
     #  check to see that all defined steps are listed, and vice verse:
-    def verify_steps(self, stepnames):
+    def verify_steps(self):
         errors=[]
-        a=set(stepnames)
-        b=set(self.attributes().keys())-set(self.attrs.keys()) # whee! set subtraction!
+        a=set(self.stepnames)
+        b=set(s.name for s in self.steps)
+        
         if a==b: return errors            # set equality! we just love over-ridden operators
         # fixme: the above is really fragile, and might break if Pipeline inherits from anything else using dict_like (or other classes?)
 
@@ -196,8 +197,8 @@ class Pipeline(templated, dict_like):
 
 
     # check to see that all inputs and outputs connect up correctly (fixme: describe this more clearly)
-    def verify_continuity(self, stepnames):
-        step=self.stepWithName(stepnames[0])
+    def verify_continuity(self):
+        step=self.steps[0]
         errors=[]
         dataset2stepname={}
         
@@ -212,8 +213,7 @@ class Pipeline(templated, dict_like):
             print "added %s" % created
 
         # subsequent steps: check inputs exist in dataset2stepname, add outputs to dataset2stepname:
-        for sn in stepnames[1:]:        # skip first
-            step=self.stepWithName(sn)
+        for step in self.steps[1:]:        # skip first
             for input in step.inputs():
                 if input not in dataset2stepname and not os.path.exists(input):
                     errors.append("input %s (in step '%s') is not produced by any previous step and does not currently exist" % (input, step.name))
@@ -225,13 +225,12 @@ class Pipeline(templated, dict_like):
         return errors
             
 
-    def verify_exes(self, stepnames):
+    def verify_exes(self):
         dirs=RnaseqGlobals.conf_value('rnaseq', 'path').split(":")
         dirs.extend([os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'),'bin')])
             
         errors=[]
-        for stepname in stepnames:
-            step=self.stepWithName(stepname)
+        for step in self.steps:
             for d in dirs:
                 try:
                     path=os.path.join(d,step.exe)

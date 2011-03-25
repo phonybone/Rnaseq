@@ -9,8 +9,6 @@ class Readset(templated, dict_like):
            'description':None,
            'type':'readset',
            'suffix':'syml',
-           'columns':{'name':'VARCHAR[255]',
-                      'description':'TEXT'}
            }
 
     def __init__(self,**args):

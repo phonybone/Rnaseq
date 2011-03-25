@@ -15,11 +15,17 @@ class RunPipeline(Command):
         try:
             argv=args['argv']          
             options=args['options']
+        except KeyError as e:
+            raise MissingArgError(str(e))
+        except IndexError as e:
+            raise UserError("Missing args in load")
+
+        try:
             readset_name=options.readset_name
             pipeline_name=options.pipeline_name
             if readset_name==None or pipeline_name==None:
                 raise UserError(RnaseqGlobals.usage)
-
+            
             readset=Readset(name=readset_name).load() 
             pipeline=Pipeline(name=pipeline_name, readset=readset).load()
             pipeline.update(RnaseqGlobals.config)
@@ -66,10 +72,8 @@ class RunPipeline(Command):
                 raise UserError("pipeline failed with return code %d\nsee %s.out and %s.err for diagnostics (in %s)" % \
                                 (retcode, pipeline.name, pipeline.name, pipeline.working_dir()))
 
-        except KeyError as e:
-            raise MissingArgError(str(e))
-        except IndexError as e:
-            raise UserError("Missing args in load")
+        except DummyException as de:
+            pass
 
 
     def qsub_launcher(self):

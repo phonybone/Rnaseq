@@ -1,5 +1,5 @@
 name: pipeline de Juan
-steps: header preprocess filterQuality filterVectors filterLowComplex ribosomal_mit remove_erccs repeats_consensus collect_filtered mapsplice cufflinks cuffcompare
+stepnames: header preprocess filterQuality filterVectors filterLowComplex ribosomal_mit remove_erccs repeats_consensus collect_filtered mapsplice cufflinks cuffcompare
 
 header:
   name: header

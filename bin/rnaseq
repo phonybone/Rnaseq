@@ -20,6 +20,9 @@ except ImportError as e:
     sys.stderr.write("(%s)\n" % e)
     sys.exit(1)
 
+from warn import *
+
+########################################################################
 
 def main():
     usage="usage: %s <cmd> [-p <pipeline>] [-r <readset>] [options]" % sys.argv[0] # fixme: form might be different; might be more like git
@@ -45,9 +48,6 @@ def main():
     
     print "rnaseq: done"
 
-
-########################################################################
-
 ########################################################################
 
 try:
@@ -65,3 +65,11 @@ except ProgrammerGoof as pg:
 except ConfigError as ce:
     warn("A configuration error occured:\n")
     die(ce)
+
+except RnaseqException as re:
+    warn("An unexpected rnaseq exception has occured: %s\n" % re)
+    if re.show_traceback:
+        import traceback
+        traceback.print_exc()
+    die(re)
+

@@ -17,11 +17,15 @@ class Step(dict_like, templated):
            }
 
 
-    def load(self):
-        templated.load(self)
+    def load(self, **args):
+        try:
+            vars=args['vars']
+        except KeyError:
+            vars={}
+        templated.load(self, vars=vars)
         if self.has_attr('prototype'):
             ptype=Step(name=self.prototype)
-            ptype.load()
+            ptype.load(vars=vars)
             self.merge(ptype)
         return self
 
