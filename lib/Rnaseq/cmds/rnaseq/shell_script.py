@@ -15,6 +15,7 @@ class ShellScript(Command):
         try:
             argv=args['argv']           # assume args=[path, author]
             options=args['options']
+            print "options is %s" % options
             readset_name=options.readset_name
             pipeline_name=options.pipeline_name
 
