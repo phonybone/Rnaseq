@@ -1,5 +1,6 @@
 #-*-python-*-
 import os, sys, optparse, yaml, re
+from warn import *
 
 # This should really be a singleton class
 class RnaseqGlobals():
@@ -11,43 +12,52 @@ class RnaseqGlobals():
 
 
     @classmethod
-    def initialize(self, usage):
+    def initialize(self, usage, **args):
         #print "initializing RnaseqGlobals"
         self.usage=usage
-        argv=self.parse_cmdline()
-        self.read_config()
-        self.add_options_to_conf()
+        self.define_opts()
+        
+        opt_list=sys.argv
+        opt_list.extend(args['opt_list'])
+        (values,argv)=self.parse_cmdline(opt_list=opt_list)
+
+        # order of checking config file: args['config_file'], values2, values
+        try:
+            config_file=args['config_file']
+        except:
+            config_file=values.config_file # blow up if this doesn't work, but shouldn't since there's a default value
+
+        
+        # set option values in config, in specific order:
+        self.read_config(config_file)
+        self.add_options_to_conf(values)
+
         return argv
 
     # return parsed argv
     @classmethod
-    def parse_cmdline(self):                    
-        self.parser=optparse.OptionParser(self.usage)
-        parser=self.parser
+    def define_opts(self):                    
+        parser=optparse.OptionParser(self.usage)
         
         # special notation: presence of '__' in dest means that options will get assigned to lower sub-hash of config
         # eg 'rnaseq__aligner'->self.config['rnaseq']['aligner']='bowtie'
-        parser.add_option('--aligner',       dest='rnaseq__aligner',     help="specify aligner", default="bowtie")
-        parser.add_option('--cluster',       dest='use_cluster', action='store_true', default=False)
-        parser.add_option("-f","--config",   dest="config_file",   help="specify alternative config file",
-                          default=os.path.normpath(os.path.abspath(__file__)+"/../../config/rnaseq.conf.yml"))
-        parser.add_option("-p","--pipeline", dest="pipeline_name", help="pipeline name")
-        parser.add_option("-r","--readset",  dest="readset_name",  help="readset name")
+        parser.add_option('--aligner',       dest='rnaseq__aligner', help="specify aligner", default="bowtie")
+        parser.add_option('--cluster',       dest='use_cluster',     help="execute operations on a cluster (requires additional config settings)", action='store_true', default=False)
+        parser.add_option("-c","--config",   dest="config_file",     help="specify alternative config file", default=os.path.normpath(os.path.abspath(__file__)+"/../../config/rnaseq.conf.yml"))
+        parser.add_option("-f","--force",    dest="force",           help="force execution of pipelines and steps even if targets are up to date", action='store_true', default=False)
+        parser.add_option("-p","--pipeline", dest="pipeline_name",   help="pipeline name")
+        parser.add_option("-r","--readset",  dest="readset_name",    help="readset name")
 
-        (values, args)=parser.parse_args(sys.argv)
-        self.options=values
-        
-        
-        return args                         # return remaining argv values
+        self.parser=parser
 
 
     @classmethod
-    def read_config(self):
-        try: 
-            config_file=self.options.config_file
-        except AttributeError:
-            raise ProgrammerGoof("must call parse_cmdline() before you can call read_config()")
-        
+    def parse_cmdline(self, opt_list=sys.argv):
+        return self.parser.parse_args(sys.argv)
+
+
+    @classmethod
+    def read_config(self, config_file):
         try:
             f=open(config_file)
             yml=f.read()
@@ -60,7 +70,7 @@ class RnaseqGlobals():
 
 
     @classmethod
-    def add_options_to_conf(self):
+    def add_options_to_conf(self, values):
         for o in self.parser.option_list:
             if o.dest==None: continue
             dest=str(o.dest)
@@ -68,7 +78,8 @@ class RnaseqGlobals():
             c=self.config
             for dp in dest_path[:-1]:
                 c=c[dp]
-            c[dest_path[-1]]=getattr(self.options, dest)
+            c[dest_path[-1]]=getattr(values, dest)
+
 
 
     

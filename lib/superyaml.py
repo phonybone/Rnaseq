@@ -32,8 +32,8 @@ class superyaml(dict_like):
         filename=os.path.basename(template)
 
         try:
-            d=Domain(self.domain, quoting=None) # fixme: what do we really want for quoting?
-            t=Domain(self.domain).get_template(filename, quoting="str")
+            d=Domain(self.domain, quoting=None, errors=4) # fixme: what do we really want for quoting?
+            t=Domain(self.domain, errors=4).get_template(filename, quoting="str") # fixme: why create two Domains?
         except Exception as e:
             print "(domain is %s)" % self.domain
             raise e

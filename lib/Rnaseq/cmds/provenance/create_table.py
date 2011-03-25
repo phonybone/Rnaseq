@@ -30,7 +30,7 @@ class CreateTable(Command):
         try:
             dbh=args['dbh']
             tablename=argv[0][2]
-            if RnaseqGlobals.options.force:
+            if RnaseqGlobals.value.force:
                 dbh.execute("DROP TABLE IF EXISTS %s" % tablename)
         except KeyError as e:
             raise MissingArgError(e)
@@ -56,7 +56,7 @@ author VARCHAR[255] NOT NULL
         try:
             dbh=args['dbh']
             tablename=argv[0][2]
-            if RnaseqGlobals.option('force'):
+            if RnaseqGlobals.conf_value('force'):
                 dbh.execute("DROP TABLE IF EXISTS %s" % tablename)
         except KeyError as e:
             raise MissingArgError(e)

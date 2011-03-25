@@ -1,5 +1,5 @@
 name: Juan's pipeline
-steps: preprocess filterQuality filterVectors filterLowComplex ribosomal_mit remove_erccs repeats_consensus refseq_hg19 hg19 pSplices_hg19 mixSAM finish
+stepnames: preprocess filterQuality filterVectors filterLowComplex ribosomal_mit remove_erccs repeats_consensus refseq_hg19 hg19 pSplices_hg19 mixSAM finish
 bowtie_args: --quiet -p ${qsub['nprocs']} -S --sam-nohead -k 1 -v 2 -q
 
 preprocess:

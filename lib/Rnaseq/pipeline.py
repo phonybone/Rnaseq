@@ -20,7 +20,6 @@ class Pipeline(templated, dict_like):
            'type':'pipeline',
            'suffix':'syml',
            'steps':[],
-           'stepnames':[],
            'readset':None,
            }
 
@@ -45,10 +44,14 @@ class Pipeline(templated, dict_like):
 
         # load steps.  (We're going to replace the current steps field, which holds a string of stepnames,
         # with a list of step objects
-        self.stepnames=re.split('[,\s]+',self.stepnames)
-        steps=[]                   # just to make sure
+
+        try:
+            self.stepnames=re.split('[,\s]+',self.stepnames)
+        except AttributeError as ae:
+            raise ConfigError(ae)       # fixme: prettify this
+            
+        self.steps=[]                   # resest, just in case
         for sn in self.stepnames:
-            #print "step %s" % sn
             step=Step(name=sn, pipeline=self)
 
             # load the step's template and self.update with the values:
@@ -77,10 +80,8 @@ class Pipeline(templated, dict_like):
                 
             # print "pipeline: step %s:\n%s" % (step.name, yaml.dump(step))
             
-            steps.append(step)
+            self.steps.append(step)
             
-        self.steps=steps
-        
 
         # Check to see that the list of step names and the steps themselves match; dies on errors
         errors=[]
@@ -88,8 +89,6 @@ class Pipeline(templated, dict_like):
         errors.extend(self.verify_continuity())
         errors.extend(self.verify_exes())
         if len(errors)>0:
-            errors.append("Please link these executables from the %s/bin directory, or make sure they are on the path defined in the config file." \
-                          % RnaseqGlobals.conf_value('rnaseq', 'root_dir'))
             raise ConfigError("\n".join(errors))
         
         return self
@@ -107,7 +106,7 @@ class Pipeline(templated, dict_like):
         for step in self.steps:
             # put in check_current step:
             # fixme: test this!!!
-            if not RnaseqGlobals.option('force'):
+            if not RnaseqGlobals.conf_value('force'):
                 if step.is_current() and not step.force:       # fixme: add --force check, but figure out how to access non-existant options first
                     print "step %s is current, skipping" % step.name
                     continue                # break out instead? fixme: think this through
@@ -126,20 +125,14 @@ class Pipeline(templated, dict_like):
             for o in set(step.outputs())|set(step.creates()):
                 prov_step.output=o
                 prov_step.args=" ".join((o, step.exe)) # double (())'s to make it a tuple
-                try: 
-                    script+=prov_step.sh_cmd()
-                except RnaseqException as e:
-                    import traceback
-                    traceback.print_exc()
-                    print "pipeline.sh_script(), step %s: caught e is %s" % (step.name, e)
-                    raise e
+                #script+=prov_step.sh_cmd()
             script+="\n"
 
         # record finish:
         prov_step.cmd='update'
         prov_step.args="-p %s --status finished" % self.name
-        script+=prov_step.sh_cmd()
-        
+        #script+=prov_step.sh_cmd()
+
         return script
 
     def scriptname(self):
@@ -239,7 +232,12 @@ class Pipeline(templated, dict_like):
                 if os.access(path, os.X_OK) and not os.path.isdir(path): break
                 if 'interpreter' in step.attributes() and os.access(path, os.R_OK): break
             else:                       # gets executed if for loop exits normally
-                errors.append("Missing executable in %s: %s" %(stepname, step.exe))
+                errors.append("Missing executable in %s: %s" %(step.name, step.exe))
+
+        if len(errors)>0:
+            errors.append("Please link these executables from the %s/bin directory, or make sure they are on the path defined in the config file." \
+                          % RnaseqGlobals.conf_value('rnaseq', 'root_dir'))
+            
 
         return errors
 

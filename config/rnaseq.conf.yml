@@ -1,7 +1,7 @@
 # some general values:
 rnaseq:
   root_dir: /proj/hoodlab/share/vcassen/rna-seq/rnaseq
-  genomes_dir: /proj/hoodlab/share/programs/indexes
+  genomes_dir: /proj/hoodlab/share/programs/blat-indexes
   domain: ${root_dir}/templates
   path: /tools/bin:/hpc/bin:/bin:/proj/hoodlab/share/programs/cufflinks
   aligner: bowtie
@@ -34,4 +34,5 @@ provenance:
     update: update.py
 
 testing:
+  template_dir: t/fixtures/templates
   test_db: t/fixtures/dbs/simple_orm.db

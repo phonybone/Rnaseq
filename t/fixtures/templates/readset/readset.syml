@@ -1,4 +1,4 @@
-reads_file: /users/vcassen/links/samples/sandbox/s_6_export.txt
+reads_file: ${rnaseq['root_dir']}/t/fixtures/readsets/s_6_export.1K.txt
 org: mouse
 readlen: 75
 

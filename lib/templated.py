@@ -6,12 +6,13 @@
 # It's getting messy the template does not contain yaml.
 
 import yaml, re, os
+import path_helpers
 from dict_like import dict_like
 from evoque import *
 from evoque.domain import Domain
 from evoque_dict import evoque_dict     # not part of official evoque lib; my own addition
 from warn import *
-#from evoque_helpers import evoque_no_quote
+
 
 class templated(dict_like):
     # class vars
@@ -36,11 +37,11 @@ class templated(dict_like):
         try:
             if self['filename'] != None:
                 tf=self['filename']
-                return tf
+                return path_helpers.sanitize(tf)
             else:
                 assert self.name, "no name in\n %s" % self
                 assert self.type, "no type in\n %s" % self
-                return "%s/%s.%s" % (self.type, self.name, self.suffix) # fixme: self.name is always the name of the template file?
+                return path_helpers.sanitize("%s/%s.%s" % (self.type, self.name, self.suffix)) # fixme: self.name is always the name of the template file?
         except KeyError as barf:
             # print "templated.template_file(): couldn't find key 'filename', so looking in default location"
             assert self.name, "no name in\n %s" % self
@@ -49,7 +50,7 @@ class templated(dict_like):
             assert type(self.name)==type("string")
             assert type(self.type)==type("string")
             assert type(self.suffix)==type("string")
-            return "%s/%s.%s" % (self.type, self.name, self.suffix)
+            return path_helpers.sanitize("%s/%s.%s" % (self.type, self.name, self.suffix))
             
 
 
@@ -61,7 +62,8 @@ class templated(dict_like):
         # get the template and call evoque() on it.  This should yield a yaml string
         domain=Domain(self.template_dir, errors=4, quoting=str) # errors=4 means raise errors as an exception
         try: 
-            template=domain.get_template(self.template_file())
+            tf=self.template_file()
+            template=domain.get_template(tf)
         except ValueError as ve:
             raise UserError("%s '%s': missing template file %s/%s" % (self.type, self.name, self.template_dir, self.template_file()))
         

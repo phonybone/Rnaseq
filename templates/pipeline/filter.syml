@@ -1,6 +1,6 @@
 name: filters_only
 description: Juan's pipeline (text filters only)
-steps: header export2fq filterQuality filterLowComplex 
+stepnames: header export2fq filterQuality filterLowComplex 
 
 
 header: 

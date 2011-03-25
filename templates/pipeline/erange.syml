@@ -1,5 +1,5 @@
 name: ERANGE
-steps: fq_all2std bowtie 
+stepnames: fq_all2std bowtie 
 
 
 fq_all2std:

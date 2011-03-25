@@ -1,0 +1,5 @@
+name: footer
+usage:
+sh_template: footer.tmpl
+force: True
+skip_success_check: True

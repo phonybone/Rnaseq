@@ -37,7 +37,7 @@ class Step(dict_like, templated):
     def sh_script(self):    
         if 'sh_template' in self.attributes():       # fixme: will this barf if sh_template not defined?
             template_dir='/proj/hoodlab/share/vcassen/rna-seq/rnaseq/templates/sh_template' # fixme; get value from a config file
-            domain=Domain(template_dir)
+            domain=Domain(template_dir, errors=4)
             template=domain.get_template(self['sh_template'])
 
             vars=self.attributes().copy()
@@ -45,7 +45,10 @@ class Step(dict_like, templated):
             vars['readset']=self.pipeline.readset
             vars['sh_cmd']=self.sh_cmdline() 
             
-            return template.evoque(vars)
+            try:
+                script=template.evoque(vars)
+            except NameError as ne:
+                raise ConfigError(ne)
         else:
             return None
 
@@ -60,6 +63,7 @@ class Step(dict_like, templated):
                 self.exe=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'), 'bin', self.exe)
         except AttributeError as ae:
             pass
+
 
         try:
             return self.usage % self   

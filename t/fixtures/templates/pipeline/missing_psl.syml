@@ -1,0 +1,12 @@
+name: missing psl
+stepnames: header missing_psl
+
+header: 
+  pass:
+
+missing_psl:
+  input: ${readsfile}.qual_OK.fq
+  output: ${readsfile}.complex_OK.fq
+  filtered: ${readsfile}.bowtie_complex_BAD.fq
+  args: -v
+
