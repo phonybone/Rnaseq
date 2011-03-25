@@ -18,7 +18,11 @@ class RnaseqGlobals():
         self.define_opts()
         
         opt_list=sys.argv
-        opt_list.extend(args['opt_list'])
+        try:
+            opt_list.extend(args['opt_list'])
+        except KeyError as ke:
+            if str(ke) != "'opt_list'":
+                raise ke
         (values,argv)=self.parse_cmdline(opt_list=opt_list)
 
         # order of checking config file: args['config_file'], values2, values

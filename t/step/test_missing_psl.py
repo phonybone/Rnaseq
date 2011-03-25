@@ -24,7 +24,6 @@ class TestListExpansion(TestInputs):
             step.sh_cmd()
 
         print "ce is %s" % ce
-        #self.assertEqual(ce
 
 
 
