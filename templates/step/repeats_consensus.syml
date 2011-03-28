@@ -1,5 +1,5 @@
 name: repeats_consensus
 description: remove repeats
 ewbt: human_RepBase15.10
-blat_index: human_RepBase15.10.2bit
+blat_index: ${blat_index}/human_RepBase15.10.2bit
 prototype: ${rnaseq['aligner']}

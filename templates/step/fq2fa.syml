@@ -1,0 +1,3 @@
+name: fq2fa
+exe: fq2fa.pl
+sh_template: fq2fa.tmpl

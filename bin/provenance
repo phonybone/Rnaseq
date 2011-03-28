@@ -35,7 +35,7 @@ def main():
     except IndexError as ie:
         die(UserError(usage))
     cf=CmdFactory(program='provenance')
-    cf.add_cmds(RnaseqGlobals.conf_value('provenance','cmds')
+    cf.add_cmds(RnaseqGlobals.conf_value('provenance','cmds'))
     cmd=cf.new_cmd(cmd)
 
     cmd.run(argv, dbh=RnaseqGlobals.dbh, config=RnaseqGlobals.config)

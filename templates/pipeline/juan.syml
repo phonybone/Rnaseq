@@ -1,58 +1,59 @@
 name: pipeline de Juan
 stepnames: header export2fq filterQuality filterVectors filterLowComplex ribosomal_mit remove_erccs repeats_consensus collect_filtered mapsplice cufflinks cuffcompare footer
+blat_index: /proj/hoodlab/share/programs/blat-indexes
 
 header:
   name: header
 
 export2fq:
   input: ${readsfile}
-  output: ${readsfile}.fq
+  output: ${readsfile}.${align_suffix}
   args: solexa2fastq
 
 filterQuality:
-  input: ${readsfile}.fq
-  output: ${readsfile}.qual_OK.fq
-  filtered: ${readsfile}.bowtie_qual_BAD.fq
+  input: ${readsfile}.${align_suffix}
+  output: ${readsfile}.qual_OK${align_suffix}
+  filtered: ${readsfile}.bowtie_qual_BAD.${align_suffix}
   args: -v
 
 filterVectors:
-  input: ${readsfile}.fq
-  output: ${readsfile}.vector_OK.fq
+  input: ${readsfile}.${align_suffix}
+  output: ${readsfile}.vector_OK.${align_suffix}
   filtered: ${readsfile}.bowtie_vector_BAD.sam
   psl: ${readsfile}.blat_vector_BAD.psl
 
 filterLowComplex:
-  input: ${readsfile}.vector_OK.fq
-  output: ${readsfile}.complex_OK.fq
-  filtered: ${readsfile}.bowtie_complex_BAD.fq
+  input: ${readsfile}.vector_OK.${align_suffix}
+  output: ${readsfile}.complex_OK.${align_suffix}
+  filtered: ${readsfile}.bowtie_complex_BAD.${align_suffix}
   args: -v
 
 ribosomal_mit:
-  input: ${readsfile}.complex_OK.fq
-  output: ${readsfile}.riboMT_OK.fq
+  input: ${readsfile}.complex_OK.${align_suffix}
+  output: ${readsfile}.riboMT_OK.${align_suffix}
   filtered: ${readsfile}.bowtie_riboMT_BAD.sam
   psl: ${readsfile}.blat_riboMT_BAD.psl
 
 remove_erccs:
-  input: ${readsfile}.riboMT_OK.fq
-  output: ${readsfile}.ercc_OK.fq
+  input: ${readsfile}.riboMT_OK.${align_suffix}
+  output: ${readsfile}.ercc_OK.${align_suffix}
   filtered: ${readsfile}.bowtie_ercc_BAD.sam
   psl: ${readsfile}.blat_ercc_BAD.psl
 
 repeats_consensus:
-  input: ${readsfile}.ercc_OK.fq
-  output: ${readsfile}.repeat_OK.fq
+  input: ${readsfile}.ercc_OK.${align_suffix}
+  output: ${readsfile}.repeat_OK.${align_suffix}
   filtered: ${readsfile}.bowtie_repeat_BAD.sam
   psl: ${readsfile}.blat_repeat_BAD.psl
 
 collect_filtered:
-  input: ${readsfile}.ercc_OK.fq
-  output: ${readsfile}.bowtie_FILTERED.fq
+  input: ${readsfile}.ercc_OK.${align_suffix}
+  output: ${readsfile}.bowtie_FILTERED.${align_suffix}
 
 mapsplice:
-  input: ${readsfile}.bowtie_FILTERED.fq
+  input: ${readsfile}.bowtie_FILTERED.${align_suffix}
   output: ${readsfile}.mapsplice.sam
-  args: '-c ${genomes_dir}/${genome}.fa -B ${genomes_dir}/${org}/${genome} -t ${genomes_dir}/${org}/${genome}.pseudo.gtf -w ${readlen} -L 25 -Q fq -X ${qsub['nprocs']} --full-running --semi-canonical'
+  args: '-c ${genomes_dir}/${genome}${align_suffix} -B ${genomes_dir}/${org}/${genome} -t ${genomes_dir}/${org}/${genome}.pseudo.gtf -w ${readlen} -L 25 -Q fq -X ${qsub['nprocs']} --full-running --semi-canonical'
 
 cufflinks:
   input: ${readsfile}.mapsplice.sam
@@ -63,7 +64,7 @@ cufflinks:
 cuffcompare:
   input: ${readsfile}.cufflinks/transcripts.gtf
   output: ${readsfile}.cuff
-  args: "-r ${genomes_dir}/${genome}.gtf -s ${genomes_dir}/${genome}.fa"
+  args: "-r ${genomes_dir}/${genome}.gtf -s ${genomes_dir}/${genome}.${align_suffix}"
 
 footer:
   name: footer

@@ -34,7 +34,7 @@ def main():
     except IndexError as ie:
         die(UserError(usage))
     cf=CmdFactory(program='rnaseq')
-    cf.add_cmds(RnaseqGlobals.conf_value('rnaseq','cmds')
+    cf.add_cmds(RnaseqGlobals.conf_value('rnaseq','cmds'))
     cmd=cf.new_cmd(cmd)
 
     # run the command 

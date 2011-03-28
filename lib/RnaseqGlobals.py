@@ -1,6 +1,10 @@
 #-*-python-*-
 import os, sys, optparse, yaml, re
 from warn import *
+try:
+    import sqlite3
+except:
+    from pysqlite2 import dbapi2 as sqlite3
 
 # This should really be a singleton class
 class RnaseqGlobals():
@@ -105,6 +109,17 @@ class RnaseqGlobals():
                 return None
 
         return conf
+
+    @classmethod
+    def set_conf_value(self,keyslist,value):
+        config=self.config
+        if (type(keyslist)==type("string")):
+            keyslist=[keyslist]
+        for k in keyslist[:-1]:
+            config=config[k]
+
+        config[keyslist[-1]]=value
+        return self
 
     @classmethod
     def option(self,opt):

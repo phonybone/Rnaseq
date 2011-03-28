@@ -8,23 +8,30 @@ import sys, yaml, subprocess, os
 # This is sort of a test command, probably won't be used in production
 
 class RunPipeline(Command):
+    def usage(self):
+        return "usage: run [output_file] -p <pipeline> -r <readset> [options]"
+
     def description(self):
         return "load and run a pipeline"
     
     def run(self, *argv, **args):
         try:
-            argv=args['argv']          
-            options=args['options']
+            config=args['config']
+            readset_name=config['readset_name']
+            pipeline_name=config['pipeline_name']
         except KeyError as e:
             raise MissingArgError(str(e))
+            
+        try:
+            argv=argv[0]
         except IndexError as e:
-            raise UserError("Missing args in load")
+            raise ProgrammerGoof(e)
 
         try:
-            readset_name=options.readset_name
-            pipeline_name=options.pipeline_name
+            readset_name=RnaseqGlobals.conf_value('readset_name')
+            pipeline_name=RnaseqGlobals.conf_value('pipeline_name')
             if readset_name==None or pipeline_name==None:
-                raise UserError(RnaseqGlobals.usage)
+                raise UserError(self.usage())
             
             readset=Readset(name=readset_name).load() 
             pipeline=Pipeline(name=pipeline_name, readset=readset).load()
@@ -47,7 +54,7 @@ class RunPipeline(Command):
             # if running on the cluster, generate a calling (qsub) script and invoke that;
             out_filename=pipeline.out_filename()
             err_filename=pipeline.err_filename()
-            if options.use_cluster:
+            if RnaseqGlobals.conf_value('use_cluster'):
                 script_filename=pipeline.write_qsub_script(script_filename)
                 cmd=self.qsub_launcher()
                 output=sys.stdout

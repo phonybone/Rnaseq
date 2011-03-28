@@ -61,6 +61,7 @@ class Step(dict_like, templated):
         if self.usage==None:
             self.usage=''
 
+        # look for exe in path, unless exe is an absolute path
         try:
             if os.path.abspath(self.exe)!=self.exe:
                 self.exe=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'), 'bin', self.exe)

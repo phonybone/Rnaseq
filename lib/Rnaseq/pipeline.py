@@ -20,8 +20,10 @@ class Pipeline(templated, dict_like):
            'type':'pipeline',
            'suffix':'syml',
            'steps':[],
-           'readset':None,
+           'readset':None,              # object, not name thereof
+           '_ID':None,                  # convenience value for pipeline configs; NOT object.id
            }
+    wd_time_format="%d%b%y.%H%M%S"
 
     def __init__(self,**args):
         dict_like.__init__(self,**args)
@@ -150,8 +152,7 @@ class Pipeline(templated, dict_like):
             readsfile=readset.reads_file
             base_dir=os.path.dirname(readsfile)
         except KeyError as ke:
-            print "ke is %s" % ke
-            raise UserError(ke)
+            raise UserError("Missing key: "+ke)
 
         try:
             wd=os.path.join(base_dir, self['working_dir'])
@@ -165,8 +166,60 @@ class Pipeline(templated, dict_like):
         except KeyError as ie:
             pass
 
-        default='rnaseq_'+time.strftime("%d%b%y.%H%M%S")
+        default='rnaseq_'+time.strftime(self.wd_time_format)
         return os.path.join(base_dir, default)
+
+
+    # Determine the path of the working reads file.  Path will be
+    # a combination of a working_directory and the basename of the
+    # readsfile.  Final value will depend on whether the reads file
+    # or the specified working directory are relative or absolute.
+    def ID(self):
+        try:
+            if self._ID: return self._ID
+        except AttributeError: pass
+        
+        # try a few different things to get the working directory:
+        reads_file=self.readset['reads_file']
+        try:
+            wd=self.readset['working_dir']
+            if (wd=='wd_timestamp'): wd='rnaseq_'+time.strftime(self.wd_time_format)
+            #print "1. wd is %s" % wd
+            
+        except KeyError:
+            try:
+                wd=self['working_dir']
+                if (wd=='wd_timestamp'): wd='rnaseq_'+time.strftime(self.wd_time_format)
+                #print "2. wd is %s" % wd
+
+            except KeyError:
+                if os.path.isabs(reads_file):
+                    wd=os.path.dirname(reads_file)
+                    #print "3. wd is %s" % wd
+                elif RnaseqGlobals.conf_value('rnaseq','wd_timestamp') or \
+                     ('wd_timestamp' in self.attributes() and \
+                      self.attributes()['wd_timestamp']): # -and isn't set to False
+                    wd='rnaseq_'+time.strftime(self.wd_time_format)
+                    #print "4. wd is %s" % wd
+                
+                else:
+                    wd=os.getcwd()
+                    #print "5. wd is %s" % wd
+
+        if os.path.isabs(wd):
+            id=os.path.join(wd,os.path.basename(reads_file)) #
+            #print "6. id is %s" % id
+        elif os.path.isabs(reads_file):
+            id=os.path.join(os.path.dirname(reads_file), wd, os.path.basename(reads_file))
+            #print "7. id is %s" % id
+        else:
+            id=os.path.join(os.getcwd(), wd, os.path.basename(reads_file))
+            #print "8. id is %s" % id
+
+        self._ID=id
+        #print "ID() returning %s" % id
+        return id
+        
 
 
     #  check to see that all defined steps are listed, and vice verse:
