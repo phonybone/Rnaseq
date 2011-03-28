@@ -19,13 +19,10 @@ class ListFiles(Command):
     def description(self):
         return "list the contents of the provenance table (filter with fileglob)"
 
-    def run(self, **args):
+    def run(self, *argv, **args):
         try:
             dbh=args['dbh']
-            argv=args['argv']           # assume args=[path, author]
         except KeyError as ke:          # fixme
-            print "caught ke"
-            print ke
             raise ke
 
         try:

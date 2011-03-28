@@ -5,6 +5,7 @@
 # templates are also processed through evoque, so they can contain ${substitutions}.  see load().
 # It's getting messy the template does not contain yaml.
 
+from RnaseqGlobals import RnaseqGlobals
 import yaml, re, os
 import path_helpers
 from dict_like import dict_like
@@ -17,7 +18,7 @@ from warn import *
 class templated(dict_like):
     # class vars
     template_dir=os.path.normpath(os.path.abspath(__file__)+"/../../templates")
-
+    #template_dir=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'),"templates")
 
     attrs={'name':None,
            'type':None,
@@ -59,6 +60,7 @@ class templated(dict_like):
     # fixme: this is a good place to examine inserting superyaml code; but so far, no need
     # returns self
     def load(self, **args):
+        #print "templated.load(%s.%s) called" % (self.type, self.name)
         # get the template and call evoque() on it.  This should yield a yaml string
         domain=Domain(self.template_dir, errors=4, quoting=str) # errors=4 means raise errors as an exception
         try: 
@@ -104,7 +106,11 @@ class templated(dict_like):
         #print "templated: tf is %s" % tf
         template=domain.get_template(tf)
         vars=args['vars'] if args.has_key('vars') else {} # consider default of self instead of {}?  Or is that stupid?
-        output=template.evoque(evoque_dict().update(vars))
+        try:
+            output=template.evoque(evoque_dict().update(vars))
+        except (KeyError, AttributeError, TypeError) as any_e:
+            raise ConfigError("%s '%s': %s" % (self.type, self.name, any_e))
+
         return output
 
 

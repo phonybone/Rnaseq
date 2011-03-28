@@ -6,9 +6,8 @@ from Rnaseq.command import *
 # usage: 
 
 class Touch(Command):
-    def run(self, **args):
+    def run(self, *argv, **args):
         try:
-            argv=args['argv']
             dbh=args['dbh']
             options=args['options']
         except KeyError as ke:

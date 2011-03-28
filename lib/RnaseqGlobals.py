@@ -36,6 +36,10 @@ class RnaseqGlobals():
         self.read_config(config_file)
         self.add_options_to_conf(values)
 
+        # connect to database:
+        db_file=os.path.join(self.conf_value('rnaseq','root_dir'), 'db', self.conf_value('db','db_name'))
+        self.dbh=sqlite3.connect(db_file)
+
         return argv
 
     # return parsed argv

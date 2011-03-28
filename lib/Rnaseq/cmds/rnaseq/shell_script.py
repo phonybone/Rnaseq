@@ -13,11 +13,10 @@ class ShellScript(Command):
     
     def run(self, *argv, **args):
         try:
-            argv=args['argv']           # assume args=[path, author]
-            options=args['options']
-            print "options is %s" % options
-            readset_name=options.readset_name
-            pipeline_name=options.pipeline_name
+            config=args['config']
+
+            readset_name=config['readset_name']
+            pipeline_name=config['pipeline_name']
 
             readset=Readset(name=readset_name).load() 
             pipeline=Pipeline(name=pipeline_name, readset=readset)

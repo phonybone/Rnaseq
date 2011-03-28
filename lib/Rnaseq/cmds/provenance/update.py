@@ -13,9 +13,8 @@ class Stub(Command):
     def description(self):
         return "update the status of a pipeline"
 
-    def run(self, **args):
+    def run(self, *argv, **args):
         try:
-            argv=args['argv']
             dbh=args['dbh']
             options=args['options']
             pipeline_name=

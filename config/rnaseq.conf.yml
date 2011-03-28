@@ -2,9 +2,8 @@
 rnaseq:
   root_dir: /proj/hoodlab/share/vcassen/rna-seq/rnaseq
   genomes_dir: /proj/hoodlab/share/programs/blat-indexes
-  domain: ${root_dir}/templates
   path: /tools/bin:/hpc/bin:/bin:/proj/hoodlab/share/programs/cufflinks
-  aligner: bowtie
+
   cmds:
     load: load.py
     sh: shell_script.py

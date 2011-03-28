@@ -11,9 +11,8 @@ class Load(Command):
     def description(self):
         return "load a pipeline and quit (debugging tool)"
 
-    def run(self, **args):
+    def run(self, *argv, **args):
         try:
-            argv=args['argv']           # assume args=[path, author]
             options=argv['options']
             readset_name=options.readset_name
             pipeline_name=options.pipeline_name

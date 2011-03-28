@@ -43,6 +43,7 @@ repeats_consensus:
   input: ${readsfile}.ercc_OK.fq
   output: ${readsfile}.repeat_OK.fq
   filtered: ${readsfile}.bowtie_repeat_BAD.sam
+  psl: ${readsfile}.blat_repeat_BAD.psl
 
 collect_filtered:
   input: ${readsfile}.ercc_OK.fq

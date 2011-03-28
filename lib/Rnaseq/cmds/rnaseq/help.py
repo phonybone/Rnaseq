@@ -8,10 +8,9 @@ import yaml, os
 # This is sort of a test command, probably won't be used in production
 
 class Help(Command):
-    def run(self, **args):
+    def run(self, *argv, **args):
         cmds=Rnaseq.config['cmds'].keys()
         cmds.sort()
-        argv=args['argv']
         prog_name=os.path.basename(argv[0])
         cf=CmdFactory(program=prog_name)
         print "%s commands:\n" % prog_name
@@ -22,5 +21,8 @@ class Help(Command):
 
     def description(self):
         return "print this help information"
+
+    def usage(self):
+        return "help"
 
 #print __file__, "checking in"

@@ -14,10 +14,9 @@ class InsertProv(Command):
     def description(self):
         return "insert a dataset (path) and authoring script into the database"
     
-    def run(self,**args):
+    def run(self, *argv, **args):
         try:
             dbh=args['dbh']
-            argv=args['argv']           # assume args=[path, author]
             path=argv[2]                # [0] is script name, [1] is command
             author=argv[3]
             tablename=RnaseqGlobals.conf_value('db','tablename')

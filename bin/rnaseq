@@ -28,24 +28,17 @@ def main():
     usage="usage: %s <cmd> [-p <pipeline>] [-r <readset>] [options]" % sys.argv[0] # fixme: form might be different; might be more like git
     argv=RnaseqGlobals.initialize(usage)       # not to be confused with sys.argv
 
-    # establish database connection:
-    # fixme: change to conf_value() calls
-    db_file=os.path.join(RnaseqGlobals.config['rnaseq']['root_dir'], 'db', RnaseqGlobals.config['db']['db_name'])
-    RnaseqGlobals.dbh=sqlite3.connect(db_file)
-
     # get the command:
     try: 
         cmd=argv[1]
     except IndexError as ie:
-        die(UserError(RnaseqGlobals.usage))
+        die(UserError(usage))
     cf=CmdFactory(program='rnaseq')
-    cf.add_cmds(RnaseqGlobals.config['rnaseq']['cmds'])
+    cf.add_cmds(RnaseqGlobals.conf_value('rnaseq','cmds')
     cmd=cf.new_cmd(cmd)
 
-
-    # run the command
-    cmd.run(argv, dbh=RnaseqGlobals.dbh, argv=argv, options=RnaseqGlobals.options)
-    
+    # run the command 
+    cmd.run(argv, dbh=RnaseqGlobals.dbh, config=RnaseqGlobals.config)
     print "rnaseq: done"
 
 ########################################################################
