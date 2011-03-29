@@ -37,20 +37,17 @@ class ShellScript(Command):
         pipeline.update(RnaseqGlobals.config)
 
 
-        close_file=False
         try:
             output_file=argv[2]     # [0] is program name, [1] is command
             output_path=os.path.join(pipeline.working_dir(), output_file)
-            f=open(output_path, "w")
-            close_file=True
         except IndexError:
-            f=sys.stdout
+            output_path=os.path.join(pipeline.working_dir(), pipeline.scriptname())
 
+        f=open(output_path, "w")
         script=pipeline.sh_script()
         f.write(script)
-        if (close_file):
-            f.close()
-            print "%s written" % output_path
+        f.close()
+        print "%s written" % output_path
 
 
 #print __file__, "checking in"

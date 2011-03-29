@@ -9,12 +9,15 @@ from dict_like import dict_like
 class evoque_dict(dict_like):
     def __init__(self,**args):
         dict_like.__init__(self,**args)
+        self.missing_keys=[]
 
     def __getitem__(self,key):
         try:
             v=self.__dict__[key]
             return v
         except KeyError as ie:
+            self.missing_keys.append(key)
+#            raise Exception("key '%s' missing from evoque_dict" % key)
             return "${%s}" % key
 
     def copy(self,*args):

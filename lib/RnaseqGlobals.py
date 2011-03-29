@@ -6,6 +6,29 @@ try:
 except:
     from pysqlite2 import dbapi2 as sqlite3
 
+
+    ########################################################################
+    # Callbacks:
+
+def aligner_callback(option, opt_str, value, parser):
+    try:
+        hash={'bowtie': { 'aligner_suffix':'fq' },
+              'blat': {'aligner_suffix':'fa'},
+              }
+        subhash=hash[value]
+    except KeyError as ke:
+        raise optparse.OptionValueError("Unknown aligner: %s" % ke)
+
+    try:
+        setattr(parser.values, option.dest, value)
+        suffix=subhash['aligner_suffix']
+        setattr(parser.values, 'rnaseq__align_suffix', suffix)
+    except Exception as e:
+        print "caught an %s: %s" % (type(e),e)
+        raise optparse.OptionValueError(str(e))
+
+
+
 # This should really be a singleton class
 class RnaseqGlobals():
     parser=''                           # gets overwritten
@@ -42,9 +65,13 @@ class RnaseqGlobals():
 
         # connect to database:
         db_file=os.path.join(self.conf_value('rnaseq','root_dir'), 'db', self.conf_value('db','db_name'))
-        self.dbh=sqlite3.connect(db_file)
+        try:
+            self.dbh=sqlite3.connect(db_file)
+        except sqlite3.OperationalError as oe:
+            raise ConfigError(str(oe)+": db_file is %s" % db_file)
 
         return argv
+
 
     # return parsed argv
     @classmethod
@@ -53,7 +80,8 @@ class RnaseqGlobals():
         
         # special notation: presence of '__' in dest means that options will get assigned to lower sub-hash of config
         # eg 'rnaseq__aligner'->self.config['rnaseq']['aligner']='bowtie'
-        parser.add_option('--aligner',       dest='rnaseq__aligner', help="specify aligner", default="bowtie")
+        parser.add_option('--aligner',       dest='rnaseq__aligner', help="specify aligner", default="bowtie", action="callback", callback=aligner_callback, type="string")
+        parser.add_option('--align_suffix',  dest='rnaseq__align_suffix', help="internal use")
         parser.add_option('--cluster',       dest='use_cluster',     help="execute operations on a cluster (requires additional config settings)", action='store_true', default=False)
         parser.add_option("-c","--config",   dest="config_file",     help="specify alternative config file", default=os.path.normpath(os.path.abspath(__file__)+"/../../config/rnaseq.conf.yml"))
         parser.add_option("-f","--force",    dest="force",           help="force execution of pipelines and steps even if targets are up to date", action='store_true', default=False)
@@ -63,10 +91,10 @@ class RnaseqGlobals():
         self.parser=parser
 
 
+    # returns (values,args)
     @classmethod
     def parse_cmdline(self, opt_list=sys.argv):
         return self.parser.parse_args(sys.argv)
-
 
     @classmethod
     def read_config(self, config_file):

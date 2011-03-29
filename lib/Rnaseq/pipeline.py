@@ -41,8 +41,11 @@ class Pipeline(templated, dict_like):
         vars.update(RnaseqGlobals.config)
         
         vars['readsfile']=self.readset.reads_file # fixme: might want to make reads_file a function, if iterated
+        vars['ID']=self.ID()
+        vars['align_suffix']=RnaseqGlobals.conf_value('rnaseq','align_suffix')
+        ev=evoque_dict().update(vars)
         # also fixme: should just add readset to vars, and let "clients" access it from there 
-        templated.load(self, vars=vars)
+        templated.load(self, vars=ev, final=True)
 
         # load steps.  (We're going to replace the current steps field, which holds a string of stepnames,
         # with a list of step objects

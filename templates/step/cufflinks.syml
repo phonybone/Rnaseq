@@ -1,4 +1,6 @@
 name: cufflinks
 sh_template: cufflinks.tmpl
-usage: '%(exe)s %(args)s -o %(output)s %(input)s'
+usage: '%(exe)s -q -p ${qsub['nprocs']}  -o %(output)s %(input)s'
 exe: cufflinks
+genome_dir: /proj/hoodlab/share/programs/Ensembl
+genome: hs37.61

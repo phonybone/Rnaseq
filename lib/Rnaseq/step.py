@@ -22,7 +22,9 @@ class Step(dict_like, templated):
             vars=args['vars']
         except KeyError:
             vars={}
-        templated.load(self, vars=vars)
+        vars['pipeline']=self.pipeline
+
+        templated.load(self, vars=vars, final=True)
         if self.has_attr('prototype'):
             ptype=Step(name=self.prototype)
             ptype.load(vars=vars)
@@ -46,7 +48,7 @@ class Step(dict_like, templated):
             vars.update(self.pipeline['rnaseq'])
             vars['readset']=self.pipeline.readset
             vars['sh_cmd']=self.sh_cmdline() 
-            
+
             try:
                 script=template.evoque(vars)
                 return script
@@ -81,13 +83,15 @@ class Step(dict_like, templated):
             warn(e)
             warn("%s.usage: %s" % (self.name,self.usage))
             raise "%s.keys(): %s" % (self.name, ", ".join(self.__dict__.keys()))
+        except TypeError as te:
+            raise ConfigError("step %s: usage='%s': %s" % (self.name, self.usage, te))
 
 
     # entry point to step's sh "presence"; calls appropriate functions, as above.
     def sh_cmd(self, **args):
         script=''
         if 'echo_name' in args and args['echo_name']:
-            script+="echo step %s\n" % self.name
+            script+="echo step %s 1\>\&2\n" % self.name
         sh_script=self.sh_script()
         if sh_script!=None:  script+=sh_script
         else: script+=self.sh_cmdline()+"\n"

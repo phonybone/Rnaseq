@@ -1,4 +1,5 @@
 name: cuffcompare
 exe: cuffcompare
-usage: '%(exe)s %(args)s -o %(output)s %(input)s'
+usage: '%(exe)s  %(genome_dir)s/%(genome)s.gtf -s %(genome_dir)s/%(genome)s.fa -o %(output)s %(input)s'
+genome_dir: /proj/hoodlab/share/programs/Ensembl
 genome: hs37.61

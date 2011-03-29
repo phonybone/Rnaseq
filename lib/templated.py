@@ -72,7 +72,6 @@ class templated(dict_like):
         vars=args['vars'] if args.has_key('vars') else {} # consider default of self instead of {}?  Or is that stupid?
         #print "%s.%s: about to evoque: vars are:\n%s" % (self.name, self.type, yaml.dump(vars))
         ev=evoque_dict().update(vars)
-        
         try: 
             yaml_str=template.evoque(ev)
             # why we want to keep this: evoque_dicts protect us against simple Key errors, but not
@@ -85,6 +84,12 @@ class templated(dict_like):
         except TypeError as ae:
             raise ProgrammerGoof("%s '%s': %s" % (self.type, self.name, ae))
         
+        # Check if all keys are needed:
+        if 'final' in args and args['final']:
+            if len(ev.missing_keys)>0:
+                raise ConfigError("%s %s: missing keys in final load: %s" %(self.type, self.name, ", ".join(str(i) for i in (set(ev.missing_keys)))))
+
+
         # call yaml.load on the string produced above, then call self.update() on the resulting dict object
         #print "yaml_str:\n%s" % yaml_str
         d=yaml.load(yaml_str)           # fixme: what if template isn't yaml???
@@ -107,9 +112,16 @@ class templated(dict_like):
         template=domain.get_template(tf)
         vars=args['vars'] if args.has_key('vars') else {} # consider default of self instead of {}?  Or is that stupid?
         try:
-            output=template.evoque(evoque_dict().update(vars))
+            ev=evoque_dict().update(vars)
+            output=template.evoque(ev)
         except (KeyError, AttributeError, TypeError) as any_e:
             raise ConfigError("%s '%s': %s" % (self.type, self.name, any_e))
+
+        # Check if all keys are needed:
+        if 'final' in args and args['final']:
+            if len(ev.missing_keys)>0:
+                raise ConfigError("%s %s: missing keys in final load: %s" %(self.type, self.name, ", ".join(ev.missing_keys)))
+
 
         return output
 
