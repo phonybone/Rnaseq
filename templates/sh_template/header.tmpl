@@ -13,3 +13,16 @@ echo 1>&2
 
 export PATH=${path}
 export PYTHONPATH=$${PYTHONPATH}:${root_dir}/lib
+
+exit_on_failure()
+{
+  retcode=$$1
+  last_step=$$2
+  if [ $$retcode != 0 ]; then
+    echo $${last_step} failed 1>&2
+#   python $${root_dir}/bin/provenance update -p '$${pipeline.name}' --status 'failed in step $${last_step}'
+    exit $$retcode
+  else
+    echo $${last_step} passed 1>&2
+  fi
+}
