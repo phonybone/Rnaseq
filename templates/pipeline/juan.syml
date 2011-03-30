@@ -8,7 +8,7 @@ header:
 export2fq:
   input: ${readsfile}
   output: ${ID}.${align_suffix}
-  args: solexa2fastq
+  args: ${rnaseq['fq_cmd']}
 
 filterQuality:
   input: ${ID}.${align_suffix}

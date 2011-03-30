@@ -12,8 +12,12 @@ except:
 
 def aligner_callback(option, opt_str, value, parser):
     try:
-        hash={'bowtie': { 'aligner_suffix':'fq' },
-              'blat': {'aligner_suffix':'fa'},
+        hash={'bowtie': { 'aligner_suffix':'fq',
+                          'fq_cmd': 'solexa2fastq',
+                          },
+              'blat': {'aligner_suffix':'fa',
+                       'fq_cmd': 'solexa2fasta',
+                       },
               }
         subhash=hash[value]
     except KeyError as ke:
@@ -22,7 +26,8 @@ def aligner_callback(option, opt_str, value, parser):
     try:
         setattr(parser.values, option.dest, value)
         suffix=subhash['aligner_suffix']
-        setattr(parser.values, 'rnaseq__align_suffix', suffix)
+        setattr(parser.values, 'rnaseq__align_suffix', subhash['aligner_suffix'])
+        setattr(parser.values, 'rnaseq__fq_cmd', subhash['fq_cmd'])
     except Exception as e:
         print "caught an %s: %s" % (type(e),e)
         raise optparse.OptionValueError(str(e))
@@ -82,6 +87,7 @@ class RnaseqGlobals():
         # eg 'rnaseq__aligner'->self.config['rnaseq']['aligner']='bowtie'
         parser.add_option('--aligner',       dest='rnaseq__aligner', help="specify aligner", default="bowtie", action="callback", callback=aligner_callback, type="string")
         parser.add_option('--align_suffix',  dest='rnaseq__align_suffix', help="internal use")
+        parser.add_option('--fq_cmd',        dest='rnaseq__fq_cmd',  help="internal use")
         parser.add_option('--cluster',       dest='use_cluster',     help="execute operations on a cluster (requires additional config settings)", action='store_true', default=False)
         parser.add_option("-c","--config",   dest="config_file",     help="specify alternative config file", default=os.path.normpath(os.path.abspath(__file__)+"/../../config/rnaseq.conf.yml"))
         parser.add_option("-f","--force",    dest="force",           help="force execution of pipelines and steps even if targets are up to date", action='store_true', default=False)

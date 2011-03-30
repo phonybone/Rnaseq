@@ -89,12 +89,15 @@ class Step(dict_like, templated):
 
     # entry point to step's sh "presence"; calls appropriate functions, as above.
     def sh_cmd(self, **args):
-        script=''
+        echo_part=''
         if 'echo_name' in args and args['echo_name']:
-            script+="echo step %s 1\>\&2\n" % self.name
+            echo_part="echo step %s 1>&2\n" % self.name
+            
         sh_script=self.sh_script()
-        if sh_script!=None:  script+=sh_script
-        else: script+=self.sh_cmdline()+"\n"
+        if sh_script==None:
+            sh_script=self.sh_cmdline()+"\n"
+
+        script="\n".join([echo_part,sh_script]) # tried using echo_part+sh_script, got weird '>' -> '&gt;' substitutions
         return script
 
 ########################################################################
