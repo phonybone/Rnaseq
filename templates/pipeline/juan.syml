@@ -14,7 +14,7 @@ filterQuality:
   input: ${ID}.${align_suffix}
   output: ${ID}.qual_OK.${align_suffix}
   filtered: ${ID}.bowtie_qual_BAD.${align_suffix}
-  args: -v
+  args: -v -f ${align_suffix}
 
 filterVectors:
   input: ${ID}.${align_suffix}
@@ -26,7 +26,7 @@ filterLowComplex:
   input: ${ID}.vector_OK.${align_suffix}
   output: ${ID}.complex_OK.${align_suffix}
   filtered: ${ID}.bowtie_complex_BAD.${align_suffix}
-  args: -v
+  args: -v -f ${align_suffix}
 
 ribosomal_mit:
   input: ${ID}.complex_OK.${align_suffix}

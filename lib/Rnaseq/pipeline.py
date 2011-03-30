@@ -9,9 +9,6 @@ from step import *
 from RnaseqGlobals import RnaseqGlobals
 import path_helpers
 
-# todo/fixme:
-# pipelines should verify that the step list in the .syml file exactly matches
-# all the steps found (ie, all present and accounted for, no extras)
 
 
 class Pipeline(templated, dict_like):
@@ -53,7 +50,7 @@ class Pipeline(templated, dict_like):
         try:
             self.stepnames=re.split('[,\s]+',self.stepnames)
         except AttributeError as ae:
-            raise ConfigError(ae)       # fixme: prettify this
+            raise ConfigError("pipeline %s does not define stepnames" % self.name)
             
         self.steps=[]                   # resest, just in case
         for sn in self.stepnames:
@@ -70,7 +67,6 @@ class Pipeline(templated, dict_like):
             # print "pipeline.load: step after merge(readset) is %s" % step
 
             # add in items from step sections in <pipeline.syml>
-            # fixme: self.
             if not self.has_attr(step.name) or self[step.name] == None:
                 raise ConfigError("Missing section: '%s' is listed as a step name in %s, but section with that name is absent." % \
                                   (step.name, self.template_file()))
@@ -112,9 +108,9 @@ class Pipeline(templated, dict_like):
             # put in check_current step:
             # fixme: test this!!!
             if not RnaseqGlobals.conf_value('force'):
-                if step.is_current() and not step.force:       # fixme: add --force check, but figure out how to access non-existant options first
+                if step.is_current() and not step.force:
                     print "step %s is current, skipping" % step.name
-                    continue                # break out instead? fixme: think this through
+                    continue
             
             # actual step
             script+="# %s\n" % step.name
@@ -232,7 +228,6 @@ class Pipeline(templated, dict_like):
         b=set(s.name for s in self.steps)
         
         if a==b: return errors            # set equality! we just love over-ridden operators
-        # fixme: the above is really fragile, and might break if Pipeline inherits from anything else using dict_like (or other classes?)
 
         name_no_step=a-b                # more set subtraction!
         if len(name_no_step)>0:
@@ -245,7 +240,8 @@ class Pipeline(templated, dict_like):
         return errors
 
 
-    # check to see that all inputs and outputs connect up correctly (fixme: describe this more clearly)
+    # check to see that all inputs and outputs connect up correctly and are accounted for
+    # outputs also include files defined by "create"
     def verify_continuity(self):
         step=self.steps[0]
         errors=[]

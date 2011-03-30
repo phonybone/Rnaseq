@@ -1,7 +1,8 @@
 # some general values:
 rnaseq:
   root_dir: /proj/hoodlab/share/vcassen/rna-seq/rnaseq
-  genomes_dir: /proj/hoodlab/share/programs/blat-indexes
+  blat_indexes: /proj/hoodlab/share/programs/blat-indexes
+  bowtie_indexes: /proj/hoodlab/share/programs/bowtie-indexes
   path: /tools/bin:/hpc/bin:/bin:/proj/hoodlab/share/programs/cufflinks
 
   cmds:

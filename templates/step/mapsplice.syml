@@ -1,5 +1,5 @@
 name: mapsplice
-usage: '%(interpreter)s %(exe)s -c %(genome_dir)s/%(genome)s.fa -B ${blat_index}/%(genome)s -t %(genome_dir)s/%(genome)s.pseudo.gtf -w ${pipeline.readset.readlen} -L 25 -Q fq -X ${qsub['nprocs']} --full-running --semi-canonical -u %(input)s.fq -o %(output)s'
+usage: '%(interpreter)s %(exe)s -c %(genome_dir)s/%(genome)s.fa -B ${blat_index}/%(genome)s -t %(genome_dir)s/%(genome)s.pseudo.gtf -w ${pipeline.readset.readlen} -L 25 -Q ${rnaseq['align_suffix']} -X ${qsub['nprocs']} --full-running --semi-canonical -u %(input)s -o %(output)s'
 exe: /proj/hoodlab/share/programs/mapsplice/bin/mapsplice_segments.py
 interpreter: python
 sh_template: mapsplice.tmpl

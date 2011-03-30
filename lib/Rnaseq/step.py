@@ -91,7 +91,7 @@ class Step(dict_like, templated):
     def sh_cmd(self, **args):
         echo_part=''
         if 'echo_name' in args and args['echo_name']:
-            echo_part="echo step %s 1>&2\n" % self.name
+            echo_part="echo step %s 1>&2" % self.name
             
         sh_script=self.sh_script()
         if sh_script==None:
