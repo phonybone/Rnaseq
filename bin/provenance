@@ -13,14 +13,8 @@ except:
     from pysqlite2 import dbapi2 as sqlite3
 
 # Try to load the rnaseq modules:
-try:
-    from Rnaseq.prov import *
-except Exception as e:
-    needed_dir=os.path.normpath(os.path.abspath(__file__)+"/../../lib")
-    sys.stderr.write("Unable to import Rnaseq.  Perhaps you need to add "+needed_dir+" to your PYTHONPATH?\n")
-    sys.stderr.write(yaml.dump(e))
-    sys.stderr.write("(%s)\n" % e)
-    sys.exit(1)
+
+from Rnaseq.prov import *
 
 ########################################################################
 # Note: this is almost exactly the same as rnaseq.main(); only difference is usage,

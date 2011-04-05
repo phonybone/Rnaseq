@@ -1,7 +1,7 @@
 # some general values:
 rnaseq:
   root_dir: /proj/hoodlab/share/vcassen/rna-seq/rnaseq
-  blat_indexes: /proj/hoodlab/share/programs/blat-indexes
+  blat_indexes: /proj/hoodlab/share/programs/blat-indexes/not/here
   bowtie_indexes: /proj/hoodlab/share/programs/bowtie-indexes
   path: /tools/bin:/hpc/bin:/bin:/proj/hoodlab/share/programs/cufflinks
 
@@ -15,7 +15,6 @@ rnaseq:
 # database
 db: 
   db_name: provenance.sqlite3
-  tablename: provenance
 
 # "qsub" is the command used to submit a job to the cluster.  These items
 # all relate to the submissing of cluster jobs.

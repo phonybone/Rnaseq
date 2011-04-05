@@ -1,8 +1,14 @@
 #-*-python-*-
-from warn import *
+import os
+
+import Rnaseq
+from Rnaseq import *
 from Rnaseq.command import *
-from sqlite3 import OperationalError
 from RnaseqGlobals import RnaseqGlobals
+from warn import *
+from sqlite3 import OperationalError
+from sqlalchemy import *
+from sqlalchemy.orm import mapper, sessionmaker
 
 class CreateTable(Command):
     def description(self):
@@ -17,63 +23,26 @@ class CreateTable(Command):
         except IndexError:
             raise UserError(self.usage())
 
-        method_name="create_%s" % tablename
-        try:
-            method=getattr(self,method_name)
-        except AttributeError as ae:
-            raise UserError("Don't know how to create table %s" % tablename)
 
-        method(*argv,**args)
+    classes=[Pipeline, PipelineRun, Step, StepRun]
 
+    def run(self,*argv,**args):
+        db_name=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'), 'db', RnaseqGlobals.conf_value('db','db_name'))
+        engine=create_engine('sqlite:///%s' % db_name, echo=False)
+        print "connected to %s" % db_name
+        metadata=MetaData()
+        Session=sessionmaker(bind=engine)
+        session=Session()
 
-    def create_provenance(self, *argv, **args):
-        try:
-            dbh=args['dbh']
-            tablename=argv[0][2]
-            if RnaseqGlobals.value.force:
-                dbh.execute("DROP TABLE IF EXISTS %s" % tablename)
-        except KeyError as e:
-            raise MissingArgError(e)
-        except IndexError as ie:
-            raise MissingArgError(ie)
+        for klass in self.classes:
 
-        try:
-            sql='''
-CREATE TABLE %s (
-id INTEGER PRIMARY KEY AUTOINCREMENT,
-path VARCHAR[255] NOT NULL,
-author VARCHAR[255] NOT NULL
-);''' % tablename
+            # Drop the table first.  Don't try to use Table.drop(), it's a pain if the table doesn't already exist.
+            #engine.execute("DROP TABLE IF EXISTS %s" % tablename)
         
-            dbh.execute(sql)
-            print "table %s created" % tablename
-        except OperationalError as oe:  # OperationalError a sql thing
-            raise ProgrammerGoof("%s in %s" % (oe,sql))
-
-
+            try: ct=getattr(klass,'create_table')
+            except AttributeError as ae:
+                raise UserError("%s doesn't define 'create_table'" % klass.__name__)
+            
+            ct(metadata, engine)
+            print "%s created" % klass.__tablename__
         
-    def create_pipeline(self,*argv,**args):
-        try:
-            dbh=args['dbh']
-            tablename=argv[0][2]
-            if RnaseqGlobals.conf_value('force'):
-                dbh.execute("DROP TABLE IF EXISTS %s" % tablename)
-        except KeyError as e:
-            raise MissingArgError(e)
-        except IndexError as ie:
-            raise MissingArgError(ie)
-
-        sql='''
-CREATE TABLE %s (
-id INTEGER PRIMARY KEY AUTOINCREMENT,
-name VARCHAR[255] NOT NULL,
-status VARCHAR[255] NOT NULL,
-success INTEGER NOT NULL DEFAULT 0)
-''' % tablename
-
-        try:
-            dbh.execute(sql)
-            print "table %s created" % tablename
-        except OperationalError as oe:  # OperationalError a sql thing
-            raise ProgrammerGoof("%s in %s" % (oe,sql))
-

@@ -9,5 +9,7 @@ from readset import *
 from cmd_factory import *
 import sys, optparse
 from RnaseqGlobals import RnaseqGlobals
-
-#print __file__,"checking in"
+from pipeline_run import *
+from step_run import *
+    
+print __file__,"checking in"

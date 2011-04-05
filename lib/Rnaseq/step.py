@@ -1,13 +1,14 @@
 #-*-python-*-
 
 import yaml, time, re
-import Rnaseq
 from RnaseqGlobals import RnaseqGlobals
 from dict_like import *
 from templated import *
 from warn import *
+from sqlalchemy import *
+from table_base import TableBase
 
-class Step(dict_like, templated):
+class Step(templated, TableBase):
     attrs={'name':None,
            'description':None,
            'type':'step',
@@ -16,6 +17,27 @@ class Step(dict_like, templated):
            'force': False,
            }
 
+
+    ########################################################################
+    __tablename__='step'
+    id=Column(Integer, primary_key=True)
+    name=Column(String, nullable=False)
+    description=Column(String)
+    
+    @classmethod
+    def create_table(self, metadata, engine):
+        step_table=Table(self.__tablename__, metadata,
+                         Column('id',Integer, primary_key=True),
+                         Column('name',String,nullable=False),
+                         Column('description', String),
+                         )
+        metadata.create_all(engine)
+        return step_table
+    
+
+    
+
+    ########################################################################
 
     def load(self, **args):
         try:

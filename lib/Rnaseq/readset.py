@@ -4,7 +4,7 @@ import yaml, socket, os
 from dict_like import dict_like
 from templated import templated
 
-class Readset(templated, dict_like):
+class Readset(templated):
     attrs={'name':None,
            'description':None,
            'type':'readset',

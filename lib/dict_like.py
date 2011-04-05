@@ -1,7 +1,7 @@
 import yaml
 from warn import *
 
-class dict_like:
+class dict_like(object):
     attrs={}                            # sub classes override this
 
     def __init__(self,**arghash):
@@ -23,6 +23,8 @@ class dict_like:
 
     def __setitem__(self,attr,val):
         self.__dict__[attr]=val
+        setattr(self,attr,val)
+        #print "dict_like: set %s to %s" % (attr,val)
         return val
     
     def __str__(self):

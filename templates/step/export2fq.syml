@@ -1,4 +1,3 @@
 name: export2fq
 description: convert an Illumina export file to FASTQ format
 prototype: fq_all2std
-args: solexa2fastq

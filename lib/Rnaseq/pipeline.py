@@ -5,13 +5,15 @@ import sys, yaml, re, time, os
 from warn import *
 from dict_like import *
 from templated import *
-from step import *
 from RnaseqGlobals import RnaseqGlobals
 import path_helpers
+from sqlalchemy import *
+from table_base import TableBase
+print "pipeline:  TableBase is %s" % TableBase
 
+from step import *
 
-
-class Pipeline(templated, dict_like):
+class Pipeline(templated, TableBase):
     attrs={'name':None,
            'description':None,
            'type':'pipeline',
@@ -28,6 +30,23 @@ class Pipeline(templated, dict_like):
         self.type='pipeline'
 
 
+    ########################################################################
+
+    __tablename__='pipeline'
+    id=Column(Integer, primary_key=True)
+    name=Column(String, nullable=False)
+    description=Column(String)
+        
+    @classmethod
+    def create_table(self, metadata, engine):
+        pipeline_table=Table(self.__tablename__, metadata,
+                             Column('id', String, primary_key=True),
+                             Column('name', String, nullable=False),
+                             Column('description', String))
+        metadata.create_all(engine)
+        return pipeline_table
+    
+
     def stepWithName(self,stepname):
         for step in self.steps:
             if step.name==stepname: return step 
@@ -39,8 +58,9 @@ class Pipeline(templated, dict_like):
         
         vars['readsfile']=self.readset.reads_file # fixme: might want to make reads_file a function, if iterated
         vars['ID']=self.ID()
-        vars['align_suffix']=RnaseqGlobals.conf_value('rnaseq','align_suffix')
+        vars['align_suffix']=RnaseqGlobals.conf_value('rnaseq','align_suffix') # fixme: this really, really shouldn't be here
         ev=evoque_dict().update(vars)
+        
         # also fixme: should just add readset to vars, and let "clients" access it from there 
         templated.load(self, vars=ev, final=True)
 
