@@ -6,9 +6,9 @@ from dict_like import dict_like
 # without throwning an error.
 
 
-class evoque_dict(dict_like):
+class evoque_dict(dict):
     def __init__(self,**args):
-        dict_like.__init__(self,**args)
+        dict.__init__(self,**args)
         self.missing_keys=[]
 
     def __getitem__(self,key):

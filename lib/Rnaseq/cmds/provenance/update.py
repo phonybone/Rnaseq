@@ -6,24 +6,28 @@ from Rnaseq.command import *
 # usage: 
 
 
-class Stub(Command):
+class Update(Command):
     def usage(self):
-        return "usage: update -p <pipeline_name> --status <status>"
+        return "usage: update <class> <id> <field> <value>"
 
     def description(self):
-        return "update the status of a pipeline"
+        return "update a database object"
 
     def run(self, *argv, **args):
         try:
             dbh=args['dbh']
-            options=args['options']
-            pipeline_name=
-        except IndexError as ie:
-            raise MissingArgError(str(ie))
+            config=args['config']
+            (classname,id,field,value)=argv[0][2:6]
 
-        pipeline=Pipeline.fetch
+        except ValueError as ie:
+            raise UserError(self.usage())
 
-    def description(self):
-        return "print this help information"
+        session=RnaseqGlobals.get_session()
+        klass=globals()[classname]
+        print "klass is %s" % klass
+        for obj in session.query(klass):
+            print "got %s %s (%s)" % (klass.__name__,obj)
+
+
 
 #print __file__, "checking in"

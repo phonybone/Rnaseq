@@ -8,18 +8,24 @@
 from RnaseqGlobals import RnaseqGlobals
 import yaml, re, os
 import path_helpers
-from dict_like import dict_like
+#from dict_like import dict_like
 from evoque import *
 from evoque.domain import Domain
 from evoque_dict import evoque_dict     # not part of official evoque lib; my own addition
 from warn import *
 
 
-class templated(dict_like):
+class templated(object):
     # class vars
     template_dir=os.path.normpath(os.path.abspath(__file__)+"/../../templates")
     #template_dir=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'),"templates") # RnaseqGlobals not init'd yet
 
+    attrs={'name':None,
+           'type':None,
+           'suffix':'syml',
+           'filename':None,             # alternate to template_filename
+           }
+    
     def template(self):
         template_file="%s/%s/%s.syml" % (self.template_dir, self.type, self.name)
         f=open(template_file)           # fixme: yaml_loadable
@@ -40,7 +46,7 @@ class templated(dict_like):
     # fixme: this is a good place to examine inserting superyaml code; but so far, no need
     # returns self
     def load(self, **args):
-        print "templated.load(%s.%s) called" % (self.type, self.name)
+        #print "templated.load(%s.%s) called" % (self.type, self.name)
         # get the template and call evoque() on it.  This should yield a yaml string
         domain=Domain(self.template_dir, errors=4, quoting=str) # errors=4 means raise errors as an exception
         try: 
@@ -51,9 +57,7 @@ class templated(dict_like):
         
         vars=args['vars'] if args.has_key('vars') else {} # consider default of self instead of {}?  Or is that stupid?
         #print "%s.%s: about to evoque: vars are:\n%s" % (self.name, self.type, yaml.dump(vars))
-        ev=evoque_dict()
-        ev.update(vars)
-        print "templated: ev is %s\nvars is %s" % (ev,vars)
+        ev=evoque_dict().update(vars)
         try: 
             yaml_str=template.evoque(ev)
             # why we want to keep this: evoque_dicts protect us against simple Key errors, but not

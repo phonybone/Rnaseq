@@ -9,7 +9,10 @@ class TestCreate(unittest.TestCase):
 
 class TestBasic(TestCreate):
     def runTest(self):
-        readset=Readset(name='readset').load()
+        readset=Readset(name='readset')
+        print "readset is %s" % readset
+        readset.load()
+        print "readset is %s" % readset
         self.assertEqual(readset.__class__,Readset)
 
 class TestMissingReadset(TestCreate):

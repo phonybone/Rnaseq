@@ -14,9 +14,8 @@ class PipelineRun(TableBase):
     successful=Column(Boolean)
     pipeline=relation(Pipeline,backref=backref(Pipeline.__tablename__, order_by=id))
         
-    def __init__(self,**args):
-        for k,v in args.items():
-            setattr(self,k,v)
+    def __init__(self,pipeline):
+        pass
 
     @classmethod
     def create_table(self, metadata, engine):

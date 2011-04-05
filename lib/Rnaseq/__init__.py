@@ -12,4 +12,3 @@ from RnaseqGlobals import RnaseqGlobals
 from pipeline_run import *
 from step_run import *
     
-print __file__,"checking in"

@@ -9,7 +9,6 @@ from RnaseqGlobals import RnaseqGlobals
 import path_helpers
 from sqlalchemy import *
 from table_base import TableBase
-print "pipeline:  TableBase is %s" % TableBase
 
 from step import *
 
@@ -342,3 +341,18 @@ class Pipeline(templated, TableBase):
 
     
     ########################################################################
+
+    # make sure self is up to date in the db (also all steps)
+    # create a new PipelineRun object based on self, store that in the db (also StepRun instances)
+    # 
+    def store_run(self):
+        session=RnaseqGlobals.get_session()
+        if hasattr(self,'id') and self.id != None:
+            # look up self.name in the db; add self to db if not found
+            db_self=session.query(Pipeline).filter_by(name=self.name).all()
+            print "db_self is %s" % db_self
+        else:
+            session.add(self)
+            session.commit()
+        
+        

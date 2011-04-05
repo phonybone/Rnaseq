@@ -6,12 +6,15 @@ try:
 except:
     from pysqlite2 import dbapi2 as sqlite3
 
+from sqlite3 import OperationalError
+from sqlalchemy import *
+from sqlalchemy.orm import mapper, sessionmaker
 
     ########################################################################
     # Callbacks:
 
 def aligner_callback(option, opt_str, value, parser):
-    try:
+    try:                                # fixme: this has got to go!
         hash={'bowtie': { 'aligner_suffix':'fq',
                           'fq_cmd': 'solexa2fastq',
                           },
@@ -35,7 +38,7 @@ def aligner_callback(option, opt_str, value, parser):
 
 
 # This should really be a singleton class
-class RnaseqGlobals():
+class RnaseqGlobals(object):
     parser=''                           # gets overwritten
     options={}
     config={}
@@ -161,5 +164,20 @@ class RnaseqGlobals():
             return self.options.opt
         except AttributeError:
             return None
+
+    @classmethod
+    def get_session(self):
+        try: return self.session
+        except AttributeError: pass
+        
+        db_name=os.path.join(self.conf_value('rnaseq','root_dir'), 'db', self.conf_value('db','db_name'))
+        engine=create_engine('sqlite:///%s' % db_name, echo=True)
+        metadata=MetaData()
+        Session=sessionmaker(bind=engine)
+        session=Session()
+        self.engine=engine
+        self.metadata=metadata
+        self.session=session
+        return session
 
 #print __file__,"checking in"

@@ -5,15 +5,11 @@ from dict_like import dict_like
 from templated import templated
 
 class Readset(templated):
-    attrs={'name':None,
-           'description':None,
-           'type':'readset',
-           'suffix':'syml',
-           }
-
     def __init__(self,**args):
-        dict_like.__init__(self,**args)
-
+        templated.__init__(self,**args)
+        self.suffix='syml'
+        self.type='readset'
+    
     def get_email(self):
         try:
             return self.email

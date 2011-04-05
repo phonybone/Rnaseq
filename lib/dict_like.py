@@ -4,28 +4,11 @@ from warn import *
 class dict_like(object):
     attrs={}                            # sub classes override this
 
-    def __init__(self,**arghash):
-        #print "dict_like.__init__ reached; self is %s" % self
-        # first set args named in attrs; this allows unnamed attrs to have default values as defined in attrs
-        for attr,v in self.attrs.items():
-            if arghash.has_key(attr):
-                self[attr]=arghash[attr]
-            else: 
-                self[attr]=self.attrs[attr]
-        # print "dict_like:__init__: args are %s" % yaml.dump(arghash)
-        #print "dict_like:__init__: self is %s (%s)" % (yaml.dump(self), type(self))
-
-
-########################################################################
-
-    def __getitem__(self,attr):
-        return self.__dict__[attr]
-
-    def __setitem__(self,attr,val):
-        self.__dict__[attr]=val
-        setattr(self,attr,val)
-        #print "dict_like: set %s to %s" % (attr,val)
-        return val
+    def __init__(self,**args):
+        print "%s: args are %s" % (type(self), args)
+        for k,v in args.items():
+            setattr(self,k,v)
+        print "done now: self is %s" % self
     
     def __str__(self):
         s="%s:\n" % self.__class__
@@ -37,33 +20,9 @@ class dict_like(object):
         return s
 
 ########################################################################
-
-    def attributes(self):
-        return self.__dict__
-    
-    # add a new attribute to an object:
-    def add_attr(self,*args):
-        attr=args[0]                    # let this fail if not present
-        try:
-            val=args[1]
-        except IndexError as e:
-            val=None                    # ok to fail
-        self.__dict__[attr]=val
-        return self
-
-    def has_attr(self,attr):
-        return self.__dict__.has_key(attr)
-
-    def has_key(self,attr):
-        return self.__dict__.has_key(attr)
-    
-    def attr_names(self):
-        return self.__dict__.keys()
-    
-########################################################################
     
     # WARNING! This lets you get around the restriction that the object can contain only keys found in attrs!
-    def update(self,d):
+    def update1(self,d):
         if (not isinstance(d,dict)):
             if (isinstance(d,dict_like)): # dict_like instances are not instances of dict
                 d=d.attributes()        # get the dict part of a dict_like object
@@ -74,7 +33,7 @@ class dict_like(object):
         return self
     
     # like update, but doesn't clobber existing keys
-    def merge(self,d):
+    def merge1(self,d):
         if (not isinstance(d,dict)):    # fixme: dry error
             if (isinstance(d,dict_like)):
                 d=d.attributes()

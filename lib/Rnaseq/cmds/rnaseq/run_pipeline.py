@@ -38,6 +38,9 @@ class RunPipeline(Command):
             pipeline.update(RnaseqGlobals.config)
             # code up to this point copied verbatim from load.py; would be nice if one command could call another?
             # and if commands could return values...
+
+            pipeline=pipeline.store_run()
+            raise ProgrammerGoof('testing')
             
             # create and store the pipeline's shell script:
             # taken from code in shell_script.py...
