@@ -69,14 +69,15 @@ class Pipeline(templated, TableBase):
         self.steps=[]                   # resest, just in case
         for sn in self.stepnames:
             step=Step(name=sn, pipeline=self)
-
+            assert step.pipeline==self
             # load the step's template and self.update with the values:
             try:
                 vars={}
                 vars.update(self.dict)
                 vars.update(RnaseqGlobals.config)
-                print "about to load %s" % step.name
+                print "pipeline.load(): about to load %s" % step.name
                 step.load(vars=vars)
+                #print "pipeline: %s.load yields %s" % (step.name, step)
             except IOError as ioe:      # IOError??? Where does this generate an IOError?
                 raise ConfigError("Unable to load step %s" % sn, ioe)
             step.merge(self.readset)

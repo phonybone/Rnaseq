@@ -46,10 +46,12 @@ class Step(templated, TableBase):
         vars['readset']=self.pipeline.readset
         
         templated.load(self, vars=vars, final=True)
-        if 'prototype' in self.dict:
-            ptype=Step(name=self.prototype)
+        try:
+            ptype=Step(name=self['prototype'], pipeline=self.pipeline)
             ptype.load(vars=vars)
             self.merge(ptype)
+        except KeyError:
+            print "step %s has no prototype" % self.name
         return self
 
     # If a step needs more than one line to invoke (eg bowtie: needs to set an environment variable),
@@ -83,8 +85,13 @@ class Step(templated, TableBase):
     # use the self.usage formatting string to create the command line that executes the script/program for
     # this step.  Return as a string.  Throws exceptions as die()'s.
     def sh_cmdline(self):
-        if self.usage==None:
-            self.usage=''
+        print "sh_cmdline: self.name is %s" % self.name
+        try:
+            usage=self['usage']
+            if usage==None:
+                usage=''
+        except KeyError:
+            usage=''
 
         # look for exe in path, unless exe is an absolute path
         try:
@@ -95,7 +102,7 @@ class Step(templated, TableBase):
 
 
         try:
-            return self.usage % self   
+            return usage % self   
 
         # fixme: you don't really know what you're doing in these except blocks...
         except KeyError as e:
@@ -104,10 +111,10 @@ class Step(templated, TableBase):
             raise ConfigError("Missing value %s in\n%s" % (e.args, self.name))
         except ValueError as e:
             warn(e)
-            warn("%s.usage: %s" % (self.name,self.usage))
+            warn("%s.usage: %s" % (self.name,usage))
             raise "%s.keys(): %s" % (self.name, ", ".join(self.__dict__.keys()))
         except TypeError as te:
-            raise ConfigError("step %s: usage='%s': %s" % (self.name, self.usage, te))
+            raise ConfigError("step %s: usage='%s': %s" % (self.name, usage, te))
 
 
     # entry point to step's sh "presence"; calls appropriate functions, as above.

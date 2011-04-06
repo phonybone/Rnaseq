@@ -36,7 +36,7 @@ class TestQuery(TestCreate):
         r=l[0]
         for a in ['name', 'org', 'readlen', 'reads_file', 'working_dir']:
             self.assertEqual(getattr(r,a), getattr(readset,a))
-        print "r.id is %s" % r.id
+        self.assertEqual(r.id,1)
         
 
 

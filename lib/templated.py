@@ -35,7 +35,8 @@ class templated(dict):
                 raise ProgrammerGoof("%s: not a dict or templated" % type(d))
 
         for (k,v) in d.items():
-            if (k not in self.dict): self[k]=v
+            if (k not in self.dict):
+                self[k]=v
 
         return self
 
