@@ -9,13 +9,11 @@ from sqlalchemy import *
 from table_base import TableBase
 
 class Step(templated, TableBase):
-    attrs={'name':None,
-           'description':None,
-           'type':'step',
-           'suffix':'syml',
-           'pipeline':None,
-           'force': False,
-           }
+    def __init__(self,**args):
+        templated.__init__(self,**args)
+        self.type='step'
+        self.suffix='syml'
+        if not hasattr(self,'force'): self.force=False
 
 
     ########################################################################
@@ -45,9 +43,10 @@ class Step(templated, TableBase):
         except KeyError:
             vars={}
         vars['pipeline']=self.pipeline
-
+        vars['readset']=self.pipeline.readset
+        
         templated.load(self, vars=vars, final=True)
-        if self.has_attr('prototype'):
+        if 'prototype' in self.dict:
             ptype=Step(name=self.prototype)
             ptype.load(vars=vars)
             self.merge(ptype)
@@ -59,17 +58,19 @@ class Step(templated, TableBase):
     # returns the resulting string.
     # If no sh_template is required, return None.
     def sh_script(self):    
-        if 'sh_template' in self.attributes():
+        if 'sh_template' in self.dict:
             template_dir=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'),"templates","sh_template")
 
             domain=Domain(template_dir, errors=4)
             sh_template=self['sh_template']
             template=domain.get_template(sh_template)
 
-            vars=self.attributes().copy()
-            vars.update(self.pipeline['rnaseq'])
-            vars['readset']=self.pipeline.readset
+            vars={}
+            vars.update(self.dict)
+            #vars.update(self.pipeline.dict)
+            vars['readset']=self.pipeline.readset # fixme: really?
             vars['sh_cmd']=self.sh_cmdline() 
+            print vars
 
             try:
                 script=template.evoque(vars)
@@ -125,15 +126,15 @@ class Step(templated, TableBase):
 ########################################################################
 
     def inputs(self):
-        if 'input' not in self.attributes(): return []
+        if 'input' not in self.dict: return []
         return re.split("[,\s]+",self.input)
 
     def outputs(self):
-        if 'output' not in self.attributes(): return []
+        if 'output' not in self.dict: return []
         return re.split("[,\s]+",self.output)
     
     def creates(self):
-        if 'create' not in self.attributes(): return []
+        if 'create' not in self.dict: return []
         return re.split("[,\s]+",self.create)
     
     # current: return true if all of the step's outputs are older than all

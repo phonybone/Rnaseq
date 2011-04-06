@@ -24,7 +24,7 @@ class CreateTable(Command):
             raise UserError(self.usage())
 
 
-    classes=[Pipeline, PipelineRun, Step, StepRun]
+    classes=[Pipeline, PipelineRun, Step, StepRun, Readset]
 
     def run(self,*argv,**args):
         session=RnaseqGlobals.get_session()

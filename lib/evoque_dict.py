@@ -9,16 +9,23 @@ from dict_like import dict_like
 class evoque_dict(dict):
     def __init__(self,**args):
         dict.__init__(self,**args)
+        for k,v in args.items():
+            self[k]=v
+            setattr(self,k,v)
         self.missing_keys=[]
+
+        
 
     def __getitem__(self,key):
         try:
-            v=self.__dict__[key]
+            v=dict.__getitem__(self,key)
             return v
         except KeyError as ie:
-            self.missing_keys.append(key)
-#            raise Exception("key '%s' missing from evoque_dict" % key)
-            return "${%s}" % key
+            try:
+                return getattr(self,key)
+            except AttributeError as ie:
+                self.missing_keys.append(key)
+                return "${%s}" % key
 
     def copy(self,*args):
         dict.copy(self.__dict__,*args)

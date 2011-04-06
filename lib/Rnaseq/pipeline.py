@@ -13,20 +13,14 @@ from table_base import TableBase
 from step import *
 
 class Pipeline(templated, TableBase):
-    attrs={'name':None,
-           'description':None,
-           'type':'pipeline',
-           'suffix':'syml',
-           'steps':[],
-           'readset':None,              # object, not name thereof
-           '_ID':None,                  # convenience value for pipeline configs; NOT object.id
-           }
-    wd_time_format="%d%b%y.%H%M%S"
-
     def __init__(self,**args):
-        dict_like.__init__(self,**args)
         templated.__init__(self,**args)
         self.type='pipeline'
+        self.suffix='syml'
+        self.steps=[]
+        self._ID=None
+
+    wd_time_format="%d%b%y.%H%M%S"
 
 
     ########################################################################
@@ -52,22 +46,23 @@ class Pipeline(templated, TableBase):
         return None
 
     def load(self):
-        vars=self.readset.attributes()
+        vars={}
+        vars.update(self.dict)
+        vars.update(self.readset.dict)
         vars.update(RnaseqGlobals.config)
         
-        vars['readsfile']=self.readset.reads_file # fixme: might want to make reads_file a function, if iterated
+        #vars['readsfile']=self.readset.reads_file # fixme: might want to make reads_file a function, if iterated
         vars['ID']=self.ID()
         vars['align_suffix']=RnaseqGlobals.conf_value('rnaseq','align_suffix') # fixme: this really, really shouldn't be here
-        ev=evoque_dict().update(vars)
-        
-        # also fixme: should just add readset to vars, and let "clients" access it from there 
+        ev=evoque_dict()
+        ev.update(vars)
         templated.load(self, vars=ev, final=True)
-
+        
         # load steps.  (We're going to replace the current steps field, which holds a string of stepnames,
         # with a list of step objects
 
         try:
-            self.stepnames=re.split('[,\s]+',self.stepnames)
+            self.stepnames=re.split('[,\s]+',self['stepnames'])
         except AttributeError as ae:
             raise ConfigError("pipeline %s does not define stepnames" % self.name)
             
@@ -77,29 +72,28 @@ class Pipeline(templated, TableBase):
 
             # load the step's template and self.update with the values:
             try:
-                vars=self.attributes()
+                vars={}
+                vars.update(self.dict)
                 vars.update(RnaseqGlobals.config)
+                print "about to load %s" % step.name
                 step.load(vars=vars)
             except IOError as ioe:      # IOError??? Where does this generate an IOError?
                 raise ConfigError("Unable to load step %s" % sn, ioe)
             step.merge(self.readset)
-            # print "pipeline.load: step after merge(readset) is %s" % step
 
             # add in items from step sections in <pipeline.syml>
-            if not self.has_attr(step.name) or self[step.name] == None:
+            try:
+                step_hash=self[step.name]
+            except Exception as e:
                 raise ConfigError("Missing section: '%s' is listed as a step name in %s, but section with that name is absent." % \
                                   (step.name, self.template_file()))
                                   
 
             try:
-                # print "pipeline: self[%s] is\n%s" % (step.name, self[step.name])
                 step.update(self[step.name])
-                # print "pipeline: step %s is\n%s" %(step.name, step)
             except KeyError as e:
                 raise ConfigError("no %s in\n%s" % (step.name, yaml.dump(self.__dict__)))
                 
-            # print "pipeline: step %s:\n%s" % (step.name, yaml.dump(step))
-            
             self.steps.append(step)
             
 
@@ -137,7 +131,7 @@ class Pipeline(templated, TableBase):
             script+="\n"
 
             # insert check success step:
-            if not ('skip_success_check' in step.attributes() and step.skip_success_check): # god python is annoying at times
+            if not ('skip_success_check' in step.dict and step.skip_success_check): # god python is annoying at times
                 check_step.last_step=step.name
                 script+=check_step.sh_cmd()
 
@@ -167,7 +161,7 @@ class Pipeline(templated, TableBase):
     def working_dir(self):
         try:
             readset=self.readset
-            readsfile=readset.reads_file
+            readsfile=readset['reads_file']
             base_dir=os.path.dirname(readsfile)
         except KeyError as ke:
             raise UserError("Missing key: "+ke)
@@ -215,8 +209,8 @@ class Pipeline(templated, TableBase):
                     wd=os.path.dirname(reads_file)
                     #print "3. wd is %s" % wd
                 elif RnaseqGlobals.conf_value('rnaseq','wd_timestamp') or \
-                     ('wd_timestamp' in self.attributes() and \
-                      self.attributes()['wd_timestamp']): # -and isn't set to False
+                     ('wd_timestamp' in self.dict and \
+                      self.dict['wd_timestamp']): # -and isn't set to False
                     wd='rnaseq_'+time.strftime(self.wd_time_format)
                     #print "4. wd is %s" % wd
                 
@@ -301,7 +295,7 @@ class Pipeline(templated, TableBase):
                 except AttributeError as ae:
                     break
                 if os.access(path, os.X_OK) and not os.path.isdir(path): break
-                if 'interpreter' in step.attributes() and os.access(path, os.R_OK): break
+                if 'interpreter' in step.dict and os.access(path, os.R_OK): break
             else:                       # gets executed if for loop exits normally
                 errors.append("Missing executable in %s: %s" %(step.name, step.exe))
 
@@ -325,7 +319,8 @@ class Pipeline(templated, TableBase):
         if out_filename==None: out_filename=self.out_filename()
         if err_filename==None: err_filename=self.err_filename()
         qsub=templated(name='qsub', type='sh_template', suffix='tmpl')
-        vars=self.attributes()
+        vars={}
+        vars.update(self.dict)
         vars['name']=path_helpers.sanitize(self.name)
         vars['cmd']=script_filename
         vars['out_filename']=out_filename

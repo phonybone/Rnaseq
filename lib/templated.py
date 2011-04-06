@@ -15,7 +15,34 @@ from evoque_dict import evoque_dict     # not part of official evoque lib; my ow
 from warn import *
 
 
-class templated(dict_like):
+class templated(dict):
+    def __init__(self,**args):
+        for k,v in args.items():
+            setattr(self,k,v)
+        self.dict=self.__dict__         # convenience, hope it doesn't bite us
+
+    def __str__(self):
+        try:
+            return yaml.dump(self)
+        except:
+            return object.__str__(self)
+
+    def merge(self,d):                  # fixme: should go into dict_helper class or some such
+        if (not isinstance(d,dict)):    
+            if (isinstance(d,templated)):
+                d=d.dict
+            else:
+                raise ProgrammerGoof("%s: not a dict or templated" % type(d))
+
+        for (k,v) in d.items():
+            if (k not in self.dict): self[k]=v
+
+        return self
+
+        
+
+    ########################################################################
+
     # class vars
     template_dir=os.path.normpath(os.path.abspath(__file__)+"/../../templates")
     #template_dir=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'),"templates") # RnaseqGlobals not init'd yet
@@ -40,9 +67,15 @@ class templated(dict_like):
     # fixme: this is a good place to examine inserting superyaml code; but so far, no need
     # returns self
     def load(self, **args):
-        print "templated.load(%s.%s) called" % (self.type, self.name)
+        assert hasattr(self,'name')     # can't do "assert self.name" because that throws Attribute error
+        assert hasattr(self,'type')     # before assert even gets to it
+
         # get the template and call evoque() on it.  This should yield a yaml string
-        domain=Domain(self.template_dir, errors=4, quoting=str) # errors=4 means raise errors as an exception
+        try:
+            domain=Domain(self.template_dir, errors=4, quoting=str) # errors=4 means raise errors as an exception
+        except ValueError as ve:
+            raise ConfigError("Error in setting template directory: "+str(ve))
+        
         try: 
             tf=self.template_file()
             template=domain.get_template(tf)
@@ -52,8 +85,10 @@ class templated(dict_like):
         vars=args['vars'] if args.has_key('vars') else {} # consider default of self instead of {}?  Or is that stupid?
         #print "%s.%s: about to evoque: vars are:\n%s" % (self.name, self.type, yaml.dump(vars))
         ev=evoque_dict()
+        if 'vars' in args and args['vars']==None:
+            raise ProgrammerGoof("vars is None")
         ev.update(vars)
-        print "templated: ev is %s\nvars is %s" % (ev,vars)
+        #print "templated: ev is %s\nvars is %s" % (ev,vars)
         try: 
             yaml_str=template.evoque(ev)
             # why we want to keep this: evoque_dicts protect us against simple Key errors, but not
@@ -67,7 +102,7 @@ class templated(dict_like):
             raise ProgrammerGoof("%s '%s': %s" % (self.type, self.name, ae))
         
         # Check if all keys are needed:
-        if 'final' in args and args['final']:
+        if 'final' in args and args['final']: # might be present but false; perl rules!
             if len(ev.missing_keys)>0:
                 raise ConfigError("%s %s: missing keys in final load: %s" %(self.type, self.name, ", ".join(str(i) for i in (set(ev.missing_keys)))))
 
@@ -85,8 +120,8 @@ class templated(dict_like):
 
     # 
     def eval_tmpl(self,**args):
-        assert self.name
-        assert self.type
+        assert hasattr(self,'name')     # can't do "assert self.name" because that throws Attribute error
+        assert hasattr(self,'type')     # before assert even gets to it
 
         domain=Domain(self.template_dir, errors=4)
         tf=self.template_file()

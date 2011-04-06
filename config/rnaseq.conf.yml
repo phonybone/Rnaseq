@@ -14,7 +14,7 @@ rnaseq:
 
 # database
 db: 
-  db_name: provenance.sqlite3
+  db_name: db/provenance.sqlite3
 
 # "qsub" is the command used to submit a job to the cluster.  These items
 # all relate to the submissing of cluster jobs.

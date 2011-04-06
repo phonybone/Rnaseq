@@ -1,14 +1,13 @@
 import yaml
 from warn import *
 
-class dict_like(object):
-    attrs={}                            # sub classes override this
+class dict_like(dict):
 
     def __init__(self,**args):
-        print "%s: args are %s" % (type(self), args)
+        dict.__init__(self,**args)
         for k,v in args.items():
             setattr(self,k,v)
-        print "done now: self is %s" % self
+            #print "setting %s=%s" % (k,v)
     
     def __str__(self):
         s="%s:\n" % self.__class__

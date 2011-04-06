@@ -1,6 +1,6 @@
 name: remove_erccs
 description: remove 
 ewbt: ERCC_reference_081215
-blat_index: ${blat_index}/ERCC_reference_081215.2bit
+blat_index: ${pipeline['blat_index']}/ERCC_reference_081215.2bit
 prototype: ${rnaseq['aligner']}_filter
 

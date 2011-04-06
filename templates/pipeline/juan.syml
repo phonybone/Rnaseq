@@ -6,7 +6,7 @@ header:
   name: header
 
 export2fq:
-  input: ${readsfile}
+  input: ${readset['reads_file']}
   output: ${ID}.${align_suffix}
   args: ${rnaseq['fq_cmd']}
 

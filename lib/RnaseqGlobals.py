@@ -50,6 +50,11 @@ class RnaseqGlobals(object):
     def initialize(self, usage, **args):
         #print "initializing RnaseqGlobals"
         self.usage=usage
+        try:
+            self.testing=args['testing']
+        except:
+            self.testing=False
+            
         self.define_opts()
         
         opt_list=sys.argv
@@ -72,7 +77,8 @@ class RnaseqGlobals(object):
         self.add_options_to_conf(values)
 
         # connect to database:
-        db_file=os.path.join(self.conf_value('rnaseq','root_dir'), 'db', self.conf_value('db','db_name'))
+        db_name=self.conf_value('db','db_name') if not ('testing' in args and args['testing']) else self.conf_value('testing','test_db')
+        db_file=os.path.join(self.conf_value('rnaseq','root_dir'), db_name)
         try:
             self.dbh=sqlite3.connect(db_file)
         except sqlite3.OperationalError as oe:
@@ -171,7 +177,7 @@ class RnaseqGlobals(object):
         except AttributeError: pass
         
         db_name=os.path.join(self.conf_value('rnaseq','root_dir'), 'db', self.conf_value('db','db_name'))
-        engine=create_engine('sqlite:///%s' % db_name, echo=True)
+        engine=create_engine('sqlite:///%s' % db_name, echo=False)
         metadata=MetaData()
         Session=sessionmaker(bind=engine)
         session=Session()
