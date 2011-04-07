@@ -38,20 +38,26 @@ class Step(templated, TableBase):
     ########################################################################
 
     def load(self, **args):
-        try:
-            vars=args['vars']
-        except KeyError:
-            vars={}
+        try: vars=args['vars']
+        except KeyError: vars={}
         vars['pipeline']=self.pipeline
         vars['readset']=self.pipeline.readset
-        
         templated.load(self, vars=vars, final=True)
+
         try:
             ptype=Step(name=self['prototype'], pipeline=self.pipeline)
             ptype.load(vars=vars)
             self.merge(ptype)
         except KeyError:
-            print "step %s has no prototype" % self.name
+            pass
+
+        # only things that are defined in step.syml or step.prototype.syml, NOT pipeline.syml
+        for a in ['name', 'description', 'interpreter', 'exe', 'usage', 'force', 'sh_template']:
+            try:
+                setattr(self,a,self[a])
+            except:
+                pass
+
         return self
 
     # If a step needs more than one line to invoke (eg bowtie: needs to set an environment variable),
@@ -68,11 +74,13 @@ class Step(templated, TableBase):
             template=domain.get_template(sh_template)
 
             vars={}
+            vars.update(self)
             vars.update(self.dict)
-            #vars.update(self.pipeline.dict)
             vars['readset']=self.pipeline.readset # fixme: really?
             vars['sh_cmd']=self.sh_cmdline() 
-            print vars
+            vars['config']=RnaseqGlobals.config
+            vars['pipeline']=self.pipeline
+            #print vars
 
             try:
                 script=template.evoque(vars)
@@ -85,7 +93,6 @@ class Step(templated, TableBase):
     # use the self.usage formatting string to create the command line that executes the script/program for
     # this step.  Return as a string.  Throws exceptions as die()'s.
     def sh_cmdline(self):
-        print "sh_cmdline: self.name is %s" % self.name
         try:
             usage=self['usage']
             if usage==None:
@@ -133,16 +140,16 @@ class Step(templated, TableBase):
 ########################################################################
 
     def inputs(self):
-        if 'input' not in self.dict: return []
-        return re.split("[,\s]+",self.input)
+        try: return re.split("[,\s]+",self['input'])
+        except: return []
 
     def outputs(self):
-        if 'output' not in self.dict: return []
-        return re.split("[,\s]+",self.output)
+        try: return re.split("[,\s]+",self['output'])
+        except: return []
     
     def creates(self):
-        if 'create' not in self.dict: return []
-        return re.split("[,\s]+",self.create)
+        try: return re.split("[,\s]+",self['create'])
+        except: return []
     
     # current: return true if all of the step's outputs are older than all
     # of the steps inputs AND the step's exe:

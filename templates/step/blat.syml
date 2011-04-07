@@ -4,4 +4,4 @@ usage: '%(exe)s %(blat_index)s %(input)s %(args)s %(psl)s'
 exe: blat
 sh_template: blat.tmpl
 args: -fastMap -q=DNA -t=DNA
-align_suffix: ${rnaseq['align_suffix']}
+align_suffix: fa

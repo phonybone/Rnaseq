@@ -1,1 +1,0 @@
-/proj/hoodlab/share/vcassen/rna-seq/rna-seq-scripts/fq_all2std.pl

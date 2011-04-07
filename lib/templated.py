@@ -16,8 +16,14 @@ from warn import *
 
 
 class templated(dict):
-    def __init__(self,**args):
-        for k,v in args.items():
+    def __init__(self,*args,**kwargs):
+        if len(args)>0:
+            try:
+                for k,v in args[0].items():
+                    setattr(self,k,v)
+            except Exception as e:
+                print "templated.__init__: caught %s" % e
+        for k,v in kwargs.items():
             setattr(self,k,v)
         self.dict=self.__dict__         # convenience, hope it doesn't bite us
 
@@ -84,6 +90,7 @@ class templated(dict):
             raise UserError("%s '%s': missing template file %s/%s" % (self.type, self.name, self.template_dir, self.template_file()))
         
         vars=args['vars'] if args.has_key('vars') else {} # consider default of self instead of {}?  Or is that stupid?
+        vars['config']=RnaseqGlobals.config
         #print "%s.%s: about to evoque: vars are:\n%s" % (self.name, self.type, yaml.dump(vars))
         ev=evoque_dict()
         if 'vars' in args and args['vars']==None:

@@ -1,1 +1,0 @@
-/proj/hoodlab/share/vcassen/rna-seq/juan/bin/knowGene2Genome.pl

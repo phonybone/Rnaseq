@@ -43,6 +43,9 @@ class ShellScript(Command):
         except IndexError:
             output_path=os.path.join(pipeline.working_dir(), pipeline.scriptname())
 
+        if not os.path.isdir(pipeline.working_dir()):
+            os.makedirs(pipeline.working_dir())
+
         f=open(output_path, "w")
         script=pipeline.sh_script()
         f.write(script)

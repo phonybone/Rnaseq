@@ -11,8 +11,8 @@ echo 1>&2 starting ${pipeline.name}
 date 1>&2
 echo 1>&2
 
-export PATH=${path}
-export PYTHONPATH=$${PYTHONPATH}:${root_dir}/lib
+export PATH=${config['rnaseq']['path']}
+export PYTHONPATH=$${PYTHONPATH}:${config['rnaseq']['root_dir']}/lib
 
 exit_on_failure()
 {

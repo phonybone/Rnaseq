@@ -11,6 +11,13 @@ def warn(*a):
 
 def die(*args):
     warn(*args)
+    try:
+        exc=args[0]
+        if exc.show_traceback:
+            import traceback
+            traceback.print_exc()
+    except:
+        pass
     sys.exit(1)
 
 class RnaseqException(Exception):
@@ -20,7 +27,7 @@ class UserError(RnaseqException):
     show_traceback=False
 
 class ConfigError(RnaseqException):
-    show_traceback=False
+    show_traceback=True
 
 class ProgrammerGoof(RnaseqException):
     pass

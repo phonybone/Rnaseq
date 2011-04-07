@@ -25,7 +25,6 @@ class Readset(templated, TableBase):
 
     @classmethod
     def create_table(self, metadata, engine):
-        print "poof"
         readset_table=Table(self.__tablename__, metadata,
                             Column('id',Integer, primary_key=True),
                             Column('name',String,nullable=False),
@@ -35,7 +34,6 @@ class Readset(templated, TableBase):
                             Column('working_dir', String),
                             useexisting=True,
                          )
-        print "readset_table is %s" % readset_table
         metadata.create_all(engine)
         return readset_table
         

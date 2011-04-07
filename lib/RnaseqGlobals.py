@@ -77,8 +77,7 @@ class RnaseqGlobals(object):
         self.add_options_to_conf(values)
 
         # connect to database:
-        db_name=self.conf_value('db','db_name') if not ('testing' in args and args['testing']) else self.conf_value('testing','test_db')
-        db_file=os.path.join(self.conf_value('rnaseq','root_dir'), db_name)
+        db_file=self.get_db_file()
         try:
             self.dbh=sqlite3.connect(db_file)
         except sqlite3.OperationalError as oe:
@@ -173,17 +172,23 @@ class RnaseqGlobals(object):
 
     @classmethod
     def get_session(self):
-        try: return self.session
-        except AttributeError: pass
-        
-        db_name=os.path.join(self.conf_value('rnaseq','root_dir'), 'db', self.conf_value('db','db_name'))
-        engine=create_engine('sqlite:///%s' % db_name, echo=False)
-        metadata=MetaData()
-        Session=sessionmaker(bind=engine)
-        session=Session()
-        self.engine=engine
-        self.metadata=metadata
-        self.session=session
-        return session
+        try: 
+            return self.session
+        except AttributeError: 
+            db_name=self.get_db_file()
+            engine=create_engine('sqlite:///%s' % db_name, echo=False)
+            metadata=MetaData()
+            Session=sessionmaker(bind=engine)
+            session=Session()
+            self.engine=engine
+            self.metadata=metadata
+            self.session=session
+            return session
+
+    @classmethod
+    def get_db_file(self, ):
+        db_name=self.conf_value('db','db_name') if not self.testing else self.conf_value('testing','test_db')
+        db_file=os.path.join(self.conf_value('rnaseq','root_dir'), db_name)
+        return db_file
 
 #print __file__,"checking in"

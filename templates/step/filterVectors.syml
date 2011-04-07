@@ -2,6 +2,6 @@ name: filterVectors
 description: filter vectors
 ewbt: UniVec_Core
 blat_index: ${pipeline['blat_index']}/solexa_primers.2bit
-prototype: ${rnaseq['aligner']}_filter
+prototype: ${config['rnaseq']['aligner']}_filter
 
 

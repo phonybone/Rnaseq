@@ -1,35 +1,31 @@
 #-*-python-*-
 from warn import *
+from Rnaseq import *
 from RnaseqGlobals import RnaseqGlobals
 from Rnaseq.command import *
-
-try:
-    import sqlite3
-except:
-    from pysqlite2 import dbapi2 as sqlite3
-
+import re
 
 
 class InsertProv(Command):
+    def usage(self):
+        return "usage: insert <class> [field='value']*"
+
     def description(self):
-        return "insert a dataset (path) and authoring script into the database"
+        return "insert a database object"
     
     def run(self, *argv, **args):
-        try:
-            dbh=args['dbh']
-            path=argv[2]                # [0] is script name, [1] is command
-            author=argv[3]
-            tablename=RnaseqGlobals.conf_value('db','tablename')
-            sql="INSERT INTO %s (path, author) VALUES ('%s', '%s')" % (tablename, path, author)
-            dbh.execute(sql)
-            dbh.commit()
-            print "data %s inserted" % path
+        try: classname=argv[0][2]                # [0] is script name, [1] is command
+        except IndexError: raise UserError(self.usage())
+        
+        try: klass=globals()[classname]
+        except KeyError: raise UserError("%s: unknown class" % classname)
 
-        except KeyError as e:
-            raise MissingArgError(str(e))
-        except IndexError as e:
-            raise UserError("Missing args in '%s' (insert needs <path> and <author>, in that order)" % " ".join(argv[1:3]))
-        #except OperationalError as oe:
-        #raise str(oe)
-            
-#print __file__, "checking in"
+        obj_hash={}
+        paired=[p for p in argv[0] if re.match("\w+=\w+", p)]
+
+        for pair in paired:
+            k,v=re.split("=",pair)
+            obj_hash[k]=v
+
+        o=klass(obj_hash)
+        print "o is %s" % o

@@ -1,1 +1,7 @@
-Missing values in sh script: check_step, prov_step at a minimum.
+fix bit with aligner as a command-line param....
+
+checking success:
+- Have to update pipeline_run of status, success if failed
+- Have to record success/failure of step_run 
+
+Have to fixup all templated-derived class constuctors for *args, **kwargs

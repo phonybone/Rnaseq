@@ -13,8 +13,8 @@ from table_base import TableBase
 from step import *
 
 class Pipeline(templated, TableBase):
-    def __init__(self,**args):
-        templated.__init__(self,**args)
+    def __init__(self,*args,**kwargs):
+        templated.__init__(self,*args,**kwargs)
         self.type='pipeline'
         self.suffix='syml'
         self.steps=[]
@@ -75,9 +75,7 @@ class Pipeline(templated, TableBase):
                 vars={}
                 vars.update(self.dict)
                 vars.update(RnaseqGlobals.config)
-                print "pipeline.load(): about to load %s" % step.name
                 step.load(vars=vars)
-                #print "pipeline: %s.load yields %s" % (step.name, step)
             except IOError as ioe:      # IOError??? Where does this generate an IOError?
                 raise ConfigError("Unable to load step %s" % sn, ioe)
             step.merge(self.readset)
@@ -89,12 +87,13 @@ class Pipeline(templated, TableBase):
                 raise ConfigError("Missing section: '%s' is listed as a step name in %s, but section with that name is absent." % \
                                   (step.name, self.template_file()))
                                   
+            #print "%s: step_hash is %s" % (step.name, step_hash)
 
             try:
-                step.update(self[step.name])
+                step.update(step_hash)
             except KeyError as e:
                 raise ConfigError("no %s in\n%s" % (step.name, yaml.dump(self.__dict__)))
-                
+
             self.steps.append(step)
             
 
@@ -132,17 +131,20 @@ class Pipeline(templated, TableBase):
             script+="\n"
 
             # insert check success step:
-            if not ('skip_success_check' in step.dict and step.skip_success_check): # god python is annoying at times
+            try: skip_check=step['skip_success_check'] 
+            except: skip_check=False
+            if not skip_check: 
                 check_step.last_step=step.name
                 script+=check_step.sh_cmd()
 
-            # record provenance for outputs:
+            # record provenance for outputs: (or not)
             for o in set(step.outputs())|set(step.creates()):
                 prov_step.output=o
                 prov_step.args=" ".join((o, step.exe)) # double (())'s to make it a tuple
                 #script+=prov_step.sh_cmd()
             script+="\n"
-
+            print "step %s added" % step.name
+            
         # record finish:
         prov_step.cmd='update'
         prov_step.args="-p %s --status finished" % self.name
@@ -292,11 +294,14 @@ class Pipeline(templated, TableBase):
         for step in self.steps:
             for d in dirs:
                 try:
-                    path=os.path.join(d,step.exe)
+                    path=os.path.join(d,step.exe) # how does this generate an AttributeError??? on step.exe???
                 except AttributeError as ae:
                     break
+
                 if os.access(path, os.X_OK) and not os.path.isdir(path): break
                 if 'interpreter' in step.dict and os.access(path, os.R_OK): break
+                try: intr=step.interpreter
+                except: intr=None
             else:                       # gets executed if for loop exits normally
                 errors.append("Missing executable in %s: %s" %(step.name, step.exe))
 
@@ -337,18 +342,5 @@ class Pipeline(templated, TableBase):
 
     
     ########################################################################
-
-    # make sure self is up to date in the db (also all steps)
-    # create a new PipelineRun object based on self, store that in the db (also StepRun instances)
-    # 
-    def store_run(self):
-        session=RnaseqGlobals.get_session()
-        if hasattr(self,'id') and self.id != None:
-            # look up self.name in the db; add self to db if not found
-            db_self=session.query(Pipeline).filter_by(name=self.name).all()
-            print "db_self is %s" % db_self
-        else:
-            session.add(self)
-            session.commit()
         
         
