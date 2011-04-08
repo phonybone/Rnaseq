@@ -4,4 +4,20 @@ checking success:
 - Have to update pipeline_run of status, success if failed
 - Have to record success/failure of step_run 
 
-Have to fixup all templated-derived class constuctors for *args, **kwargs
+pipeline run:
+- Verify that the pipeline exists in the db; get id
+- Create and insert a pipeline_run object using pipeline_id et al
+- Incorporate pipeline_run id into script for updates:
+- - Before starting step:
+python bin/provenance insert StepRun pipeline_run_id=$id status='started'
+
+- - On success:
+python bin/provenance update PipelineRun id=$id status="%step.name completed"
+python bin/provenance update StepRun id=$id status="%step.name completed" successful=True
+
+- - On failure:
+python bin/provenance update PipelineRun id=$id status="%step.name failed" successful=False
+python bin/provenance update StepRun id=$id status="%step.name failed" successful=False
+
+
+Have to put a UNIQUE restraint on pipeline names in the db

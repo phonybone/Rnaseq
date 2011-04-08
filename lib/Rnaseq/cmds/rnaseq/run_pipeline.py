@@ -28,6 +28,7 @@ class RunPipeline(Command):
             raise ProgrammerGoof(e)
 
         try:
+            # Create the pipeline and readset objects:
             readset_name=RnaseqGlobals.conf_value('readset_name')
             pipeline_name=RnaseqGlobals.conf_value('pipeline_name')
             if readset_name==None or pipeline_name==None:

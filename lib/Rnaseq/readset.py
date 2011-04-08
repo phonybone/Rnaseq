@@ -7,8 +7,8 @@ from sqlalchemy import *
 from table_base import TableBase
 
 class Readset(templated, TableBase):
-    def __init__(self,**args):
-        templated.__init__(self,**args)
+    def __init__(self,*args,**kwargs):
+        templated.__init__(self,*args,**kwargs)
         self.suffix='syml'
         self.type='readset'
     

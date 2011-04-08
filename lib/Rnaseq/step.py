@@ -9,8 +9,8 @@ from sqlalchemy import *
 from table_base import TableBase
 
 class Step(templated, TableBase):
-    def __init__(self,**args):
-        templated.__init__(self,**args)
+    def __init__(self,*args,**kwargs):
+        templated.__init__(self,*args,**kwargs)
         self.type='step'
         self.suffix='syml'
         if not hasattr(self,'force'): self.force=False

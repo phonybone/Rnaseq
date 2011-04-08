@@ -26,6 +26,8 @@ class InsertProv(Command):
         for pair in paired:
             k,v=re.split("=",pair)
             obj_hash[k]=v
-
         o=klass(obj_hash)
-        print "o is %s" % o
+        
+        session=RnaseqGlobals.get_session()
+        session.add(o)
+        session.commit()

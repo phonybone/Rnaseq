@@ -344,3 +344,10 @@ class Pipeline(templated, TableBase):
     ########################################################################
         
         
+    # Create and store a PipelineRun object based on this pipeline
+    def store_run(self):
+        # look up self in the db; add if not found:
+        session=RnaseqGlobals.get_session()
+        pipeline_orms=session.query(Pipeline).filter_by(name=self.name).all()
+        print 
+        pr=PipelineRun()
