@@ -1,4 +1,4 @@
-reads_file: ${rnaseq['root_dir']}/t/fixtures/readsets/s_6_export.1K.txt
+reads_file: ${rnaseq['root_dir']}/t/fixtures/readsets/s_?_export.1K.txt
 org: mouse
 readlen: 75
 

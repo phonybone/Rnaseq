@@ -18,16 +18,19 @@ exit_on_failure()
 {
   retcode=$$1
   last_step=$$2
+  pipelinerun_id=$$3	# optional
+  steprun_id=$$4        # optional
+
   if [ $$retcode != 0 ]; then
     echo $${last_step} failed 1>&2
-    python $${root_dir}/bin/provenance update PipelineRun -id <pipeline_run_id> --status '$${last_step} failed' --successful=False
-    python $${root_dir}/bin/provenance update StepRun id=$id status="$${step.name} failed" successful=False
+    python $${root_dir}/bin/provenance update PipelineRun --id $$pipelinerun_id --status '$${last_step} failed' --successful=False
+    python $${root_dir}/bin/provenance update StepRun --id=$$steprun_id --status="$${step.name} failed" successful=False
 
     exit $$retcode
   else
     echo $${last_step} passed 1>&2
-    python $${root_dir}/bin/provenance update PipelineRun id=$id status="$${step.name} completed"
-    python $${root_dir}/bin/provenance update StepRun id=$id status="$${step.name} completed" successful=True
+    python $${root_dir}/bin/provenance update PipelineRun --id=$$pipelinerun_id --status="$${step.name} completed"
+    python $${root_dir}/bin/provenance update StepRun --id=$$steprun_id --status="$${step.name} completed" successful=True
 
   fi
 }

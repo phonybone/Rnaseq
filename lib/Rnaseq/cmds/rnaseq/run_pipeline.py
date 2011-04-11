@@ -27,24 +27,24 @@ class RunPipeline(Command):
         except IndexError as e:
             raise ProgrammerGoof(e)
 
-        try:
-            # Create the pipeline and readset objects:
-            readset_name=RnaseqGlobals.conf_value('readset_name')
-            pipeline_name=RnaseqGlobals.conf_value('pipeline_name')
-            if readset_name==None or pipeline_name==None:
-                raise UserError(self.usage())
-            
-            readset=Readset(name=readset_name).load() 
+        # Create the pipeline and readset objects:
+        readset=Readset(name=readset_name).load() 
+
+        # Iterate through reads files defined in readset:
+        # fixme: condense this loop
+        for reads_path in readset.path_iterator():
+            print "reads_path is %s" % reads_path
+            readset['reads_file']=reads_path
             pipeline=Pipeline(name=pipeline_name, readset=readset).load()
             pipeline.update(RnaseqGlobals.config)
-            # code up to this point copied verbatim from load.py; would be nice if one command could call another?
-            # and if commands could return values...
 
-            pipeline=pipeline.store_run()
-            raise ProgrammerGoof('testing')
+            # Create the PipelineRun object:
+            if False:
+                pipeline_run=PipelineRun(pipeline)
+                session=RnaseqGlobals.get_session()
+                session.add(pipeline_run)
             
             # create and store the pipeline's shell script:
-            # taken from code in shell_script.py...
             script=pipeline.sh_script()
             script_filename=os.path.join(pipeline.working_dir(), pipeline.scriptname())
             try:
@@ -69,22 +69,24 @@ class RunPipeline(Command):
                 output=open(out_filename, 'w')
                 err=open(err_filename, 'w')
 
-
+            # create the cmd list:
             cmd.append(script_filename)
             print "launch cmd is '%s'" % " ".join(cmd)
 
-            pipe=subprocess.Popen(cmd, stdout=output, stderr=err)
-            retcode=pipe.wait()
-            if cmd[0]=="sh":
-                output.close()
-                err.close()
-            retcode=0
-            if retcode != 0:
-                raise UserError("pipeline failed with return code %d\nsee %s.out and %s.err for diagnostics (in %s)" % \
-                                (retcode, pipeline.name, pipeline.name, pipeline.working_dir()))
+            # launch the subprocess and check for success:
+            if not RnaseqGlobals.option('no_run'):
+                pipe=subprocess.Popen(cmd, stdout=output, stderr=err)
+                retcode=pipe.wait()
+                if cmd[0]=="sh":
+                    output.close()
+                    err.close()
+                    retcode=0   # why???
+                if retcode != 0:
+                    raise UserError("pipeline failed with return code %d\nsee %s.out and %s.err for diagnostics (in %s)" % \
+                                        (retcode, pipeline.name, pipeline.name, pipeline.working_dir()))
+                
 
-        except DummyException as de:
-            pass
+    ########################################################################
 
 
     def qsub_launcher(self):

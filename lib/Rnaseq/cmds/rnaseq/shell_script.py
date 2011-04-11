@@ -6,6 +6,8 @@ import sys, yaml
 
 # usage: provenance load <readset pipeline>
 # This is sort of a test command, probably won't be used in production
+# It's getting obsolete: there is no support for testing of provenance stuff.
+# Use rnaseq run -n -p <pipeline> -r <readset> instead (-n supresses running of pipeline)
 
 class ShellScript(Command):
     def usage(self):

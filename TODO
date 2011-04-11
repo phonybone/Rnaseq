@@ -21,3 +21,5 @@ python bin/provenance update StepRun id=$id status="%step.name failed" successfu
 
 
 Have to put a UNIQUE restraint on pipeline names in the db
+
+get rid of dbh stuff in favor of sqlalchemy crap

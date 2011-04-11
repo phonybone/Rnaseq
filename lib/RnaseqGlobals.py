@@ -99,6 +99,7 @@ class RnaseqGlobals(object):
         parser.add_option('--cluster',       dest='use_cluster',     help="execute operations on a cluster (requires additional config settings)", action='store_true', default=False)
         parser.add_option("-c","--config",   dest="config_file",     help="specify alternative config file", default=os.path.normpath(os.path.abspath(__file__)+"/../../config/rnaseq.conf.yml"))
         parser.add_option("-f","--force",    dest="force",           help="force execution of pipelines and steps even if targets are up to date", action='store_true', default=False)
+        parser.add_option("-n","--no_run",   dest="no_run",          help="supress actuall running", default=False, action='store_true')
         parser.add_option("-p","--pipeline", dest="pipeline_name",   help="pipeline name")
         parser.add_option("-r","--readset",  dest="readset_name",    help="readset name")
 

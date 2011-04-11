@@ -12,7 +12,7 @@ from table_base import TableBase
 
 from step import *
 
-class Pipeline(templated, TableBase):
+class Pipeline(TableBase, templated):
     def __init__(self,*args,**kwargs):
         templated.__init__(self,*args,**kwargs)
         self.type='pipeline'
@@ -27,14 +27,14 @@ class Pipeline(templated, TableBase):
 
     __tablename__='pipeline'
     id=Column(Integer, primary_key=True)
-    name=Column(String, nullable=False)
+    name=Column(String, nullable=False, index=True, unique=True)
     description=Column(String)
         
     @classmethod
     def create_table(self, metadata, engine):
         pipeline_table=Table(self.__tablename__, metadata,
                              Column('id', String, primary_key=True),
-                             Column('name', String, nullable=False),
+                             Column('name', String, nullable=False, index=True, unique=True),
                              Column('description', String))
         metadata.create_all(engine)
         return pipeline_table
@@ -52,11 +52,11 @@ class Pipeline(templated, TableBase):
         vars.update(RnaseqGlobals.config)
         
         #vars['readsfile']=self.readset.reads_file # fixme: might want to make reads_file a function, if iterated
-        vars['ID']=self.ID()
+        #vars['ID']=self.ID()
         vars['align_suffix']=RnaseqGlobals.conf_value('rnaseq','align_suffix') # fixme: this really, really shouldn't be here
         ev=evoque_dict()
         ev.update(vars)
-        templated.load(self, vars=ev, final=True)
+        templated.load(self, vars=ev, final=False)
         
         # load steps.  (We're going to replace the current steps field, which holds a string of stepnames,
         # with a list of step objects
@@ -110,7 +110,9 @@ class Pipeline(templated, TableBase):
     # return an entire shell script that runs the pipeline
     # warning: this will add a "current" check, which might become out of date if
     # things change between when this script is created and when it is executed.
-    def sh_script(self):
+    def sh_script(self,**kwargs):
+        
+
         script="#!/bin/sh\n\n"
         check_step=Step(name='check_success', pipeline=self).load()
         prov_step=Step(name='provenance', pipeline=self).load()
@@ -153,7 +155,8 @@ class Pipeline(templated, TableBase):
         return script
 
     def scriptname(self):
-        return path_helpers.sanitize(self.name)+".sh"
+        reads_file_root=os.path.splitext(os.path.basename(self.readset['reads_file']))[0]
+        return path_helpers.sanitize(self.name+'.'+reads_file_root)+".sh"
 
     # get the working directory for the pipeline.
     # first ,check to see if the readset defines a working_dir
@@ -189,13 +192,8 @@ class Pipeline(templated, TableBase):
     # a combination of a working_directory and the basename of the
     # readsfile.  Final value will depend on whether the reads file
     # or the specified working directory are relative or absolute.
-    def ID(self):
-        try:
-            if self._ID: return self._ID
-        except AttributeError: pass
-        
+    def ID(self, reads_file):
         # try a few different things to get the working directory:
-        reads_file=self.readset['reads_file']
         try:
             wd=self.readset['working_dir']
             if (wd=='wd_timestamp'): wd='rnaseq_'+time.strftime(self.wd_time_format)
@@ -231,7 +229,7 @@ class Pipeline(templated, TableBase):
             id=os.path.join(os.getcwd(), wd, os.path.basename(reads_file))
             #print "8. id is %s" % id
 
-        self._ID=id
+        #self._ID=id
         #print "ID() returning %s" % id
         return id
         
@@ -343,11 +341,11 @@ class Pipeline(templated, TableBase):
     
     ########################################################################
         
-        
-    # Create and store a PipelineRun object based on this pipeline
-    def store_run(self):
-        # look up self in the db; add if not found:
+    # return the id of an object, looking itself up and/or inserting itself into the
+    # db as necessary:
+    def fetch_id(self):
+        try: return self.id
+        except AttributeError: pass
+
         session=RnaseqGlobals.get_session()
-        pipeline_orms=session.query(Pipeline).filter_by(name=self.name).all()
-        print 
-        pr=PipelineRun()
+        mself=session.merge(self)

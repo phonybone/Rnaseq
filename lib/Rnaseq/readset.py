@@ -1,6 +1,6 @@
 #-*-python-*-
 
-import yaml, socket, os
+import yaml, socket, os, glob
 from dict_like import dict_like
 from templated import templated
 from sqlalchemy import *
@@ -46,4 +46,7 @@ class Readset(templated, TableBase):
             user=os.environ['USER']
             suffix=".".join(socket.gethostname().split('.')[-2:])
             return "@".join((user,suffix))
+
+    def path_iterator(self):
+        return glob.glob(self['reads_file'])
 

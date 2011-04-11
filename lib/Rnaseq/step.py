@@ -65,7 +65,7 @@ class Step(templated, TableBase):
     # within the templates/sh_templates subdir).  This routine fetches the template and calls evoque on it, and
     # returns the resulting string.
     # If no sh_template is required, return None.
-    def sh_script(self):    
+    def sh_script(self, **kwargs):
         if 'sh_template' in self.dict:
             template_dir=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'),"templates","sh_template")
 
@@ -80,6 +80,7 @@ class Step(templated, TableBase):
             vars['sh_cmd']=self.sh_cmdline() 
             vars['config']=RnaseqGlobals.config
             vars['pipeline']=self.pipeline
+            vars.update(kwargs)
             #print vars
 
             try:
