@@ -5,8 +5,11 @@ from table_base import TableBase
 from sqlalchemy import *
 from sqlalchemy.orm import backref, relation
 
-class StepRun(TableBase):
+#class StepRun(TableBase):
+class StepRun(object):
     __tablename__='step_run'
+
+    crap='''
     id=Column(Integer, primary_key=True)
     step_id=Column(Integer, ForeignKey('step.id'))
     pipeline_run_id=Column(Integer, ForeignKey('pipeline_run.id'))
@@ -16,6 +19,7 @@ class StepRun(TableBase):
     successful=Column(Boolean)
     step=relation(Step,backref=backref(Step.__tablename__, order_by=id))
     pipeline_run=relation(PipelineRun, backref=backref(PipelineRun.__tablename__, order_by=id))
+'''
     
     def __init__(self,**args):
         for k,v in args.items():

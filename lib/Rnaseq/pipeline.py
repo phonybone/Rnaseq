@@ -8,11 +8,10 @@ from templated import *
 from RnaseqGlobals import RnaseqGlobals
 import path_helpers
 from sqlalchemy import *
-from table_base import TableBase
 
 from step import *
 
-class Pipeline(TableBase, templated):
+class Pipeline(templated):
     def __init__(self,*args,**kwargs):
         templated.__init__(self,*args,**kwargs)
         self.type='pipeline'
@@ -26,16 +25,14 @@ class Pipeline(TableBase, templated):
     ########################################################################
 
     __tablename__='pipeline'
-    id=Column(Integer, primary_key=True)
-    name=Column(String, nullable=False, index=True, unique=True)
-    description=Column(String)
         
     @classmethod
     def create_table(self, metadata, engine):
         pipeline_table=Table(self.__tablename__, metadata,
-                             Column('id', String, primary_key=True),
+                             Column('id', Integer, primary_key=True, autoincrement=True),
                              Column('name', String, nullable=False, index=True, unique=True),
-                             Column('description', String))
+                             Column('description', String),
+                             )
         metadata.create_all(engine)
         return pipeline_table
     
@@ -349,3 +346,5 @@ class Pipeline(TableBase, templated):
 
         session=RnaseqGlobals.get_session()
         mself=session.merge(self)
+
+print "%s checking in: Pipeline.__name__ is %s" % (__file__,Pipeline.__name__)

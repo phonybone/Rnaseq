@@ -20,7 +20,6 @@ except ImportError as e:
     sys.stderr.write("(%s)\n" % e)
     sys.exit(1)
 
-from warn import *
 
 ########################################################################
 
@@ -38,7 +37,7 @@ def main():
     cmd=cf.new_cmd(cmd)
 
     # run the command 
-    cmd.run(argv, dbh=RnaseqGlobals.dbh, config=RnaseqGlobals.config)
+    cmd.run(argv, config=RnaseqGlobals.config)
     print "rnaseq: done"
 
 ########################################################################

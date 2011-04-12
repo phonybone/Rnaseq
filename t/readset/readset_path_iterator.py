@@ -11,7 +11,7 @@ class TestCreate(unittest.TestCase):
 
 class TestPathIterator(TestCreate):
     def runTest(self):
-        readset=Readset(name='readset').load(vars=RnaseqGlobals.config)
+        readset=Readset(name='readset_many').load(vars=RnaseqGlobals.config)
         path_it=readset.path_iterator()
         self.assertEqual(len(path_it),3)
         for path in path_it:

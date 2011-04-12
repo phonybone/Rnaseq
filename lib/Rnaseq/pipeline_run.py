@@ -4,8 +4,10 @@ from table_base import TableBase
 from sqlalchemy import *
 from sqlalchemy.orm import backref, relation
 
-class PipelineRun(TableBase):
+#class PipelineRun(TableBase):
+class PipelineRun(object):
     __tablename__='pipeline_run'
+    crap='''
     id=Column(Integer, primary_key=True)
     pipeline_id=Column(Integer, ForeignKey('pipeline.id'))
     start_time=Column(Integer)
@@ -13,6 +15,7 @@ class PipelineRun(TableBase):
     status=Column(String)
     successful=Column(Boolean)
     pipeline=relation(Pipeline,backref=backref(Pipeline.__tablename__, order_by=id))
+'''
         
     def __init__(self,pipeline):
         pass

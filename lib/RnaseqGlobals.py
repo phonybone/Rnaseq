@@ -1,14 +1,11 @@
 #-*-python-*-
 import os, sys, optparse, yaml, re
+from Rnaseq import *
 from warn import *
-try:
-    import sqlite3
-except:
-    from pysqlite2 import dbapi2 as sqlite3
 
-from sqlite3 import OperationalError
 from sqlalchemy import *
 from sqlalchemy.orm import mapper, sessionmaker
+
 
     ########################################################################
     # Callbacks:
@@ -76,12 +73,7 @@ class RnaseqGlobals(object):
         self.read_config(config_file)
         self.add_options_to_conf(values)
 
-        # connect to database:
-        db_file=self.get_db_file()
-        try:
-            self.dbh=sqlite3.connect(db_file)
-        except sqlite3.OperationalError as oe:
-            raise ConfigError(str(oe)+": db_file is %s" % db_file)
+        self.get_session()
 
         return argv
 
@@ -177,8 +169,15 @@ class RnaseqGlobals(object):
             return self.session
         except AttributeError: 
             db_name=self.get_db_file()
-            engine=create_engine('sqlite:///%s' % db_name, echo=False)
+            engine=create_engine('sqlite:///%s' % db_name, echo=True)
             metadata=MetaData()
+
+            from Rnaseq import Pipeline, Step, Readset, PipelineRun, StepRun
+            for cls in [Pipeline,Step,Readset,PipelineRun,StepRun]:
+                tbl=cls.create_table(metadata,engine)
+                mapper(cls,tbl)
+                print "%s mapped" % cls.__name__
+
             Session=sessionmaker(bind=engine)
             session=Session()
             self.engine=engine
@@ -187,7 +186,7 @@ class RnaseqGlobals(object):
             return session
 
     @classmethod
-    def get_db_file(self, ):
+    def get_db_file(self):
         db_name=self.conf_value('db','db_name') if not self.testing else self.conf_value('testing','test_db')
         db_file=os.path.join(self.conf_value('rnaseq','root_dir'), db_name)
         return db_file

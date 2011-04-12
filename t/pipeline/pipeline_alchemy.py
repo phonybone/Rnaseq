@@ -18,7 +18,7 @@ class TestCreate(unittest.TestCase):
         
         Pipeline.create_table(RnaseqGlobals.metadata, RnaseqGlobals.engine)
         print "Pipeline table created"
-        
+        self.session.flush()
 
 class TestInsert(TestCreate):
     def runTest(self):

@@ -8,7 +8,8 @@ from warn import *
 from sqlalchemy import *
 from table_base import TableBase
 
-class Step(templated, TableBase):
+#class Step(templated, TableBase):
+class Step(templated):
     def __init__(self,*args,**kwargs):
         templated.__init__(self,*args,**kwargs)
         self.type='step'
@@ -18,9 +19,11 @@ class Step(templated, TableBase):
 
     ########################################################################
     __tablename__='step'
+    crap='''
     id=Column(Integer, primary_key=True)
     name=Column(String, nullable=False)
     description=Column(String)
+'''
     
     @classmethod
     def create_table(self, metadata, engine):
