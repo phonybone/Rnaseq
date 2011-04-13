@@ -83,6 +83,7 @@ class Step(templated):
             vars['sh_cmd']=self.sh_cmdline() 
             vars['config']=RnaseqGlobals.config
             vars['pipeline']=self.pipeline
+            vars['ID']=self.pipeline.ID()
             vars.update(kwargs)
             #print vars
 
@@ -106,9 +107,9 @@ class Step(templated):
 
         # look for exe in path, unless exe is an absolute path
         try:
-            if os.path.abspath(self.exe)!=self.exe:
-                self.exe=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'), 'bin', self.exe)
-        except AttributeError as ae:
+            if os.path.abspath(self['exe'])!=self['exe']:
+                self['exe']=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'), 'bin', self['exe'])
+        except KeyError as ae:          # not all steps have self['exe']; eg header, footer
             pass
 
 
@@ -171,7 +172,7 @@ class Step(templated):
             if mtime > latest_input:
                 latest_input=mtime
 
-            exe_file=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'), 'bin', self.exe)
+            exe_file=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'), 'bin', self['exe'])
             exe_mtime=os.stat(exe_file).st_mtime
             if exe_mtime > latest_input:
                 latest_input=exe_mtime

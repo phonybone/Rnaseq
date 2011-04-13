@@ -33,7 +33,6 @@ class RunPipeline(Command):
         # Iterate through reads files defined in readset:
         # fixme: condense this loop
         for reads_path in readset.path_iterator():
-            print "reads_path is %s" % reads_path
             readset['reads_file']=reads_path
             pipeline=Pipeline(name=pipeline_name, readset=readset).load()
             pipeline.update(RnaseqGlobals.config)
@@ -53,7 +52,7 @@ class RunPipeline(Command):
                 pass                    # already exists, that's ok (fixme: could be permissions error)
             with open(script_filename, "w") as f:
                 f.write(script)
-                warn("%s written" % script_filename)
+                print "%s written" % script_filename
 
             # if running on the cluster, generate a calling (qsub) script and invoke that;
             out_filename=pipeline.out_filename()
@@ -74,7 +73,7 @@ class RunPipeline(Command):
             print "launch cmd is '%s'" % " ".join(cmd)
 
             # launch the subprocess and check for success:
-            if not RnaseqGlobals.option('no_run'):
+            if not RnaseqGlobals.conf_value('no_run'):
                 pipe=subprocess.Popen(cmd, stdout=output, stderr=err)
                 retcode=pipe.wait()
                 if cmd[0]=="sh":

@@ -6,34 +6,6 @@ from warn import *
 from sqlalchemy import *
 from sqlalchemy.orm import mapper, sessionmaker
 
-
-    ########################################################################
-    # Callbacks:
-
-def aligner_callback(option, opt_str, value, parser):
-    try:                                # fixme: this has got to go!
-        hash={'bowtie': { 'aligner_suffix':'fq',
-                          'fq_cmd': 'solexa2fastq',
-                          },
-              'blat': {'aligner_suffix':'fa',
-                       'fq_cmd': 'solexa2fasta',
-                       },
-              }
-        subhash=hash[value]
-    except KeyError as ke:
-        raise optparse.OptionValueError("Unknown aligner: %s" % ke)
-
-    try:
-        setattr(parser.values, option.dest, value)
-        suffix=subhash['aligner_suffix']
-        setattr(parser.values, 'rnaseq__align_suffix', subhash['aligner_suffix'])
-        setattr(parser.values, 'rnaseq__fq_cmd', subhash['fq_cmd'])
-    except Exception as e:
-        print "caught an %s: %s" % (type(e),e)
-        raise optparse.OptionValueError(str(e))
-
-
-
 # This should really be a singleton class
 class RnaseqGlobals(object):
     parser=''                           # gets overwritten
@@ -45,33 +17,27 @@ class RnaseqGlobals(object):
 
     @classmethod
     def initialize(self, usage, **args):
-        #print "initializing RnaseqGlobals"
         self.usage=usage
-        try:
-            self.testing=args['testing']
-        except:
-            self.testing=False
+        try: self.testing=args['testing']
+        except: self.testing=False
             
         self.define_opts()
-        
         opt_list=sys.argv
         try:
             opt_list.extend(args['opt_list'])
         except KeyError as ke:
-            if str(ke) != "'opt_list'":
-                raise ke
+            if str(ke) != "'opt_list'": raise ke
         (values,argv)=self.parse_cmdline(opt_list=opt_list)
+        self.values=values
 
-        # order of checking config file: args['config_file'], values2, values
-        try:
-            config_file=args['config_file']
-        except:
-            config_file=values.config_file # blow up if this doesn't work, but shouldn't since there's a default value
 
-        
         # set option values in config, in specific order:
+        try: config_file=args['config_file']
+        except: config_file=values.config_file # blow up if this doesn't work, but shouldn't since there's a default value
         self.read_config(config_file)
-        self.add_options_to_conf(values)
+        self.fix_align_params()         # ugh (fixme)
+        self.add_options_to_conf(values) # converts "__" entries, et al
+
 
         self.get_session()
 
@@ -85,7 +51,7 @@ class RnaseqGlobals(object):
         
         # special notation: presence of '__' in dest means that options will get assigned to lower sub-hash of config
         # eg 'rnaseq__aligner'->self.config['rnaseq']['aligner']='bowtie'
-        parser.add_option('--aligner',       dest='rnaseq__aligner', help="specify aligner", default="bowtie", action="callback", callback=aligner_callback, type="string")
+        parser.add_option('--aligner',       dest='rnaseq__aligner', help="specify aligner", default="bowtie", type="string")
         parser.add_option('--align_suffix',  dest='rnaseq__align_suffix', help="internal use")
         parser.add_option('--fq_cmd',        dest='rnaseq__fq_cmd',  help="internal use")
         parser.add_option('--cluster',       dest='use_cluster',     help="execute operations on a cluster (requires additional config settings)", action='store_true', default=False)
@@ -121,15 +87,13 @@ class RnaseqGlobals(object):
         for o in self.parser.option_list:
             if o.dest==None: continue
             dest=str(o.dest)
+            val=getattr(values,dest)
             dest_path=re.split('__',dest)
             c=self.config
-            for dp in dest_path[:-1]:
+            for dp in dest_path[:-1]:   # find subhash
                 c=c[dp]
-            c[dest_path[-1]]=getattr(values, dest)
+            c[dest_path[-1]]=getattr(values, dest) # set the final value
 
-
-
-    
 
     @classmethod
     def conf_value(self,*args):
@@ -158,10 +122,8 @@ class RnaseqGlobals(object):
 
     @classmethod
     def option(self,opt):
-        try:
-            return self.options.opt
-        except AttributeError:
-            return None
+        try: return self.options.opt
+        except AttributeError: return None
 
     @classmethod
     def get_session(self):
@@ -169,15 +131,14 @@ class RnaseqGlobals(object):
             return self.session
         except AttributeError: 
             db_name=self.get_db_file()
-            engine=create_engine('sqlite:///%s' % db_name, echo=True)
+            engine=create_engine('sqlite:///%s' % db_name, echo=False)
             metadata=MetaData()
 
             from Rnaseq import Pipeline, Step, Readset, PipelineRun, StepRun
             for cls in [Pipeline,Step,Readset,PipelineRun,StepRun]:
                 tbl=cls.create_table(metadata,engine)
                 mapper(cls,tbl)
-                print "%s mapped" % cls.__name__
-
+                
             Session=sessionmaker(bind=engine)
             session=Session()
             self.engine=engine
@@ -189,6 +150,35 @@ class RnaseqGlobals(object):
     def get_db_file(self):
         db_name=self.conf_value('db','db_name') if not self.testing else self.conf_value('testing','test_db')
         db_file=os.path.join(self.conf_value('rnaseq','root_dir'), db_name)
+        #print "get_db_file() returning %s" % db_file
         return db_file
+
+    @classmethod
+    def fix_align_params(self):
+        aligner=self.values.rnaseq__aligner
+        try:
+            hash={'bowtie': { 'aligner_suffix':'fq',
+                              'fq_cmd': 'solexa2fastq',
+                              },
+                  'blat': {'aligner_suffix':'fa',
+                           'fq_cmd': 'solexa2fasta',
+                           },
+                  }
+            subhash=hash[aligner]
+        except KeyError as ke:
+            raise optparse.OptionValueError("Unknown aligner: %s" % ke)
+
+        try:
+            parser=self.parser
+            suffix=subhash['aligner_suffix']
+            setattr(self.values, 'rnaseq__align_suffix', subhash['aligner_suffix'])
+            setattr(self.values, 'rnaseq__fq_cmd', subhash['fq_cmd'])
+        except Exception as e:
+            print "caught an %s: %s" % (type(e),e)
+            raise optparse.OptionValueError(str(e))
+
+
+            
+
 
 #print __file__,"checking in"

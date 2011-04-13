@@ -1,4 +1,4 @@
-sort -k 3,3 -k 4,4n ${readset['reads_file']}.mapsplice.sam > ${readset['reads_file']}.mapsplice.sorted.sam
-rm ${readset['reads_file']}.mapsplice.sam
-mv ${readset['reads_file']}.mapsplice.sorted.sam ${readset['reads_file']}.mapsplice.sam
+sort -k 3,3 -k 4,4n ${ID}.mapsplice.sam > ${ID}.mapsplice.sorted.sam
+rm ${ID}.mapsplice.sam
+mv ${ID}.mapsplice.sorted.sam ${ID}.mapsplice.sam
 ${sh_cmd}

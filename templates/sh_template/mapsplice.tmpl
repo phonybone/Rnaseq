@@ -1,5 +1,5 @@
 ${sh_cmd}
 exit_on_failure $$? ${name}
-grep chr ${readset['reads_file']}.mapsplice/alignments.sam | perl -lane '$$F[1] == 16 ? print "$$_\tXS:A:-" : print "$$_\tXS:A:+"' > ${readset['reads_file']}.mapsplice.sam
+grep chr ${ID}.mapsplice/alignments.sam | perl -lane '$$F[1] == 16 ? print "$$_\tXS:A:-" : print "$$_\tXS:A:+"' > ${ID}.mapsplice.sam
 exit_on_failure $$? ${name}
-rm -rf ${readset['reads_file']}.mapsplice
+rm -rf ${ID}.mapsplice

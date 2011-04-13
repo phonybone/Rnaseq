@@ -49,8 +49,9 @@ class Pipeline(templated):
         vars.update(RnaseqGlobals.config)
         
         #vars['readsfile']=self.readset.reads_file # fixme: might want to make reads_file a function, if iterated
-        #vars['ID']=self.ID()
-        vars['align_suffix']=RnaseqGlobals.conf_value('rnaseq','align_suffix') # fixme: this really, really shouldn't be here
+        vars['ID']=self.ID()
+        #vars['align_suffix']=RnaseqGlobals.conf_value('rnaseq','align_suffix') # fixme: this really, really shouldn't be here
+        #vars['fq_cmd']=RnaseqGlobals.conf_value('rnaseq','fq_cmd') # fixme: this shouldn't be here either
         ev=evoque_dict()
         ev.update(vars)
         templated.load(self, vars=ev, final=False)
@@ -72,6 +73,7 @@ class Pipeline(templated):
                 vars={}
                 vars.update(self.dict)
                 vars.update(RnaseqGlobals.config)
+                vars['ID']=self.ID()
                 step.load(vars=vars)
             except IOError as ioe:      # IOError??? Where does this generate an IOError?
                 raise ConfigError("Unable to load step %s" % sn, ioe)
@@ -189,7 +191,10 @@ class Pipeline(templated):
     # a combination of a working_directory and the basename of the
     # readsfile.  Final value will depend on whether the reads file
     # or the specified working directory are relative or absolute.
-    def ID(self, reads_file):
+    # fixme: why doesn't this call self.working_dir() anywhere?
+    def ID(self):
+        reads_file=self.readset['reads_file']
+
         # try a few different things to get the working directory:
         try:
             wd=self.readset['working_dir']
@@ -347,4 +352,4 @@ class Pipeline(templated):
         session=RnaseqGlobals.get_session()
         mself=session.merge(self)
 
-print "%s checking in: Pipeline.__name__ is %s" % (__file__,Pipeline.__name__)
+#print "%s checking in: Pipeline.__name__ is %s" % (__file__,Pipeline.__name__)

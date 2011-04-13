@@ -1,4 +1,4 @@
-name: bowtie
+name: bowtie_filter
 description: align the reads to the ref. geneome (using bowtie)
 usage: '%(exe)s %(ewbt)s %(args)s --un %(output)s %(input)s'
 exe: bowtie

@@ -5,16 +5,13 @@
 
 import sys, os, yaml, optparse
 from warn import *
-try:
-    import sqlite3
-except:
-    from pysqlite2 import dbapi2 as sqlite3
 
 # Try to load the rnaseq modules:
 try:
+    needed_dir=os.path.normpath(os.path.abspath(__file__)+"/../../lib")
+    sys.path.append(needed_dir)
     from Rnaseq import *
 except ImportError as e:
-    needed_dir=os.path.normpath(os.path.abspath(__file__)+"/../../lib")
     sys.stderr.write("Unable to import Rnaseq.  Perhaps you need to add "+needed_dir+" to your PYTHONPATH?\n")
     sys.stderr.write(yaml.dump(e))
     sys.stderr.write("(%s)\n" % e)

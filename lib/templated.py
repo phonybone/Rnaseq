@@ -137,7 +137,8 @@ class templated(dict):
         template=domain.get_template(tf)
         vars=args['vars'] if args.has_key('vars') else {} # consider default of self instead of {}?  Or is that stupid?
         try:
-            ev=evoque_dict().update(vars)
+            ev=evoque_dict()
+            ev.update(vars)
             output=template.evoque(ev)
         except (KeyError, AttributeError, TypeError) as any_e:
             raise ConfigError("%s '%s': %s" % (self.type, self.name, any_e))

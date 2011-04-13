@@ -1,16 +1,25 @@
 # some general values:
 rnaseq:
-  root_dir: /Users/victorcassen/random/isb/Rnaseq
+  root_dir: /proj/hoodlab/share/vcassen/rna-seq/rnaseq
   blat_indexes: /proj/hoodlab/share/programs/blat-indexes/not/here
   bowtie_indexes: /proj/hoodlab/share/programs/bowtie-indexes
   path: /tools/bin:/hpc/bin:/bin:/proj/hoodlab/share/programs/cufflinks
 
+  # Don't edit this section
   cmds:
     load: load.py
     sh: shell_script.py
     help: help.py
     run: run_pipeline.py
     touch: touch.py
+
+# Don't edit this section
+provenance:
+  cmds:
+    create_table: create_table.py
+    insert: insert_prov.py
+    ls: list_files.py
+    update: update.py
 
 # database
 db: 
@@ -25,13 +34,7 @@ qsub:
   ssh_cmd: /usr/bin/ssh
   nprocs: 4
 
-provenance:
-  cmds:
-    create_table: create_table.py
-    insert: insert_prov.py
-    ls: list_files.py
-    update: update.py
-
+# Don't edit this section
 testing:
   template_dir: t/fixtures/templates
   test_db: t/fixtures/dbs/simple_orm.db

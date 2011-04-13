@@ -7,51 +7,51 @@ header:
 
 export2fq:
   input: ${readset['reads_file']}
-  output: ${ID}.${align_suffix}
-  args: ${rnaseq['fq_cmd']}
+  output: ${ID}.${rnaseq['align_suffix']}
+  args: ${rnaseq['fq_cmd']} 
 
 filterQuality:
-  input: ${ID}.${align_suffix}
-  output: ${ID}.qual_OK.${align_suffix}
-  filtered: ${ID}.bowtie_qual_BAD.${align_suffix}
-  args: -v -f ${align_suffix}
+  input: ${ID}.${rnaseq['align_suffix']}
+  output: ${ID}.qual_OK.${rnaseq['align_suffix']}
+  filtered: ${ID}.bowtie_qual_BAD.${rnaseq['align_suffix']}
+  args: -v -f ${rnaseq['align_suffix']}
 
 filterVectors:
-  input: ${ID}.${align_suffix}
-  output: ${ID}.vector_OK.${align_suffix}
+  input: ${ID}.${rnaseq['align_suffix']}
+  output: ${ID}.vector_OK.${rnaseq['align_suffix']}
   filtered: ${ID}.bowtie_vector_BAD.sam
   psl: ${ID}.blat_vector_BAD.psl
 
 filterLowComplex:
-  input: ${ID}.vector_OK.${align_suffix}
-  output: ${ID}.complex_OK.${align_suffix}
-  filtered: ${ID}.bowtie_complex_BAD.${align_suffix}
-  args: -v -f ${align_suffix}
+  input: ${ID}.vector_OK.${rnaseq['align_suffix']}
+  output: ${ID}.complex_OK.${rnaseq['align_suffix']}
+  filtered: ${ID}.bowtie_complex_BAD.${rnaseq['align_suffix']}
+  args: -v -f ${rnaseq['align_suffix']}
 
 ribosomal_mit:
-  input: ${ID}.complex_OK.${align_suffix}
-  output: ${ID}.riboMT_OK.${align_suffix}
+  input: ${ID}.complex_OK.${rnaseq['align_suffix']}
+  output: ${ID}.riboMT_OK.${rnaseq['align_suffix']}
   filtered: ${ID}.bowtie_riboMT_BAD.sam
   psl: ${ID}.blat_riboMT_BAD.psl
 
 remove_erccs:
-  input: ${ID}.riboMT_OK.${align_suffix}
-  output: ${ID}.ercc_OK.${align_suffix}
+  input: ${ID}.riboMT_OK.${rnaseq['align_suffix']}
+  output: ${ID}.ercc_OK.${rnaseq['align_suffix']}
   filtered: ${ID}.bowtie_ercc_BAD.sam
   psl: ${ID}.blat_ercc_BAD.psl
 
 repeats_consensus:
-  input: ${ID}.ercc_OK.${align_suffix}
-  output: ${ID}.repeat_OK.${align_suffix}
+  input: ${ID}.ercc_OK.${rnaseq['align_suffix']}
+  output: ${ID}.repeat_OK.${rnaseq['align_suffix']}
   filtered: ${ID}.bowtie_repeat_BAD.sam
   psl: ${ID}.blat_repeat_BAD.psl
 
 collect_filtered:
-  input: ${ID}.ercc_OK.${align_suffix}
-  output: ${ID}.bowtie_FILTERED.${align_suffix}
+  input: ${ID}.ercc_OK.${rnaseq['align_suffix']}
+  output: ${ID}.bowtie_FILTERED.${rnaseq['align_suffix']}
 
 mapsplice:
-  input: ${ID}.bowtie_FILTERED.${align_suffix}
+  input: ${ID}.bowtie_FILTERED.${rnaseq['align_suffix']}
   output: ${ID}.mapsplice.sam
 
 cufflinks:

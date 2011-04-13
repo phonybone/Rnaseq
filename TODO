@@ -23,3 +23,17 @@ python bin/provenance update StepRun id=$id status="%step.name failed" successfu
 Have to put a UNIQUE restraint on pipeline names in the db
 
 get rid of dbh stuff in favor of sqlalchemy crap
+
+Allow readset configuration files to be anywhere, not just in templates directory
+
+The -h flag should also show the list of available commands.
+
+The way you're handling the aligner issue sucks.  Would it be better
+to subclass Step so as to allow steps to have their own logic?  Steps 
+would presumably be loaded similarly to the way commands currently are.  
+Attributes like 'args' and various suffixes could be set via object 
+attributes.
+
+Want to put back in the bit that makes certain object keys (eg step['exe']) into attributes; 
+could do this in dict_like: if class defines list of attributes to set. (Note: dict_like already
+does something like that...)
