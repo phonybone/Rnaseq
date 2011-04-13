@@ -288,7 +288,7 @@ class Pipeline(templated):
 
     def verify_exes(self):
         dirs=RnaseqGlobals.conf_value('rnaseq', 'path').split(":")
-        dirs.extend([os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'),'bin')])
+        dirs.extend([os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'),'programs')])
             
         errors=[]
         for step in self.steps:
@@ -306,7 +306,7 @@ class Pipeline(templated):
                 errors.append("Missing executable in %s: %s" %(step.name, step.exe))
 
         if len(errors)>0:
-            errors.append("Please link these executables from the %s/bin directory, or make sure they are on the path defined in the config file." \
+            errors.append("Please link these executables from the %s/programs directory, or make sure they are on the path defined in the config file." \
                           % RnaseqGlobals.conf_value('rnaseq', 'root_dir'))
             
 

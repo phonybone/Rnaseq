@@ -108,7 +108,7 @@ class Step(templated):
         # look for exe in path, unless exe is an absolute path
         try:
             if os.path.abspath(self['exe'])!=self['exe']:
-                self['exe']=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'), 'bin', self['exe'])
+                self['exe']=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'), 'programs', self['exe'])
         except KeyError as ae:          # not all steps have self['exe']; eg header, footer
             pass
 
@@ -172,10 +172,13 @@ class Step(templated):
             if mtime > latest_input:
                 latest_input=mtime
 
-            exe_file=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'), 'bin', self['exe'])
-            exe_mtime=os.stat(exe_file).st_mtime
-            if exe_mtime > latest_input:
-                latest_input=exe_mtime
+            try:
+                exe_file=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'), 'programs', self['exe'])
+                exe_mtime=os.stat(exe_file).st_mtime
+                if exe_mtime > latest_input:
+                    latest_input=exe_mtime
+            except OSError as oe:
+                raise ConfigError("%s: %s" %(exe_file, oe))
 
         for output in self.outputs():
             try:

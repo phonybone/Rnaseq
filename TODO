@@ -37,3 +37,5 @@ attributes.
 Want to put back in the bit that makes certain object keys (eg step['exe']) into attributes; 
 could do this in dict_like: if class defines list of attributes to set. (Note: dict_like already
 does something like that...)
+
+Fix up provenance to resemble rnaseq
