@@ -39,3 +39,5 @@ could do this in dict_like: if class defines list of attributes to set. (Note: d
 does something like that...)
 
 Fix up provenance to resemble rnaseq
+
+Allow key=value params on command line to set any templated value? (store them in RnaseqGlobals, probably)

@@ -33,7 +33,7 @@ class ShellScript(Command):
         except IndexError:
             raise UserError(self.usage())
 
-        readset=Readset(name=readset_name).load() 
+        readset=Readset(filename=readset_name).load() 
         pipeline=Pipeline(name=pipeline_name, readset=readset)
         pipeline.load()
         pipeline.update(RnaseqGlobals.config)

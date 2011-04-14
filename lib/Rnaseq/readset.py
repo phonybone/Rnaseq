@@ -1,17 +1,16 @@
 #-*-python-*-
 
 import yaml, socket, os, glob
-from dict_like import dict_like
-from templated import templated
 from sqlalchemy import *
-from table_base import TableBase
+from warn import *
 
 #class Readset(templated, TableBase):
-class Readset(templated):
+class Readset(dict):
     def __init__(self,*args,**kwargs):
-        templated.__init__(self,*args,**kwargs)
         self.suffix='syml'
         self.type='readset'
+        for k,v in kwargs.items():
+            setattr(self,k,v)
         
     ########################################################################
     crap='''
@@ -42,6 +41,20 @@ class Readset(templated):
         return readset_table
         
     ########################################################################
+
+    def load(self):
+        try:
+            f=open(self.filename)
+            yml=yaml.load(f)
+            f.close()
+        except IOError as ioe:
+            raise UserError(str(ioe))
+        except AttributeError as ae:
+            raise ProgrammerGoof(ae)
+        self.update(yml)
+        for k,v in yml.items():
+            setattr(self,k,v)
+        return self
 
     def get_email(self):
         try:

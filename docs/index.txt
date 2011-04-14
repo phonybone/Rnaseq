@@ -24,7 +24,7 @@ How it works:
 The basic operation of the pipeline software is to convert a group of
 text-based configuration files (YAML format) into a shell script that can be run
 on a desktop computer or cluster.  The configuration files separate information
-in a modular way, with different files that describe the data to be analyzed,
+in a modular way.  Different files describe the data to be analyzed,
 each step of the pipeline, how the steps fit together to form the overall
 pipeline, and a final file that defines "global" values (independent of any
 specific pipeline).  The pipeline software then assembles the data in these
@@ -54,13 +54,14 @@ Google "python easy_install" for more information.
 
 
 Globals configuration:
-Before you can run the pipeline tool, you must edit in the config file
+Before you can run the pipeline tool, you must edit the config file
 'config/rnaseq.conf.yml' (relative to the installation directory).  This is a
 yaml file.  Some of the sections are marked "Do not edit", and the tool will
 break if the values in those sections are changed.  Of the remaining sections, 
 most of the values should be self-explanatory.  All paths are relative to the
 installation directory unless starting with '/'.
 
+Some entries that must be configured are:
 - root_dir: synonomous with the installation directory
 - blat_indexes, bowtie_indexes: the directory in which indexes for these
   programs can be found.
@@ -200,8 +201,11 @@ exe: filterQuality.pl
 
 Each step may use several config files in it's definition as follows.  A "base"
 file is found in templates/step/<step_name>.syml.  It can contain the following fields:
+
 - name: the name of the step
+
 - description: a description of what the step does
+
 - usage: this is a python format string that is used to create the actual
   command that will be issued.  It uses the python "hash format" version of the
   '%' operator, which means the '%s' expansions are named and refer to keys in a
@@ -209,21 +213,26 @@ file is found in templates/step/<step_name>.syml.  It can contain the following 
   expand the format string, but not all the keys must be defined in the step
   itself; they may also be defined by the pipeline, the global config dict, or
   by other entities.
+
 - exe: the name of the script or executable that implements the step.  This may
   be either an absolute or relative file system path; if relative, it is
   relative to the bin/ directory under the installation directory.  Links are
   allowed. 
+
 - interpreter: if 'exe', above, is a script, than this field must contain the
   name of the interpreter that runs the script (eg perl, python, etc).
+
 - args: If there are invariant args to this step, they can be defined here.  For
   args that vary from pipeline to pipeline, define the args in the pipeline
   section of the step instead.
+
 - sh_template: some steps require more than one shell-level command to run.  If
   a step defines a sh_template: entry, it refers to a snippet of sh code in
   which the step command may be imbedded.  The template itself must reside in
   the templates/sh_template subdirectory (relative to the installation
   directory). Within the template, the ${sh_cmd} variable is expanded to the
   usage-exanded string mentioned above.  See bowtie_filter.tmpl as an example.
+
 - prototype: Some steps are simply variants of a base step.  For example, many
   steps use an aligner (currently either blat or bowtie, but others could be
   defined).  If a step defines a prototype field, a step of with the given name
@@ -261,3 +270,87 @@ ${align_suffix} is set to 'fa'; if '--aligner' is set to 'bowtie',
 ${align_suffix} is set to 'fq'.  This value can be overwritten by the pipeline
 or by a command-line parameter '--align_suffix'
 
+A note about YAML file structure:
+Indentation bla bla bla
+
+How to create a new pipeline or modify an existing one:
+
+1. Edit the pipeline.syml file
+Each pipeline must have it's own configuration file.  The file is divided into
+two parts, a header section and a step definition section.
+
+The header section consists of "key: value" pairs.  There are two required
+entries: "name:" and "stepnames:", but there may be as many key/value pairs as
+needed.  The "name:" value can be anything, but should be kept fairly short.  It
+must also be unique.  The "stepnames:" entry must list all the steps of the
+pipeline by name, with each step name separated by a comma and/or whitespace
+(all on one line, however).
+
+The pipeline configuration file may refer to variables defined in the global
+configuration file (including command-line options) or variables defined by the
+readset.  Additionally, the special variable ${ID} is defined.
+
+1a. Edit the list of steps (stepnames)
+
+1b. Edit the section for each step
+Each step must have a section in the pipeline configuration file.  The step
+section must define variables that the step itself leaves undefined (see below);
+that is, values that are pipeline-specific.  Typically this includes the names
+of the input and output files, files that are created as side-effects, and
+specific command-line arguments to the program that the step executes.
+Specifically, all of the entities mentioned in the step's "usage:" must be
+defined either by the step itself or by the step's section in the pipeline
+configuration file.
+
+The list of steps mentioned in the "stepnames:" entry of the header must match
+in a 1-to-1 way with the list of step sections.
+
+2. Create a step:
+Steps are defined by a set of small configuration files.  At a minimum the set
+contains a file located in the templates/step/ directory with a name comprised
+of the stepname and the suffix ".syml".  For example, a step to implement a
+program named "foo" might exist in templates/step/foo.syml.
+
+2a. Create the step/stepname.syml file
+
+The step.syml file must define a few fields:
+- name: This must correspond to the name of the step listed in the pipeline
+configuration file, and must also be the same as the basename of the .syml
+file. 
+- description: This should be a short (one line) description of what the step
+does. 
+- usage: This field is used to create the shell command that runs the step.  It
+is a python format string, which means that it will be used as the left-hand
+operand of the the python '%' string format operator.  In practice what this
+means is that substrings of the form "%(field)s" will be replaced with the value
+defined by "field".  For example, "%(name)s" would be replaced with the value of
+the step's name as defined by the "name:" field.
+- exe: This entry must contain the file system location of the program to run as
+an absolute path, or a path relative to and of the directories listed in the
+global configuration "path" entry (in the rnaseq section).
+- interpreter: if the program is an interpreted script and does not have the
+execution bit set in the file permissions, you can specify the needed
+interpreter using this field.  As with the "exe:" field, the "interpreter:"
+field must be "findable" in the directories specified by the global "path:"
+value.  This field is not required for non-interpreted executables.
+
+The step may define and reference (in the usage string) any other values it
+needs.  The main requirement is that every field referenced by the usage field
+be defined either by the step or in the step's section within the pipeline
+configuration file.  Missing fields will result in a run-time error and be
+reported to the user.
+
+In addition, there are a few other fields that allow more complicated behaviour
+of steps.  They are:
+
+2b. If the step needs more than one command line, create the
+    sh_template/stepname.syml file
+
+Some steps logically require more than just the running of their program.  For
+example, a step might want to "clean up" after itself by removing an unneeded
+file generated by the program.  While it would be possible to define a second
+step to perform this task, it makes sense to include the operations within same
+step since they're logically connected.  In order to implement this, a step may
+define 
+
+2c. If the step is derived from a prototype, indicate it

@@ -11,17 +11,19 @@ class TestCreate(unittest.TestCase):
 
 class TestDict(TestCreate):
     def runTest(self):
-        readset=Readset(name='readset').load(vars=RnaseqGlobals.config)
-        self.assertEqual(readset.name, 'readset')
+        readset=Readset(filename='readset.syml').load()
+        self.assertEqual(readset.filename, 'readset.syml')
 
-        print "%s" % readset.dict
-        self.assertEqual(type(readset.dict),type({}))
-        self.assertEqual(readset.dict['name'],'readset')
-        self.assertEqual(readset.name, 'readset')
+        self.assertEqual(readset['reads_file'],'s_?_export.txt')
+        self.assertEqual(readset['description'],'this is a sample readset')
+        self.assertEqual(readset['org'],'mouse')
+        self.assertEqual(readset['readlen'],75)
+        self.assertEqual(readset['working_dir'],'rnaseq_wf')
+        
 
         vars={'this': 'that'}
-        readset.dict.update(vars)
-        self.assertEqual(readset.dict['this'],'that')
+        readset.update(vars)
+        self.assertEqual(readset['this'],'that')
         
         print "TestDict passed"
 

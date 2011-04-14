@@ -28,7 +28,7 @@ class RunPipeline(Command):
             raise ProgrammerGoof(e)
 
         # Create the pipeline and readset objects:
-        readset=Readset(name=readset_name).load() 
+        readset=Readset(filename=readset_name).load() 
 
         # Iterate through reads files defined in readset:
         # fixme: condense this loop

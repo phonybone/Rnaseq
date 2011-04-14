@@ -45,7 +45,7 @@ class Pipeline(templated):
     def load(self):
         vars={}
         vars.update(self.dict)
-        vars.update(self.readset.dict)
+        vars.update(self.readset)
         vars.update(RnaseqGlobals.config)
         
         #vars['readsfile']=self.readset.reads_file # fixme: might want to make reads_file a function, if iterated
