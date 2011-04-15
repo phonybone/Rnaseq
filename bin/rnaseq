@@ -21,7 +21,7 @@ except ImportError as e:
 ########################################################################
 
 def main():
-    usage="usage: %s <cmd> [-p <pipeline>] [-r <readset>] [options]" % sys.argv[0] # fixme: form might be different; might be more like git
+    usage="usage: %s <cmd> [-p <pipeline>] [-r <readset_file>] [options]" % sys.argv[0] # fixme: form might be different; might be more like git
     argv=RnaseqGlobals.initialize(usage)       # not to be confused with sys.argv
 
     # get the command:

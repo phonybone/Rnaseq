@@ -28,12 +28,12 @@ class ShellScript(Command):
             raise ProgrammerGoof(e)
 
         try:
-            readset_name=config['readset_name']
+            readset_file=config['readset_file']
             pipeline_name=config['pipeline_name']
         except IndexError:
             raise UserError(self.usage())
 
-        readset=Readset(filename=readset_name).load() 
+        readset=Readset(filename=readset_file).load() 
         pipeline=Pipeline(name=pipeline_name, readset=readset)
         pipeline.load()
         pipeline.update(RnaseqGlobals.config)

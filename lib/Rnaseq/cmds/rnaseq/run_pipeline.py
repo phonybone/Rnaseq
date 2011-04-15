@@ -17,7 +17,7 @@ class RunPipeline(Command):
     def run(self, *argv, **args):
         try:
             config=args['config']
-            readset_name=config['readset_name']
+            readset_file=config['readset_file']
             pipeline_name=config['pipeline_name']
         except KeyError as e:
             raise MissingArgError(str(e))
@@ -28,7 +28,7 @@ class RunPipeline(Command):
             raise ProgrammerGoof(e)
 
         # Create the pipeline and readset objects:
-        readset=Readset(filename=readset_name).load() 
+        readset=Readset(filename=readset_file).load() 
 
         # Iterate through reads files defined in readset:
         # fixme: condense this loop

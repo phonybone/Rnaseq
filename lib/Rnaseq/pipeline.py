@@ -57,7 +57,8 @@ class Pipeline(templated):
         templated.load(self, vars=ev, final=False)
         
         # load steps.  (We're going to replace the current steps field, which holds a string of stepnames,
-        # with a list of step objects
+        # with a list of step objects.
+        # fixme: explicitly add header and footer steps; 
 
         try:
             self.stepnames=re.split('[,\s]+',self['stepnames'])

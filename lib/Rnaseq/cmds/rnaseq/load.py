@@ -19,14 +19,14 @@ class Load(Command):
     def run(self, *argv, **args):
         try:
             config=args['config']
-            readset_name=config['readset_name']
+            readset_file=config['readset_file']
             pipeline_name=config['pipeline_name']
         except KeyError as e:
             raise MissingArgError(str(e))
 
         # have to create session before creating any objects that session adds, etc:
 
-        readset=Readset(name=readset_name).load() 
+        readset=Readset(name=readset_file).load() 
         pipeline=Pipeline(name=pipeline_name, readset=readset)
         pipeline.update(RnaseqGlobals.config)
         pipeline.description='desc for juan'

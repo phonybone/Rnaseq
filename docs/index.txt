@@ -33,6 +33,7 @@ desired hardware configuration.
 
 
 How to install it:
+--------------------------------------------------------------------------------
 There are currently several ways to obtain the sourcecode.  If you have git on
 your computer, use this command: 
 
@@ -80,8 +81,46 @@ Simple version - analysis without tweaking the pipeline steps or parameters:
 The pipeline tool is a python script named 'rnaseq', located in the bin/
 directory of the application package (ie, wherever it was installed).  You can
 add this directory to you PATH, put a link from /usr/local/bin to this
-directory, or otherwise make the rnaseq script findable to your system.  See
-below for a list of command-line parameters and examples.
+directory, or otherwise make the rnaseq script findable to your system.  
+
+The basic command to run a pipeline is this:
+
+python bin/rnaseq <cmd> -p <pipeline> -r <readset_file>
+
+where <pipeline> is the name of pre-defined pipeline (see below) and
+<readset_file> is the name of a file that defines the data to be analyzed (also
+see below).
+
+A list of all the command-line parameters can be displayed by invoking the -h
+flag:
+
+python bin/rnaseq -h
+
+which yields:
+
+Usage: bin/rnaseq <cmd> [-p <pipeline>] [-r <readset_file>] [options]
+
+Options:
+  -h, --help            show this help message and exit
+  --aligner=RNASEQ__ALIGNER
+                        specify aligner
+  --align_suffix=RNASEQ__ALIGN_SUFFIX
+                        internal use
+  --fq_cmd=RNASEQ__FQ_CMD
+                        internal use
+  --cluster             execute operations on a cluster (requires additional
+                        config settings)
+  -c CONFIG_FILE, --config=CONFIG_FILE
+                        specify alternative config file
+  -f, --force           force execution of pipelines and steps even if targets
+                        are up to date
+  -n, --no_run          supress actuall running
+  -p PIPELINE_NAME, --pipeline=PIPELINE_NAME
+                        pipeline name
+  -r READSET_FILE, --readset=READSET_FILE
+                        readset filename
+
+
 
 Defining the data set:
 
@@ -353,4 +392,149 @@ step to perform this task, it makes sense to include the operations within same
 step since they're logically connected.  In order to implement this, a step may
 define 
 
-2c. If the step is derived from a prototype, indicate it
+2c. Sometimes it is useful to create variations of a step that share some
+information (such as the executable) but vary other parts, (perhaps the
+command-line parameters used).  In this case, it is possible to base a new step
+on an existing one, using the existing step as a "prototype".  When this is
+done, the two steps combine all their defined values when the usage string is
+constructed.  When both prototype and derived steps define the same fields,
+those of the derived step overwrite the prototype.  This can be used to
+establish default values in the prototype that may be superceded by the derived
+step.  Additionally, the prototype may leave certain fields blank to be later
+filled in by the derived step (with an error raised if the field remains
+undefined).
+
+If the step is derived from a prototype, indicate it by using a "prototype:"
+entry in derived step's .syml file.  The value of the entry will be the name of the step
+from which the new step will be prototyped.
+
+
+A Complete Example:
+
+The readset.syml:
+reads_file: /users/vcassen/links/samples/sandbox/s_?_export.1M.txt
+description: this is a sample readset
+org: mouse
+readlen: 75
+working_dir: rnaseq_wf
+
+Note the file glob in the reads_file:, and the working_dir: entry which will
+direct all output to a subdirectory with the name rnaseq_wf (created in the same
+directory as the reads_files)
+
+A short pipeline.syml:
+
+name: pipeline de Juan
+stepnames: header export2fq filterQuality filterVectors footer
+
+header:
+  name: header
+
+export2fq:
+  input: ${readset['reads_file']}
+  output: ${ID}.${rnaseq['align_suffix']}
+  args: ${rnaseq['fq_cmd']} 
+
+filterQuality:
+  input: ${ID}.${rnaseq['align_suffix']}
+  output: ${ID}.qual_OK.${rnaseq['align_suffix']}
+  filtered: ${ID}.bowtie_qual_BAD.${rnaseq['align_suffix']}
+  args: -v -f ${rnaseq['align_suffix']}
+
+filterVectors:
+  input: ${ID}.${rnaseq['align_suffix']}
+  output: ${ID}.vector_OK.${rnaseq['align_suffix']}
+  filtered: ${ID}.bowtie_vector_BAD.sam
+  psl: ${ID}.blat_vector_BAD.psl
+
+footer:
+  name: footer
+
+This pipeline has five steps: a header step, three actual processing steps, and
+a footer step.  
+
+In the top section, two key-value pairs are defined.  Note that the value for
+the stepnames: entry exactly corresponds to the five step sections that follow.
+
+The header and footer steps are required for every pipeline (fixme).  
+
+The export2fq step translates an Illumina export file into a different format
+using a perl script.  
+
+The input to this script is the reads_file defined by the readset (in the case
+that the reads_file contains a file glob, a loop is created that iterates over
+all the files that match the file glob and a script is generated for each file.
+In this scenario, the 'reads_file' entry in the readset object is set to the
+current reads_file).
+
+The output uses the special ${ID} variable created from the current reads_file
+and the working_dir (which can be set in either the readset or the pipeline
+config file).
+
+Two other variable substitutions are made in the export2fq step:
+${rnaseq['align_suffix']} and ${rnaseq['fq_cmd']}.  These actually represent a
+"hack" which may or may not remain in the program.  The hack is that, based on
+the value of the command-line parameter "--aligner", these two extra entries are
+added to the 'rnaseq' section of the global configuration file.  This allows the
+user to specify the alignment tool to use without changing the pipeline as a
+whole.  In this case, 'align_suffix' is set to 'fq', and 'fq_cmd' is set to the
+proper value for that program ('solexa2fastq').  This is not a sustainable
+strategy and providing a better solution is high on the "TODO" list.
+
+The export2fq.syml looks like this:
+
+name: export2fq
+description: convert an Illumina export file to FASTQ format
+prototype: fq_all2std
+
+It is based on a prototype, 'fq_all2std'.   This is the fq_all2std.syml file:
+
+name: fq_all2std
+usage: '%(interpreter)s %(exe)s %(args)s %(input)s %(output)s'
+interpreter: perl
+exe: fq_all2std.pl
+
+As you can see, between the pipeline's export2fq: section and the two step .syml
+files, all the attributes referenced in the usage format string are accounted for.
+
+
+The next step is 'filterQuality'.  This step removes low-quality reads from the
+reads_file.  You can see from the pipeline section for this step and the
+previous step that the input to this step is the same as the output from the
+previous step.
+
+The filterQuality.syml file looks like this:
+
+name: filterQuality
+description: Remove sequences with low quality scores
+usage: '%(interpreter)s %(exe)s %(args)s -i %(input)s -o %(output)s -b %(filtered)s'
+interpreter: perl
+exe: filterQuality.pl
+
+It is fairly straightforward.  Notice the additional field "filtered" in the
+usage string, and it's definition in the step's section in the pipeline file.
+
+
+The final step (aside from the footer step) is filterVectors:
+
+name: filterVectors
+description: filter vectors
+ewbt: UniVec_Core
+blat_index: ${pipeline['blat_index']}/solexa_primers.2bit
+prototype: ${config['rnaseq']['aligner']}_filter
+
+This is a prototype-based step.  The prototype that the step is based on depends
+on the value of the aligner as specified on the command line; it can be either
+'bowtie' or 'blat'.  The actual step name is either 'bowtie_filter' or
+'blat_filter'.  blat_filter.syml looks like this:
+
+name: blat
+description: align the reads to the ref. geneome (using blat)
+usage: '%(exe)s %(blat_index)s %(input)s %(args)s %(psl)s'
+exe: blat
+sh_template: blat_filter.tmpl
+args: -fastMap -q=DNA -t=DNA
+
+Note that some fields are needed by bowtie and others by blat, but both must be
+defined regardless of which aligner is used.
+
