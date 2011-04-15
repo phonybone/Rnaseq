@@ -1,5 +1,6 @@
 name: pipeline de Juan
 stepnames: header export2fq filterQuality filterVectors filterLowComplex ribosomal_mit remove_erccs repeats_consensus collect_filtered mapsplice cufflinks cuffcompare footer
+blat_index: /proj/hoodlab/share/programs/RNAseq-Pi/data/blat-indexes
 
 header:
   name: header

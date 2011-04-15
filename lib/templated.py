@@ -153,6 +153,8 @@ class templated(dict):
 
 
 
+#print __file__,"checking in"
+
 if __name__ == '__main__':
     import os
     path=os.path.normpath(os.path.abspath(__file__)+"../../../t/templated/test_all.py")
