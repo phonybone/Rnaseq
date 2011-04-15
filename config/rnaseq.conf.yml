@@ -17,9 +17,10 @@ rnaseq:
 provenance:
   cmds:
     create_table: create_table.py
-    insert: insert_prov.py
-    ls: list_files.py
+    insert: insert.py
+    ls: select.py
     update: update.py
+    next_step: next_step.py
 
 # database
 db: 

@@ -2,16 +2,19 @@
 
 import yaml, time, re
 from RnaseqGlobals import RnaseqGlobals
+from dict_like import *
 from templated import *
 from warn import *
 from sqlalchemy import *
+from table_base import TableBase
 
+#class Step(templated, TableBase):
 class Step(templated):
     def __init__(self,*args,**kwargs):
         templated.__init__(self,*args,**kwargs)
         self.type='step'
         self.suffix='syml'
-        #if not hasattr(self,'force'): self.force=False
+        if not hasattr(self,'force'): self.force=False
 
 
     ########################################################################
@@ -26,13 +29,12 @@ class Step(templated):
     def create_table(self, metadata, engine):
         step_table=Table(self.__tablename__, metadata,
                          Column('id',Integer, primary_key=True),
-                         Column('name',String),
+                         Column('name',String,nullable=False),
                          Column('description', String),
                          )
         metadata.create_all(engine)
         return step_table
     
-
 
     
 
@@ -188,9 +190,3 @@ class Step(templated):
 
         #print "final: latest_input is %s, earliest_output is %s" % (latest_input, earliest_output)
         return latest_input<earliest_output
-    
-########################################################################
-    def step_run(self):
-        sr=StepRun(
-
-#print __file__,"checking in"

@@ -7,18 +7,13 @@ from sqlalchemy.orm import backref, relation
 #class PipelineRun(TableBase):
 class PipelineRun(object):
     __tablename__='pipeline_run'
-    crap='''
-    id=Column(Integer, primary_key=True)
-    pipeline_id=Column(Integer, ForeignKey('pipeline.id'))
-    start_time=Column(Integer)
-    finish_time=Column(Integer)
-    status=Column(String)
-    successful=Column(Boolean)
-    pipeline=relation(Pipeline,backref=backref(Pipeline.__tablename__, order_by=id))
-'''
         
     def __init__(self,pipeline):
-        pass
+        self.pipeline=pipeline
+        try:
+            self.pipeline_id=pipeline.id
+        except AttributeError:
+            pass
 
     @classmethod
     def create_table(self, metadata, engine):

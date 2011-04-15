@@ -1,20 +1,12 @@
 #!/usr/bin/env python
 #-*-python-*-
 
-# Implement CRUD operations on a provenance database.
 
 # what happens if these fail?  Can that be user's responsbility?
-import yaml, optparse, os, sys, re
+import yaml, os, sys, re
+from Rnaseq import *
 from RnaseqGlobals import RnaseqGlobals
 
-try:
-    import sqlite3
-except:
-    from pysqlite2 import dbapi2 as sqlite3
-
-# Try to load the rnaseq modules:
-
-from Rnaseq.prov import *
 
 ########################################################################
 # Note: this is almost exactly the same as rnaseq.main(); only difference is usage,
@@ -32,37 +24,10 @@ def main():
     cf.add_cmds(RnaseqGlobals.conf_value('provenance','cmds'))
     cmd=cf.new_cmd(cmd)
 
-    cmd.run(argv, dbh=RnaseqGlobals.dbh, config=RnaseqGlobals.config)
+    cmd.run(argv, config=RnaseqGlobals.config)
     print "\ndone"
 
 ########################################################################
-
-# parse command line opts.  return a list of un-processed args
-def parse_cmdline(usage):                    
-    parser=optparse.OptionParser(usage)
-
-    parser.add_option("-f","--config", dest="config", help="specify alternative config file",
-                      default=os.path.normpath(os.path.abspath(__file__)+"/../../config/rnaseq.conf.yml"))
-
-    parser.add_option("--force", dest="force", help="force excecution of commands even if they overwrite data",
-                      action="store_true", default=False)
-
-    parser.add_option("-p","--pipeline", dest="pipeline_name", help="pipeline id (name)")
-    parser.add_option("--status", dest="status", help="status value")
-
-    (values, argv)=parser.parse_args(sys.argv)
-    global options
-    options=values
-    optparse.options=values
-    return argv                         # return remaining argv values
-
-
-def read_config(config_file):
-    f=open(config_file)
-    yml=f.read()
-    f.close()
-    return yaml.load(yml)
-
 
 
 try:
