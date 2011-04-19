@@ -1,0 +1,3 @@
+name: pipeline_start
+sh_template: pipeline_start.tmpl
+usage:

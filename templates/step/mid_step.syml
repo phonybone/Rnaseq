@@ -1,0 +1,3 @@
+name: mid_step
+sh_template: mid_step.tmpl
+usage: 

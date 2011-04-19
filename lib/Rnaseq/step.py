@@ -11,7 +11,7 @@ class Step(templated):
         templated.__init__(self,*args,**kwargs)
         self.type='step'
         self.suffix='syml'
-        #if not hasattr(self,'force'): self.force=False
+        if not hasattr(self,'force'): self.force=False
 
 
     ########################################################################
@@ -26,7 +26,7 @@ class Step(templated):
     def create_table(self, metadata, engine):
         step_table=Table(self.__tablename__, metadata,
                          Column('id',Integer, primary_key=True),
-                         Column('name',String),
+                         Column('name',String, nullable=False, index=True, unique=True),
                          Column('description', String),
                          )
         metadata.create_all(engine)
@@ -190,7 +190,6 @@ class Step(templated):
         return latest_input<earliest_output
     
 ########################################################################
-    def step_run(self):
-        sr=StepRun(
+
 
 #print __file__,"checking in"

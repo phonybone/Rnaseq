@@ -17,29 +17,19 @@ export PYTHONPATH=$${PYTHONPATH}:${config['rnaseq']['root_dir']}/lib
 exit_on_failure()
 {
   retcode=$$1
-  last_step=$$2
-  pipelinerun_id=$$3	# optional
-  steprun_id=$$4        # optional
+  pipelinerun_id=$$2
+  step_id=$$3
+  next_step_id=$$4
 
-  now=`date +%s`
+  python ${config['rnaseq']['root_dir']}/bin/provenance mid_step $${pipelinerun_id} $${step_id} $${next_step_id} $${retcode}
+
+
   if [ $$retcode != 0 ]; then
     echo $${last_step} failed 1>&2
-#    python $${root_dir}/bin/provenance update PipelineRun --id $$pipelinerun_id --status '$${last_step} failed' --successful=False
-#    python $${root_dir}/bin/provenance update StepRun --id=$$steprun_id --status="$${last_step} failed" successful=False finish_time=$${now}
-
     exit $$retcode
   else
     echo $${last_step} passed 1>&2
-#    python $${root_dir}/bin/provenance update PipelineRun --id=$$pipelinerun_id status="$${last_step} completed" 
-#    python $${root_dir}/bin/provenance update StepRun --id=$$steprun_id --status="$${last_step} completed" successful=True finish_time $${now}
-
   fi
 }
 
-start_step()
-{
-  stepname=$$1
-  pipeline_id=$$2
-  now=`date +%s`
 
-# python $${root_dir}/bin/provenance insert StepRun start_time=$${now} status='started'

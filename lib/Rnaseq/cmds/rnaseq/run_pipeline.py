@@ -30,22 +30,24 @@ class RunPipeline(Command):
         # Create the pipeline and readset objects:
         readset=Readset(filename=readset_file).load() 
 
+        session=RnaseqGlobals.get_session()
+
         # Iterate through reads files defined in readset:
         # fixme: condense this loop
         for reads_path in readset.path_iterator():
             readset['reads_file']=reads_path
             pipeline=Pipeline(name=pipeline_name, readset=readset).load() # 
             pipeline.update(RnaseqGlobals.config)
-
-            # Create the PipelineRun object:
-            if True:
-                pipeline_run=PipelineRun(pipeline)
-                session=RnaseqGlobals.get_session()
-                pipeline_run.start_time=int(time.time())
-                pipeline_run.status='standby'
+            pipeline.store_db()
+            
+            # Don't Create the PipelineRun object:
+            if not RnaseqGlobals.conf_value('no_run') and False:
+                pipeline_run=PipelineRun(pipeline_id=pipeline.id, start_time=int(time.time()), status='standby')
                 session.add(pipeline_run)
                 session.commit()
             
+
+
             # create and store the pipeline's shell script:
             script=pipeline.sh_script()
             script_filename=os.path.join(pipeline.working_dir(), pipeline.scriptname())

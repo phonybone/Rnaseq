@@ -134,8 +134,8 @@ class RnaseqGlobals(object):
             engine=create_engine('sqlite:///%s' % db_name, echo=False)
             metadata=MetaData()
 
-            from Rnaseq import Pipeline, Step, Readset, PipelineRun, StepRun
-            for cls in [Pipeline,Step,Readset,PipelineRun,StepRun]:
+            from Rnaseq import Pipeline, Step, Readset, StepRun, PipelineRun # have to import these explicitly because we're in a classmethod?
+            for cls in [Pipeline,Step,Readset,StepRun,PipelineRun]:
                 tbl=cls.create_table(metadata,engine)
                 mapper(cls,tbl)
                 

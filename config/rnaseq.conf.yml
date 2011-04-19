@@ -20,7 +20,9 @@ provenance:
     insert: insert.py
     ls: select.py
     update: update.py
-    next_step: next_step.py
+    pipeline_start: pipeline_start.py
+    mid_step: mid_step.py
+    pipeline_end: pipeline_end.py
 
 # database
 db: 

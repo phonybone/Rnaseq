@@ -6,6 +6,8 @@ from warn import *
 from dict_like import *
 from templated import *
 from RnaseqGlobals import RnaseqGlobals
+from pipeline_run import *
+from step_run import *
 import path_helpers
 from sqlalchemy import *
 
@@ -40,6 +42,13 @@ class Pipeline(templated):
     def stepWithName(self,stepname):
         for step in self.steps:
             if step.name==stepname: return step 
+        return None
+
+    def stepAfter(self,stepname):
+        prev_step=self.steps[0]
+        for step in self.steps[1:]:
+            if prev_step.name==stepname: return step
+            prev_step=step
         return None
 
     def load(self):
@@ -110,15 +119,32 @@ class Pipeline(templated):
     # return an entire shell script that runs the pipeline
     # warning: this will add a "current" check, which might become out of date if
     # things change between when this script is created and when it is executed.
-    def sh_script(self,**kwargs):
+    def sh_script(self):
         
-
         script="#!/bin/sh\n\n"
-        check_step=Step(name='check_success', pipeline=self).load()
-        prov_step=Step(name='provenance', pipeline=self).load()
-        prov_step.cmd='insert'
-        prov_step.flags=''
+
+        session=RnaseqGlobals.get_session()
+        self.store_db();                # insure self.id exists
+        pipeline_run=PipelineRun(pipeline_id=self.id, status='standby')
+        session.add(pipeline_run)
+        session.commit()                # we need the pipelinerun_id below
+
+        # create step_run objects:
+        step_runs={}
+        for step in self.steps:
+            step_run=StepRun(step_id=step.id, pipeline_run_id=pipeline_run.id, status='standby')
+            session.add(step_run)
+            step_runs[step.name]=step_run
+        session.commit()                # we need the pipelinerun_id below
         
+        # create auxillary steps:
+        pipeline_start=Step(name='pipeline_start', pipeline=self, pipelinerun_id=pipeline_run.id).load()
+        mid_step=Step(name='mid_step', pipeline=self, pipeline_run_id=pipeline_run.id).load()
+        pipeline_end=Step(name='pipeline_end', pipeline=self, pipelinerun_id=pipeline_run.id).load()
+
+        script+=pipeline_start.sh_cmd()
+
+        last_stepname=self.steps[-1].name
         for step in self.steps:
             # put in check_current step:
             # fixme: test this!!!
@@ -135,22 +161,18 @@ class Pipeline(templated):
             # insert check success step:
             try: skip_check=step['skip_success_check'] 
             except: skip_check=False
-            if not skip_check: 
-                check_step.last_step=step.name
-                script+=check_step.sh_cmd()
+            if not skip_check and step.name != last_stepname:
+                step_run=step_runs[step.name]
+                mid_step.stepname=step.name
+                mid_step.steprun_id=step_run.id
+                mid_step.next_steprun_id=step_runs[self.stepAfter(step.name).name].id # sheesh
+                script+=mid_step.sh_cmd()
 
-            # record provenance for outputs: (or not)
-            for o in set(step.outputs())|set(step.creates()):
-                prov_step.output=o
-                prov_step.args=" ".join((o, step.exe)) # double (())'s to make it a tuple
-                #script+=prov_step.sh_cmd()
             script+="\n"
             print "step %s added" % step.name
             
         # record finish:
-        prov_step.cmd='update'
-        prov_step.args="-p %s --status finished" % self.name
-        #script+=prov_step.sh_cmd()
+        script+=pipeline_end.sh_cmd()
 
         return script
 
@@ -343,14 +365,25 @@ class Pipeline(templated):
 
     
     ########################################################################
-        
-    # return the id of an object, looking itself up and/or inserting itself into the
-    # db as necessary:
-    def fetch_id(self):
-        try: return self.id
-        except AttributeError: pass
 
+    # lookup self in db; if not found, store.  Same for all steps.
+    def store_db(self):
         session=RnaseqGlobals.get_session()
-        mself=session.merge(self)
+        other_self=session.query(Pipeline).filter_by(name=self.name).first()
+        if other_self==None:
+            session.add(self)
+        else:
+            self.id=other_self.id
+
+        for step in self.steps:
+            other_step=session.query(Step).filter_by(name=step.name).first()
+            if other_step == None:
+                session.add(step)
+            else:
+                step.id=other_step.id
+
+        session.commit()
+        return self
+        
 
 #print "%s checking in: Pipeline.__name__ is %s" % (__file__,Pipeline.__name__)

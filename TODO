@@ -38,6 +38,15 @@ Want to put back in the bit that makes certain object keys (eg step['exe']) into
 could do this in dict_like: if class defines list of attributes to set. (Note: dict_like already
 does something like that...)
 
-Fix up provenance to resemble rnaseq
 
 Allow key=value params on command line to set any templated value? (store them in RnaseqGlobals, probably)
+
+Integrate pipeline_start, pipeline_end, and mid_step prov cmds (and nix step check_success)
+
+Create more rnaseq/prov commands to query db:
+- list all pipelines
+- list all pipeline stats (steps, 
+- list pipeline run stats (status, success, step times)
+- list/run partial pipelines (start step, end step)
+
+pipeline.sh_script has extraneous steps: provenance
