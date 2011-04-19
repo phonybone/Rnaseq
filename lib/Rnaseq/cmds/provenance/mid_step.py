@@ -4,9 +4,6 @@ from Rnaseq import *
 from Rnaseq.command import *
 import time
 
-# usage: 
-
-
 class MidStep(Command):
     def usage(self):
         return "usage: mid_step <pipelinerun_id> <steprun_id> <next_steprun_id> <retcode>"
@@ -17,9 +14,7 @@ class MidStep(Command):
     def run(self, *argv, **args):
         try:
             config=args['config']
-            (pipelinerun_id, steprun_id, next_steprun_id, retcode)=argv[0][2:5]
-            pipelinerun_id=int(pipelinerun_id)
-            retcode=int(retcode)
+            (pipelinerun_id, steprun_id, next_steprun_id, retcode)=[int(x) for x in argv[0][2:6]]
             
         except ValueError as ie:
             raise UserError(self.usage())
@@ -45,22 +40,28 @@ class MidStep(Command):
             step_run.successful=True
             step_run.finish_time=now
             step_run.status='finished' # or something...
+            print "step_run(%d) updated" % step_run.id
 
             # set pipeline_run status:
             pipeline_run.status="%s finished" % step.name
+            print "pipeline_run(%d) updated" % pipeline_run.id
 
             # set the start time for the next step_run:
             next_steprun=session.query(StepRun).filter_by(id=next_steprun_id).first()
             next_steprun.start_time=now
+            next_steprun.status='started'
+            print "next_step_run(%d) updated" % next_steprun.id
 
         else:                           # last step failed (boo)
             step_run.successful=False
             step_run.finish_time=now
             step_run.status='failed'
+            print "step_run(%d) updated" % step_run.id
 
             # pipeline_run status:
             pipeline_run.status="%s failed" % step.name
             pipeline_run.successful=False
             pipeline_run.finish_time=now
+            print "pipeline_run(%d) updated" % pipeline_run.id
 
         session.commit()

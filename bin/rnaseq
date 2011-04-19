@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #-*-python-*-
 
 # The main rnaseq entry point
@@ -5,17 +6,7 @@
 
 import sys, os, yaml, optparse
 from warn import *
-
-# Try to load the rnaseq modules:
-try:
-    needed_dir=os.path.normpath(os.path.abspath(__file__)+"/../../lib")
-    sys.path.append(needed_dir)
-    from Rnaseq import *
-except ImportError as e:
-    sys.stderr.write("Unable to import Rnaseq.  Perhaps you need to add "+needed_dir+" to your PYTHONPATH?\n")
-    sys.stderr.write(yaml.dump(e))
-    sys.stderr.write("(%s)\n" % e)
-    sys.exit(1)
+from Rnaseq import *
 
 
 ########################################################################
@@ -28,7 +19,7 @@ def main():
     try: 
         cmd=argv[1]
     except IndexError as ie:
-        die(UserError(usage))
+        cmd='help'
     cf=CmdFactory(program='rnaseq')
     cf.add_cmds(RnaseqGlobals.conf_value('rnaseq','cmds'))
     cmd=cf.new_cmd(cmd)
