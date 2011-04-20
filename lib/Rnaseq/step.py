@@ -4,7 +4,12 @@ import yaml, time, re
 from RnaseqGlobals import RnaseqGlobals
 from templated import *
 from warn import *
+from Rnaseq import *
+from step_run import *
+
 from sqlalchemy import *
+from sqlalchemy.orm import mapper, relationship, backref
+
 
 class Step(templated):
     def __init__(self,*args,**kwargs):
@@ -16,20 +21,19 @@ class Step(templated):
 
     ########################################################################
     __tablename__='step'
-    crap='''
-    id=Column(Integer, primary_key=True)
-    name=Column(String, nullable=False)
-    description=Column(String)
-'''
-    
+    sa_properties={'step_runs':relationship(StepRun, backref='step', primaryjoin=StepRun.__table__.c.id)}
+
+
     @classmethod
     def create_table(self, metadata, engine):
+
         step_table=Table(self.__tablename__, metadata,
                          Column('id',Integer, primary_key=True),
                          Column('name',String, nullable=False, index=True, unique=True),
                          Column('description', String),
                          )
         metadata.create_all(engine)
+        print "%s table %s created" %(self.__name__,self,__tablename__)
         return step_table
     
 

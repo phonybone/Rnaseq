@@ -3,7 +3,6 @@ from warn import *
 from Rnaseq import *
 from RnaseqGlobals import RnaseqGlobals
 from Rnaseq.command import *
-import re
 
 
 class Insert(Command):

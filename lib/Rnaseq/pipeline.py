@@ -2,6 +2,7 @@
 
 import sys, yaml, re, time, os
 
+from step import *
 from warn import *
 from dict_like import *
 from templated import *
@@ -10,8 +11,8 @@ from pipeline_run import *
 from step_run import *
 import path_helpers
 from sqlalchemy import *
+from sqlalchemy.orm import mapper
 
-from step import *
 
 class Pipeline(templated):
     def __init__(self,*args,**kwargs):
@@ -27,6 +28,8 @@ class Pipeline(templated):
     ########################################################################
 
     __tablename__='pipeline'
+    sa_properties={'pipeline_runs':relationship(PipelineRun, backref='pipeline')}
+
         
     @classmethod
     def create_table(self, metadata, engine):
@@ -36,6 +39,8 @@ class Pipeline(templated):
                              Column('description', String),
                              )
         metadata.create_all(engine)
+        mapper(Pipeline,pipeline_table,self.sa_properties)
+        print "%s table %s created" %(self.__name__,self,__tablename__)
         return pipeline_table
     
 
@@ -146,13 +151,16 @@ class Pipeline(templated):
         script+=pipeline_start.sh_cmd()
 
         last_stepname=self.steps[-1].name
+        current_flag=True               # once one step isn't current, the rest aren't either
         for step in self.steps:
             # put in check_current step:
             # fixme: test this!!!
-            if not RnaseqGlobals.conf_value('force'):
+            if not RnaseqGlobals.conf_value('force') and current_flag:
                 if step.is_current() and not step.force:
                     print "step %s is current, skipping" % step.name
                     continue
+                else:
+                    current_flag=False
             
             # actual step
             script+="# %s\n" % step.name

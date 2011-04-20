@@ -1,4 +1,5 @@
 from sqlalchemy import *
+from sqlalchemy.orm import mapper
 
 class StepRun(object):
     __tablename__='step_run'
@@ -19,4 +20,8 @@ class StepRun(object):
                              Column('status', String),
                              Column('successful', Boolean))
         metadata.create_all(engine)
+        mapper(StepRun, step_run_table)
+        print "%s table %s created" %(self.__name__,self,__tablename__)
         return step_run_table
+
+#print __file__,"checking in"

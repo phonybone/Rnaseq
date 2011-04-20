@@ -24,4 +24,7 @@ Create more rnaseq/prov commands to query db:
 - list pipeline run stats (status, success, step times)
 - list/run partial pipelines (start step, end step)
 
+- job control
+
+
 add (optional) labels to pipeline_runs; tie in to working_dir?; not quite

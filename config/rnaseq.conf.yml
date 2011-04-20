@@ -12,6 +12,7 @@ rnaseq:
     help: help.py
     run: run_pipeline.py
     touch: touch.py
+    ls: ls.py
 
 
 # Don't edit this section
@@ -19,7 +20,6 @@ provenance:
   cmds:
     create_table: create_table.py
     insert: insert.py
-    ls: select.py
     update: update.py
     pipeline_start: pipeline_start.py
     mid_step: mid_step.py
