@@ -18,7 +18,15 @@ class RunPipeline(Command):
         try:
             config=args['config']
             readset_file=config['readset_file']
+            missing=[]
+            if readset_file==None: missing.append('readset (-r)')
             pipeline_name=config['pipeline_name']
+            if pipeline_name==None: missing.append('pipeline (-p)')
+
+            if len(missing)>0:
+                msg="Missing items from command line: %s" % ", ".join(missing)
+                raise UserError(msg)
+            
         except KeyError as e:
             raise MissingArgError(str(e))
             

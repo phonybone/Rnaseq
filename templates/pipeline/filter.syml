@@ -7,18 +7,19 @@ header:
   pass:
 
 export2fq:
-  input: ${readsfile}
-  output: ${readsfile}.fq
+  input: ${readset['reads_file']}
+  output: ${ID}.fq
+  args: solexa2fastq
 
 filterQuality:
-  input: ${readsfile}.fq
-  output: ${readsfile}.qual_OK.fq
-  filtered: ${readsfile}.bowtie_qual_BAD.fq
+  input: ${ID}.fq
+  output: ${ID}.qual_OK.fq
+  filtered: ${ID}.bowtie_qual_BAD.fq
   args: -v
 
 filterLowComplex:
-  input: ${readsfile}.qual_OK.fq
-  output: ${readsfile}.complex_OK.fq
+  input: ${ID}.qual_OK.fq
+  output: ${ID}.complex_OK.fq
   filtered: ${readsfile}.bowtie_complex_BAD.fq
   args: -v
 

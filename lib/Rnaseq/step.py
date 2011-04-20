@@ -12,7 +12,7 @@ class Step(templated):
         self.type='step'
         self.suffix='syml'
         if not hasattr(self,'force'): self.force=False
-
+        if not hasattr(self,'description'): self.description=self.name
 
     ########################################################################
     __tablename__='step'

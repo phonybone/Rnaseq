@@ -139,6 +139,7 @@ class Pipeline(templated):
         
         # create auxillary steps:
         pipeline_start=Step(name='pipeline_start', pipeline=self, pipelinerun_id=pipeline_run.id).load()
+        pipeline_start.next_steprun_id=step_runs[self.steps[0].name].id
         mid_step=Step(name='mid_step', pipeline=self, pipeline_run_id=pipeline_run.id).load()
         pipeline_end=Step(name='pipeline_end', pipeline=self, pipelinerun_id=pipeline_run.id).load()
 
@@ -161,11 +162,15 @@ class Pipeline(templated):
             # insert check success step:
             try: skip_check=step['skip_success_check'] 
             except: skip_check=False
-            if not skip_check and step.name != last_stepname:
+            if not skip_check:
                 step_run=step_runs[step.name]
                 mid_step.stepname=step.name
                 mid_step.steprun_id=step_run.id
-                mid_step.next_steprun_id=step_runs[self.stepAfter(step.name).name].id # sheesh
+                next_step=self.stepAfter(step.name)
+                try:
+                    mid_step.next_steprun_id=step_runs[self.stepAfter(step.name).name].id # sheesh
+                except:
+                    mid_step.next_steprun_id=0
                 script+=mid_step.sh_cmd()
 
             script+="\n"

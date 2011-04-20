@@ -44,13 +44,15 @@ class MidStep(Command):
 
             # set pipeline_run status:
             pipeline_run.status="%s finished" % step.name
+            pipeline_run.current_step_run_id=next_steprun_id
             print "pipeline_run(%d) updated" % pipeline_run.id
 
             # set the start time for the next step_run:
-            next_steprun=session.query(StepRun).filter_by(id=next_steprun_id).first()
-            next_steprun.start_time=now
-            next_steprun.status='started'
-            print "next_step_run(%d) updated" % next_steprun.id
+            if next_steprun_id > 0:
+                next_steprun=session.query(StepRun).filter_by(id=next_steprun_id).first()
+                next_steprun.start_time=now
+                next_steprun.status='started'
+                print "next_step_run(%d) updated" % next_steprun.id
 
         else:                           # last step failed (boo)
             step_run.successful=False

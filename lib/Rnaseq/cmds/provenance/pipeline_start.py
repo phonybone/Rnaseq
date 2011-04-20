@@ -18,7 +18,8 @@ class PipelineStart(Command):
         try:
             config=args['config']
             pipelinerun_id=int(argv[0][2])
-            
+            next_steprun_id=int(argv[0][3])
+
         except ValueError as ie:
             raise UserError(self.usage())
 
@@ -27,6 +28,8 @@ class PipelineStart(Command):
         pipeline_run=session.query(PipelineRun).filter_by(id=pipelinerun_id).first()
         pipeline_run.status='started'
         pipeline_run.start_time=int(time.time())
+        pipeline_run.current_step_run_id=next_steprun_id
 
         session.commit()
+        pipeline=session.query(Pipeline).filter_by(id=pipeline_run.pipeline_id).first()
         print "pipeline '%s' started" % pipeline.name
