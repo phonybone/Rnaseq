@@ -28,3 +28,5 @@ Create more rnaseq/prov commands to query db:
 
 
 add (optional) labels to pipeline_runs; tie in to working_dir?; not quite
+
+make sure correct reference genomes are being used for organism of data.

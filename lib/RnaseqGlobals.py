@@ -60,7 +60,7 @@ class RnaseqGlobals(object):
         parser.add_option("-n","--no_run",   dest="no_run",          help="supress actuall running", default=False, action='store_true')
         parser.add_option("-p","--pipeline", dest="pipeline_name",   help="pipeline name")
         parser.add_option("-r","--readset",  dest="readset_file",    help="readset filename")
-
+        parser.add_option("--pr", "--pipeline-run", dest="pipeline_run_id", help="pipeline run id")
         self.parser=parser
 
 
@@ -134,15 +134,12 @@ class RnaseqGlobals(object):
             engine=create_engine('sqlite:///%s' % db_name, echo=False)
             metadata=MetaData()
 
-            classes=[Step,Readset,StepRun,PipelineRun,Pipeline]
-            tables={}
             from Rnaseq import Pipeline, Step, Readset, StepRun, PipelineRun # have to import these explicitly because we're in a classmethod?
+            classes=[Pipeline,Step,Readset,PipelineRun,StepRun]
+            tables={}
             for cls in classes:
                 tables[cls]=cls.create_table(metadata,engine)
 
-            for cls in classes:
-                mapper(cls, tables[cls], cls.sa_properties)
-                
             Session=sessionmaker(bind=engine)
             session=Session()
             self.engine=engine

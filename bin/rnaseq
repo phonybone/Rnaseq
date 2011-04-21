@@ -16,10 +16,9 @@ def main():
     argv=RnaseqGlobals.initialize(usage)       # not to be confused with sys.argv
 
     # get the command:
-    try: 
-        cmd=argv[1]
-    except IndexError as ie:
-        cmd='help'
+    try: cmd=argv[1]
+    except IndexError as ie: cmd='help'
+        
     cf=CmdFactory(program='rnaseq')
     cf.add_cmds(RnaseqGlobals.conf_value('rnaseq','cmds'))
     cmd=cf.new_cmd(cmd)

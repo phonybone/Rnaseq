@@ -21,7 +21,6 @@ class Step(templated):
 
     ########################################################################
     __tablename__='step'
-    sa_properties={'step_runs':relationship(StepRun, backref='step', primaryjoin=StepRun.__table__.c.id)}
 
 
     @classmethod
@@ -33,7 +32,9 @@ class Step(templated):
                          Column('description', String),
                          )
         metadata.create_all(engine)
-        print "%s table %s created" %(self.__name__,self,__tablename__)
+
+        sa_properties={'step_runs':relationship(StepRun, backref='step')}
+        mapper(Step, step_table, sa_properties)
         return step_table
     
 

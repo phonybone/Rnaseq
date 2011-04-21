@@ -43,8 +43,6 @@ class MidStep(Command):
             print "step_run(%d) updated" % step_run.id
 
             # set pipeline_run status:
-            pipeline_run.status="%s finished" % step.name
-            pipeline_run.current_step_run_id=next_steprun_id
             print "pipeline_run(%d) updated" % pipeline_run.id
 
             # set the start time for the next step_run:
@@ -53,6 +51,13 @@ class MidStep(Command):
                 next_steprun.start_time=now
                 next_steprun.status='started'
                 print "next_step_run(%d) updated" % next_steprun.id
+
+                pipeline_run.status="%s started" % next_steprun.step.name
+                pipeline_run.current_step_run_id=next_steprun_id
+
+            else:
+                pipeline_run.status="%s finished" % step.name
+                pipeline_run.current_step_run_id=0
 
         else:                           # last step failed (boo)
             step_run.successful=False

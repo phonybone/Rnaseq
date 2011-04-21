@@ -24,12 +24,12 @@ class Pipeline(templated):
 
     wd_time_format="%d%b%y.%H%M%S"
 
+    def __str__(self):
+        return "%s" % self.name
 
     ########################################################################
 
     __tablename__='pipeline'
-    sa_properties={'pipeline_runs':relationship(PipelineRun, backref='pipeline')}
-
         
     @classmethod
     def create_table(self, metadata, engine):
@@ -39,10 +39,13 @@ class Pipeline(templated):
                              Column('description', String),
                              )
         metadata.create_all(engine)
-        mapper(Pipeline,pipeline_table,self.sa_properties)
-        print "%s table %s created" %(self.__name__,self,__tablename__)
+
+        sa_properties={'pipeline_runs':relationship(PipelineRun, backref='pipeline')}
+        mapper(Pipeline, pipeline_table, sa_properties)
         return pipeline_table
     
+
+    ########################################################################
 
     def stepWithName(self,stepname):
         for step in self.steps:
@@ -164,7 +167,8 @@ class Pipeline(templated):
             
             # actual step
             script+="# %s\n" % step.name
-            script+=step.sh_cmd(echo_name=True)
+            step_script=step.sh_cmd(echo_name=True)
+            script+=step_script
             script+="\n"
 
             # insert check success step:
@@ -172,6 +176,7 @@ class Pipeline(templated):
             except: skip_check=False
             if not skip_check:
                 step_run=step_runs[step.name]
+                step_run.cmd=step_script
                 mid_step.stepname=step.name
                 mid_step.steprun_id=step_run.id
                 next_step=self.stepAfter(step.name)
@@ -184,6 +189,8 @@ class Pipeline(templated):
             script+="\n"
             print "step %s added" % step.name
             
+        session.commit()                # to store updated step_run objects
+        
         # record finish:
         script+=pipeline_end.sh_cmd()
 
