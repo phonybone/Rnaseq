@@ -1,5 +1,2 @@
-${sh_cmd}
-exit_on_failure $$? ${name}
 grep chr ${ID}.mapsplice/alignments.sam | perl -lane '$$F[1] == 16 ? print "$$_\tXS:A:-" : print "$$_\tXS:A:+"' > ${ID}.mapsplice.sam
-exit_on_failure $$? ${name}.grep
 rm -rf ${ID}.mapsplice

@@ -1,5 +1,5 @@
 name: pipeline de Juan
-stepnames: header export2fq filterQuality filterVectors filterLowComplex ribosomal_mit remove_erccs repeats_consensus collect_filtered mapsplice cufflinks cuffcompare footer
+stepnames: header export2fq filterQuality filterVectors filterLowComplex ribosomal_mit remove_erccs repeats_consensus collect_filtered mapsplice mapsplice2 cufflinks cuffcompare footer
 blat_index: /proj/hoodlab/share/programs/RNAseq-Pi/data/blat-indexes
 
 header:
@@ -54,6 +54,9 @@ mapsplice:
   input: ${ID}.bowtie_FILTERED.${rnaseq['align_suffix']}
   output: ${ID}.mapsplice
   create: ${ID}.mapsplice.sam
+
+mapsplice2:
+  name: mapsplice2
 
 cufflinks:
   input: ${ID}.mapsplice.sam
