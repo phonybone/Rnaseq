@@ -24,7 +24,8 @@ class templated(dict):
             except Exception as e:
                 print "templated.__init__: caught %s" % e
         for k,v in kwargs.items():
-            setattr(self,k,v)
+            try: setattr(self,k,v)      # something in alchemy can eff this up
+            except Exception as e: print "templated.__init__: caught %s" % e
         self.dict=self.__dict__         # convenience, hope it doesn't bite us
 
     def __str__(self):

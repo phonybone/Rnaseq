@@ -13,7 +13,7 @@ rnaseq:
     run: run_pipeline.py
     touch: touch.py
     ls: ls.py
-
+    ts: test_step.py
 
 # Don't edit this section
 provenance:

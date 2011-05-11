@@ -16,8 +16,11 @@ class Step(templated):
         templated.__init__(self,*args,**kwargs)
         self.type='step'
         self.suffix='syml'
-        if not hasattr(self,'force'): self.force=False
-        if not hasattr(self,'description'): self.description=self.name
+        try:                    # something in alchemy can eff this up
+            if not hasattr(self,'force'): self.force=False
+            if not hasattr(self,'description'): self.description=self.name
+        except Exception as e:
+            print "Step.__init__: caught %s" % e
 
     ########################################################################
     __tablename__='step'

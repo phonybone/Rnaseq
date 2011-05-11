@@ -14,12 +14,16 @@ class Stub(Command):
         raise ProgrammerGoof("%s doesn't override description()" % self.__class__.__name__)
 
 
-    def run(self, **args):
+    def run(self, *argv, **args):
         try:
-            dbh=args['dbh']
-            options=args['options']
-        except IndexError as ie:
-            raise MissingArgError(str(ie))
+            (arg1,arg2)=argv[0][2:3]
+            config=args['config']
+        except KeyError as ke:
+            raise MissingArgError(str(ke))
+        except ValueError as ie:
+            raise UserError(self.usage())
+
+        session=RnaseqGlobals.get_session()
 
         raise ProgrammerGoof("%s doesn't override run()" % self.__class__.__name__)
 
