@@ -35,14 +35,21 @@ class RnaseqGlobals(object):
         try: config_file=args['config_file']
         except: config_file=values.config_file # blow up if this doesn't work, but shouldn't since there's a default value
         self.read_config(config_file)
+        self.verify_root_dir()
         self.fix_align_params()         # ugh (fixme)
         self.add_options_to_conf(values) # converts "__" entries, et al
-
-
         self.get_session()
 
         return argv
 
+    @classmethod
+    def verify_root_dir(self):
+        if not self.conf_value('rnaseq','root_dir'):
+            root_dir=os.path.normpath(os.path.join(__file__,'..'))
+            self.config['rnaseq']['root_dir']=root_dir
+        root_dir=self.conf_value('rnaseq','root_dir')
+        if not os.access(root_dir, os.R_OK | os.W_OK | os.X_OK):
+            raise ConfigError(root_dir+": not a viable path (doesn't exist or permissions error; all access (including executable) needed")
 
     # return parsed argv
     @classmethod
@@ -131,6 +138,7 @@ class RnaseqGlobals(object):
             return self.session
         except AttributeError: 
             db_name=self.get_db_file()
+            print "db_name is %s" % db_name
             engine=create_engine('sqlite:///%s' % db_name, echo=False)
             metadata=MetaData()
 
