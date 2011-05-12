@@ -45,3 +45,11 @@ class PipelineRun(object):
 
     def finishtime(self):
         return time.strftime(self.time_format, time.localtime(self.finish_time))
+
+    def report(self):
+        try: dur=duration(self.start_time, self.finish_time)
+        except: dur='n/a'
+        report="pipeline: '%s' (%d)\tstatus: %s\tsuccess: %s\ttotal duration: %s\n" % (self.pipeline.name, self.id, self.status, self.successful, dur)
+        for step_run in self.step_runs:
+            report+="\t%s\n" % step_run.report()
+        return report

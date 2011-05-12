@@ -31,7 +31,8 @@ class MidStep(Command):
         if not step_run:
             print "steprun_id=%s: no last step_run???" % steprun_id
             return
-        step=session.query(Step).filter_by(id=step_run.step_id).first()
+        step=step_run.step
+        print "mid_step: step is %s" % step.name
         
         now=int(time.time())
         if retcode==0:                   # last step was a success!

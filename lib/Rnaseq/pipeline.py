@@ -141,6 +141,9 @@ class Pipeline(templated):
         step_runs={}
         for step in self.steps:
             step_run=StepRun(step_id=step.id, pipeline_run_id=pipeline_run.id, status='standby')
+            for output in step.outputs():
+                print "output is %s" % output
+                step_run.file_outputs.append(FileOutput(path=output))
             session.add(step_run)
             step_runs[step.name]=step_run
         session.commit()                # we need the pipelinerun_id below

@@ -45,7 +45,7 @@ class RnaseqGlobals(object):
     @classmethod
     def verify_root_dir(self):
         if not self.conf_value('rnaseq','root_dir'):
-            root_dir=os.path.normpath(os.path.join(__file__,'..'))
+            root_dir=os.path.normpath(os.path.join(__file__,'../..'))
             self.config['rnaseq']['root_dir']=root_dir
         root_dir=self.conf_value('rnaseq','root_dir')
         if not os.access(root_dir, os.R_OK | os.W_OK | os.X_OK):
@@ -142,8 +142,9 @@ class RnaseqGlobals(object):
             engine=create_engine('sqlite:///%s' % db_name, echo=False)
             metadata=MetaData()
 
-            from Rnaseq import Pipeline, Step, Readset, StepRun, PipelineRun # have to import these explicitly because we're in a classmethod?
-            classes=[Pipeline,Step,Readset,PipelineRun,StepRun]
+            # have to import these explicitly because we're in a classmethod: (or something)
+            from Rnaseq import Pipeline, Step, Readset, StepRun, PipelineRun, FileOutput 
+            classes=[Pipeline,Step,Readset,PipelineRun,StepRun,FileOutput]
             tables={}
             for cls in classes:
                 tables[cls]=cls.create_table(metadata,engine)

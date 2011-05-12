@@ -20,6 +20,6 @@ filterQuality:
 filterLowComplex:
   input: ${ID}.qual_OK.fq
   output: ${ID}.complex_OK.fq
-  filtered: ${readsfile}.bowtie_complex_BAD.fq
+  filtered: ${ID}.bowtie_complex_BAD.fq
   args: -v
 

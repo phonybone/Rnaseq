@@ -11,6 +11,7 @@ import sys, optparse
 from RnaseqGlobals import RnaseqGlobals
 from pipeline_run import *
 from step_run import *
+from file_output import *
 
 from fred import *
    

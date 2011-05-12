@@ -18,17 +18,22 @@ class PipelineStart(Command):
         try:
             config=args['config']
             pipelinerun_id=int(argv[0][2])
-            next_steprun_id=int(argv[0][3])
+            first_steprun_id=int(argv[0][3])
 
         except ValueError as ie:
             raise UserError(self.usage())
 
         session=RnaseqGlobals.get_session()
-
+        now=int(time.time())
+        
         pipeline_run=session.query(PipelineRun).filter_by(id=pipelinerun_id).first()
         pipeline_run.status='started'
-        pipeline_run.start_time=int(time.time())
-        pipeline_run.current_step_run_id=next_steprun_id
+        pipeline_run.start_time=now
+        pipeline_run.current_step_run_id=first_steprun_id
+
+        step_run=session.query(StepRun).filter_by(id=first_steprun_id).first()
+        step_run.start_time=now
+        step_run.status='started'
 
         session.commit()
         pipeline=session.query(Pipeline).filter_by(id=pipeline_run.pipeline_id).first()
