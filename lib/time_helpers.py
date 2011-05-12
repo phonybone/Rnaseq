@@ -1,6 +1,6 @@
 # return a string describing the difference between two times.  t1 and t2 are integers or floats as
 # returned by time.time()
-def duration(t1, t2):
+def duration(t1, t2, precision=5):
     t1=int(t1)
     t2=int(t2)
     duration=t1-t2
@@ -17,33 +17,41 @@ def duration(t1, t2):
         s='' if n==1 else 's'
         l.append("%d year%s" % (n,s))
         duration=duration%secs_in_year
+        precision-=1
 
-    if duration > secs_in_day:
+    if duration > secs_in_day and precision > 0:
         n=int(duration/secs_in_day)
         s='' if n==1 else 's'
         l.append("%d day%s" % (n,s))
         duration=duration%secs_in_day
+        precision-=1
         
-    if duration > secs_in_hour:
+    if duration > secs_in_hour and precision > 0:
         n=int(duration/secs_in_hour)
         s='' if n==1 else 's'
         l.append("%d hour%s" % (n,s))
         duration=duration%secs_in_hour
+        precision-=1
 
-    if duration > secs_in_min:
+    if duration > secs_in_min and precision > 0:
         n=int(duration/secs_in_min)
         s='' if n==1 else 's'
         l.append("%d min%s" % (n,s))
         duration=duration%secs_in_min
+        precision-=1
 
-    s='' if duration==1 else 's'
-    l.append("%d sec%s" % (duration,s))
+    if precision > 0:
+        s='' if duration==1 else 's'
+        l.append("%d sec%s" % (duration,s))
+        
     return ", ".join(l)
 
 if __name__ == '__main__':
     t1=0
     for t2 in [30, 61, 234, 3292, 28329, 98238, 7372737, 48291038, 482910338]:
         print "%d: %s" % (t2, duration(t1, t2))
+    for t2 in [30, 61, 234, 3292, 28329, 98238, 7372737, 48291038, 482910338]:
+        print "%d: %s" % (t2, duration(t1, t2, 2))
 
         
                  

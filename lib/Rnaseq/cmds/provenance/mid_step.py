@@ -57,7 +57,7 @@ class MidStep(Command):
 
             else:
                 pipeline_run.status="%s finished" % step.name
-                pipeline_run.current_step_run_id=0
+                #pipeline_run.current_step_run_id=0 # let the last step id stand for reporting purposes
 
         else:                           # last step failed (boo)
             step_run.successful=False

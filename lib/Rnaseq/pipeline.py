@@ -40,7 +40,8 @@ class Pipeline(templated):
                              )
         metadata.create_all(engine)
 
-        sa_properties={'pipeline_runs':relationship(PipelineRun, backref='pipeline')}
+        sa_properties={'pipeline_runs':relationship(PipelineRun, backref='pipeline'),
+                       }
         mapper(Pipeline, pipeline_table, sa_properties)
         return pipeline_table
     
@@ -61,8 +62,8 @@ class Pipeline(templated):
 
     def load(self):
         vars={}
-        vars.update(self.dict)
-        vars.update(self.readset)
+        if hasattr(self,'dict'): vars.update(self.dict)
+        if hasattr(self, 'readset'): vars.update(self.readset)
         vars.update(RnaseqGlobals.config)
         
         #vars['readsfile']=self.readset.reads_file # fixme: might want to make reads_file a function, if iterated
@@ -133,7 +134,7 @@ class Pipeline(templated):
 
         session=RnaseqGlobals.get_session()
         self.store_db();                # insure self.id exists
-        pipeline_run=PipelineRun(pipeline_id=self.id, status='standby')
+        pipeline_run=PipelineRun(pipeline_id=self.id, status='standby', input_file=self.readset['reads_file'])
         session.add(pipeline_run)
         session.commit()                # we need the pipelinerun_id below
 
@@ -142,7 +143,6 @@ class Pipeline(templated):
         for step in self.steps:
             step_run=StepRun(step_id=step.id, pipeline_run_id=pipeline_run.id, status='standby')
             for output in step.outputs():
-                print "output is %s" % output
                 step_run.file_outputs.append(FileOutput(path=output))
             session.add(step_run)
             step_runs[step.name]=step_run
@@ -164,6 +164,8 @@ class Pipeline(templated):
             if not RnaseqGlobals.conf_value('force') and current_flag:
                 if step.is_current() and not step.force:
                     print "step %s is current, skipping" % step.name
+                    step_runs[step.name].status='skipped'
+
                     continue
                 else:
                     current_flag=False

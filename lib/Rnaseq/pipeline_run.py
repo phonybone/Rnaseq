@@ -1,3 +1,4 @@
+from RnaseqGlobals import *
 from sqlalchemy import *
 from sqlalchemy.orm import backref, relationship, mapper
 import time
@@ -18,6 +19,7 @@ class PipelineRun(object):
         pipeline_run_table=Table(self.__tablename__, metadata,
                                  Column('id', Integer, primary_key=True),
                                  Column('pipeline_id', String, ForeignKey('pipeline.id'), nullable=False),
+                                 Column('input_file',  String),
                                  Column('current_step_run_id', Integer),
                                  Column('start_time', Integer),
                                  Column('finish_time', Integer),
@@ -34,7 +36,7 @@ class PipelineRun(object):
         try:
             if self.start_time==None: raise Exception
             if self.finish_time==None: raise Exception
-            dur=duration(self.start_time, self.finish_time)
+            dur=duration(self.start_time, self.finish_time, 2)
         except: dur=''
         return "\t".join(str(x) for x in [self.pipeline.name, self.id, self.status, self.successful, self.starttime(), self.finishtime(),
                                           dur])
@@ -46,10 +48,28 @@ class PipelineRun(object):
     def finishtime(self):
         return time.strftime(self.time_format, time.localtime(self.finish_time))
 
+    def summary(self):
+        try:
+            session=RnaseqGlobals.get_session()
+            last_step=session.query(StepRun).filter_by(id=self.current_step_run_id).first()
+            last_step_name=last_step.step.name
+        except Exception as e:
+            last_step_name='n/a'
+
+        try: start_time=time.strftime(self.time_format, time.localtime(self.start_time))
+        except: start_time='n/a'
+
+        try: dur=duration(self.start_time, self.finish_time, 2)
+        except: dur='n/a'
+            
+        return "(%d) start time: %s\tduration: %s\tstatus: %s\tsuccessful: %s\tlast step: %s" % (self.id, start_time, dur, self.status, self.successful, last_step_name)
+
     def report(self):
-        try: dur=duration(self.start_time, self.finish_time)
+        try: dur=duration(self.start_time, self.finish_time, 2)
         except: dur='n/a'
         report="pipeline: '%s' (%d)\tstatus: %s\tsuccess: %s\ttotal duration: %s\n" % (self.pipeline.name, self.id, self.status, self.successful, dur)
+        report+="        input file: %s\n" % self.input_file
+        report+="        Steps:\n"
         for step_run in self.step_runs:
             report+="\t%s\n" % step_run.report()
         return report

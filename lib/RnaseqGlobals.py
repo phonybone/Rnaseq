@@ -138,7 +138,6 @@ class RnaseqGlobals(object):
             return self.session
         except AttributeError: 
             db_name=self.get_db_file()
-            print "db_name is %s" % db_name
             engine=create_engine('sqlite:///%s' % db_name, echo=False)
             metadata=MetaData()
 
@@ -184,7 +183,7 @@ class RnaseqGlobals(object):
             setattr(self.values, 'rnaseq__align_suffix', subhash['aligner_suffix'])
             setattr(self.values, 'rnaseq__fq_cmd', subhash['fq_cmd'])
         except Exception as e:
-            print "caught an %s: %s" % (type(e),e)
+            #print "caught an %s: %s" % (type(e),e)
             raise optparse.OptionValueError(str(e))
 
 

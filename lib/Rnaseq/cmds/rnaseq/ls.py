@@ -1,7 +1,7 @@
 from Rnaseq import *
 from Rnaseq.command import *
 from RnaseqGlobals import *
-
+from yaml import dump
 
 class Ls(Command):
 
@@ -52,11 +52,10 @@ class Ls(Command):
             print "pipeline %s" % p.name
 
     def ls_pipeline(self,pipeline):
-        print pipeline
+        print "pipeline: %s" % pipeline.name
         for pr in pipeline.pipeline_runs:
-            print "%s" % pr
+            print "\trun: %s" % pr.summary()
 
     def ls_pipeline_run(self,pipeline_run):
-        print pipeline_run
-        for sr in pipeline_run.step_runs:
-            print sr
+        print pipeline_run.report()
+

@@ -13,18 +13,8 @@ class Readset(dict):
             setattr(self,k,v)
         
     ########################################################################
-    crap='''
-    id=Column(Integer, primary_key=True)
-    name=Column(String, nullable=False)
-    reads_file=Column(String)
-    org=Column(String)
-    readlen=Column(Integer)
-    working_dir=Column(String)
-'''
         
     __tablename__='readset'
-
-
 
     @classmethod
     def create_table(self, metadata, engine):
