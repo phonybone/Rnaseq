@@ -1,5 +1,7 @@
 #-*-python-*-
 
+# step_object version
+
 import sys, yaml, re, time, os
 
 from step import *
