@@ -1,6 +1,6 @@
 from Rnaseq import *
 
-class header(Step):
+class Header(Step):
     def fred(self):
         print "step.fred() called"
         

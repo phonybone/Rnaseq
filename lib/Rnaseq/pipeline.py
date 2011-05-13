@@ -61,6 +61,10 @@ class Pipeline(templated):
             prev_step=step
         return None
 
+    # read in the (s)yml file that defines the pipeline, passing the contents the evoque as needed.
+    # load in all of the steps (via a similar mechanism), creating a list in self.steps
+    # raise errors as needed (mostly ConfigError's)
+    # returns self
     def load(self):
         vars={}
         vars.update(self.dict)
@@ -125,7 +129,31 @@ class Pipeline(templated):
             raise ConfigError("\n".join(errors))
         
         return self
-    
+
+
+    def load_steps(self):
+        self.load_template()
+        try:
+            self.stepnames=re.split('[,\s]+',self['stepnames'])
+        except AttributeError as ae:
+            raise ConfigError("pipeline %s does not define stepnames" % self.name)
+        for stepname in self.stepnames:
+            step=self.new_step(stepname)
+            self.steps.append(step)
+
+    def load_template(self):
+        vars={}
+        vars.update(self.dict)
+        #vars.update(self.readset)
+        vars.update(RnaseqGlobals.config)
+        vars['ID']=self.ID()
+
+        ev=evoque_dict()
+        ev.update(vars)
+        templated.load(self, vars=ev, final=False)
+        
+
+
     # return an entire shell script that runs the pipeline
     # warning: this will add a "current" check, which might become out of date if
     # things change between when this script is created and when it is executed.
@@ -238,8 +266,9 @@ class Pipeline(templated):
     # or the specified working directory are relative or absolute.
     # fixme: why doesn't this call self.working_dir() anywhere?
     def ID(self):
-        reads_file=self.readset['reads_file']
-
+        try: reads_file=self.readset['reads_file']
+        except: return '${ID}'
+        
         # try a few different things to get the working directory:
         try:
             wd=self.readset['working_dir']
@@ -407,5 +436,16 @@ class Pipeline(templated):
         session.commit()
         return self
         
+
+########################################################################
+
+    def new_step(self, stepname, **kwargs):
+        mod=__import__('Rnaseq.steps.%s' % stepname)
+        mod=getattr(mod,"steps")
+        mod=getattr(mod,stepname)
+        kls=getattr(mod,stepname)
+        step=kls(kwargs)
+        return step
+
 
 #print "%s checking in: Pipeline.__name__ is %s" % (__file__,Pipeline.__name__)
