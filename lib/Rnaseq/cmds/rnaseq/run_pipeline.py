@@ -44,8 +44,9 @@ class RunPipeline(Command):
         # fixme: condense this loop
         for reads_path in readset.path_iterator():
             readset['reads_file']=reads_path
-            pipeline=Pipeline(name=pipeline_name, readset=readset).load() # 
+            pipeline=Pipeline(name=pipeline_name, readset=readset).load_steps() # 
             pipeline.update(RnaseqGlobals.config)
+            RnaseqGlobals.read_user_config(pipeline)
             pipeline.store_db()
             
             # Don't Create the PipelineRun object:

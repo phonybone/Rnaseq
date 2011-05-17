@@ -2,14 +2,12 @@ name: filters_only
 description: Juan's pipeline (text filters only)
 stepnames: header export2fq filterQuality filterLowComplex 
 
-
 header: 
   pass:
 
 export2fq:
   input: ${readset['reads_file']}
   output: ${ID}.fq
-  args: solexa2fastq
 
 filterQuality:
   input: ${ID}.fq
@@ -20,6 +18,6 @@ filterQuality:
 filterLowComplex:
   input: ${ID}.qual_OK.fq
   output: ${ID}.complex_OK.fq
-  filtered: ${readsfile}.bowtie_complex_BAD.fq
+  filtered: ${ID}.bowtie_complex_BAD.fq
   args: -v
 

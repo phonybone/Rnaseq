@@ -103,7 +103,7 @@ class templated(dict):
             # why we want to keep this: evoque_dicts protect us against simple Key errors, but not
             # errors of the type ${readset['missing_key']}
         except KeyError as ke:
-            #print "ke is %s (%s)" % (ke, type(ke))
+            print "ke is %s (%s)" % (ke, type(ke))
             raise ConfigError("%s '%s': %s" % (self.type, self.name, ke))
         except AttributeError as ae:
             raise ConfigError("%s '%s': %s" % (self.type, self.name, ae))

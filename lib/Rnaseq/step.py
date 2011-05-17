@@ -2,7 +2,7 @@
 
 import yaml, time, re
 from RnaseqGlobals import RnaseqGlobals
-from templated import *
+#from templated import *
 from warn import *
 from Rnaseq import *
 from step_run import *
@@ -11,14 +11,15 @@ from sqlalchemy import *
 from sqlalchemy.orm import mapper, relationship, backref
 
 
-class Step(templated):
+class Step(dict):                     # was Step(templated)
     def __init__(self,*args,**kwargs):
-        templated.__init__(self,*args,**kwargs)
-        self.type='step'
-        self.suffix='syml'
+        for k,v in kwargs.items():
+            try: setattr(self,k,v)      # something in alchemy can eff this up
+            except Exception as e: print "templated.__init__: caught %s" % e
         try:                    # something in alchemy can eff this up
-            if not hasattr(self,'force'): self.force=False
+            if not hasattr(self,'name'): self.name=self.__class__.__name__
             if not hasattr(self,'description'): self.description=self.name
+            if not hasattr(self,'force'): self.force=False
         except Exception as e:
             print "Step.__init__: caught %s" % e
 
@@ -46,85 +47,68 @@ class Step(templated):
 
     ########################################################################
 
-    def load(self, **args):
-        try: vars=args['vars']
-        except KeyError: vars={}
-        vars['pipeline']=self.pipeline
-        vars['readset']=self.pipeline.readset
-        templated.load(self, vars=vars, final=True)
-
-        try:
-            ptype=Step(name=self['prototype'], pipeline=self.pipeline)
-            ptype.load(vars=vars)
-            self.merge(ptype)
-        except KeyError:
-            pass
-
-        # only things that are defined in step.syml or step.prototype.syml, NOT pipeline.syml
-        for a in ['name', 'description', 'interpreter', 'exe', 'usage', 'force', 'sh_template']:
-            try:
-                setattr(self,a,self[a])
-            except:
-                pass
-
-        return self
-
     # If a step needs more than one line to invoke (eg bowtie: needs to set an environment variable),
     # define the set of commands in a template and set the 'sh_template' attribute to point to the template
     # within the templates/sh_templates subdir).  This routine fetches the template and calls evoque on it, and
     # returns the resulting string.
     # If no sh_template is required, return None.
     def sh_script(self, **kwargs):
-        if 'sh_template' in self.dict:
-            template_dir=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'),"templates","sh_template")
-
-            domain=Domain(template_dir, errors=4)
-            sh_template=self['sh_template']
-            template=domain.get_template(sh_template)
-
-            vars={}
-            vars.update(self)
-            vars.update(self.dict)
-            vars['readset']=self.pipeline.readset # fixme: really?
-            vars['sh_cmd']=self.sh_cmdline() 
-            vars['config']=RnaseqGlobals.config
-            vars['pipeline']=self.pipeline
-            vars['ID']=self.pipeline.ID()
-            vars.update(kwargs)
-            #print vars
-
-            try:
-                script=template.evoque(vars)
-                return script
-            except NameError as ne:
-                raise ConfigError("%s while processing step '%s'" %(ne,self.name))
-        else:
-            return None
+        try: sh_template=self.sh_template
+        except: return None
+            
+        template_dir=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'),"templates","sh_template")
+        
+        domain=Domain(template_dir, errors=4)
+        template=domain.get_template(sh_template)
+        
+        vars={}
+        vars.update(self)
+        vars.update(self.__dict__)
+        vars['readset']=self.pipeline.readset # fixme: really? used by some steps, eg mapsplice
+        vars['sh_cmd']=self.sh_cmdline() 
+        vars['config']=RnaseqGlobals.config
+        vars['pipeline']=self.pipeline
+        vars['ID']=self.pipeline.ID()
+        vars.update(kwargs)
+        #print vars
+        
+        try:
+            script=template.evoque(vars)
+            return script
+        except NameError as ne:
+            raise ConfigError("%s while processing step '%s'" %(ne,self.name))
 
     # use the self.usage formatting string to create the command line that executes the script/program for
     # this step.  Return as a string.  Throws exceptions as die()'s.
     def sh_cmdline(self):
         try:
-            usage=self['usage']
-            if usage==None:
-                usage=''
-        except KeyError:
+            usage=self.usage
+            if usage==None: usage=''
+        except AttributeError:
             usage=''
 
         # look for exe in path, unless exe is an absolute path
         try:
-            if os.path.abspath(self['exe'])!=self['exe']:
-                self['exe']=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'), 'programs', self['exe'])
-        except KeyError as ae:          # not all steps have self['exe']; eg header, footer
+            if os.path.abspath(self.exe)!=self.exe:
+                self.exe=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'), 'programs', self.exe)
+        except AttributeError as ae:          # not all steps have self.exe; eg header, footer
             pass
 
 
-        try:
-            return usage % self   
-
+        # fill h with all attributes of self that aren't reserved ("__") or functions:
+        # note: doesn't expand ${} stuff, since not going through evoque; so those have to be expanded already...
+        l=[x for x in dir(self) if not (re.match('__', x) or callable(getattr(self,x)))]
+        h=self.__dict__
+        try: h.update(self.pipeline[self.name])
+        except: pass
+        for attr in l:
+            h[attr]=getattr(self,attr)
+        return usage % h
+    
+        '''
         # fixme: you don't really know what you're doing in these except blocks...
         except KeyError as e:
-            raise ConfigError("Missing value %s in\n%s" % (e.args, self.name))
+            raise ConfigError("Missing value %s in\n%s" % (e, self.name))
         except AttributeError as e:
             raise ConfigError("Missing value %s in\n%s" % (e.args, self.name))
         except ValueError as e:
@@ -133,7 +117,7 @@ class Step(templated):
             raise "%s.keys(): %s" % (self.name, ", ".join(self.__dict__.keys()))
         except TypeError as te:
             raise ConfigError("step %s: usage='%s': %s" % (self.name, usage, te))
-
+        '''
 
     # entry point to step's sh "presence"; calls appropriate functions, as above.
     def sh_cmd(self, **args):
@@ -141,9 +125,9 @@ class Step(templated):
         if 'echo_name' in args and args['echo_name']:
             echo_part="echo step %s 1>&2" % self.name
             
-        sh_script=self.sh_script()
+        sh_script=self.sh_script()      # try the templated version first
         if sh_script==None:
-            sh_script=self.sh_cmdline()+"\n"
+            sh_script=self.sh_cmdline()+"\n" # 
 
         script="\n".join([echo_part,sh_script]) # tried using echo_part+sh_script, got weird '>' -> '&gt;' substitutions
         return script
@@ -151,15 +135,15 @@ class Step(templated):
 ########################################################################
 
     def inputs(self):
-        try: return re.split("[,\s]+",self['input'])
+        try: return re.split("[,\s]+",self.input)
         except: return []
 
     def outputs(self):
-        try: return re.split("[,\s]+",self['output'])
+        try: return re.split("[,\s]+",self.output)
         except: return []
     
     def creates(self):
-        try: return re.split("[,\s]+",self['create'])
+        try: return re.split("[,\s]+",self.create)
         except: return []
     
     # current: return true if all of the step's outputs are older than all
@@ -179,7 +163,7 @@ class Step(templated):
                 latest_input=mtime
 
             try:
-                exe_file=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'), 'programs', self['exe'])
+                exe_file=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'), 'programs', self.exe)
                 exe_mtime=os.stat(exe_file).st_mtime
                 if exe_mtime > latest_input:
                     latest_input=exe_mtime

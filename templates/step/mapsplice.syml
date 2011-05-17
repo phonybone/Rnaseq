@@ -4,4 +4,3 @@ exe: mapsplice_segments.py
 interpreter: python
 genome_dir: /proj/hoodlab/share/programs/Ensembl
 genome: hs37.61
-

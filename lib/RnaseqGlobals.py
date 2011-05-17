@@ -61,6 +61,7 @@ class RnaseqGlobals(object):
         parser.add_option("-p","--pipeline", dest="pipeline_name",   help="pipeline name")
         parser.add_option("-r","--readset",  dest="readset_file",    help="readset filename")
         parser.add_option("--pr", "--pipeline-run", dest="pipeline_run_id", help="pipeline run id")
+        parser.add_option('-u', "--user_config", dest='user_config', help="additional user specified parameters (config file)")
         self.parser=parser
 
 
@@ -110,7 +111,28 @@ class RnaseqGlobals(object):
         return conf
 
     @classmethod
-    def set_conf_value(self,keyslist,value):
+    def root_dir(self):
+        try: return self.conf_value('rnaseq','root_dir')
+        except:
+            root_dir=os.path.abspath(os.path.join(__file__,"../.."))
+            self.set_conf_value('rnaseq','root_dir',root_dir)
+            return root_dir
+    
+    @classmethod
+    def abs_dir(self,*args):
+        if len(args)==0:
+            raise MissingArgsException('conf_value: no args')
+
+        conf=self.config
+        for a in args:
+            try: conf=conf[a]
+            except KeyError: return None
+            
+        abspath=os.path.join(self.root_dir(), conf)
+        return abspath
+
+    @classmethod
+    def set_conf_value(self,keyslist,value): 
         config=self.config
         if (type(keyslist)==type("string")):
             keyslist=[keyslist]
@@ -135,7 +157,7 @@ class RnaseqGlobals(object):
             metadata=MetaData()
 
             from Rnaseq import Pipeline, Step, Readset, StepRun, PipelineRun # have to import these explicitly because we're in a classmethod?
-            classes=[Pipeline,Step,Readset,PipelineRun,StepRun]
+            classes=[Pipeline,Readset,PipelineRun,StepRun] # omit step
             tables={}
             for cls in classes:
                 tables[cls]=cls.create_table(metadata,engine)
@@ -179,7 +201,35 @@ class RnaseqGlobals(object):
             raise optparse.OptionValueError(str(e))
 
 
-            
+
+    # process the user config file.  Sections that correspond to step names get their
+    # contents merged into the step's dict.  Otherwise the values are merged into the
+    # global config hash.
+    # Returns self.
+    @classmethod
+    def read_user_config(self, pipeline):
+        try: user_config_file=self.conf_value('user_config')
+        except: return self
+
+        try: f=open(user_config_file)
+        except IOError as ioe: raise UserError(ioe)
+        except TypeError: return self
+        
+        try: yml=yaml.load(f)
+        except yaml.scanner.ScannerError as barf:
+            raise ConfigError(barf)
+
+        for k,v in yml.items():
+            step=pipeline.stepWithName(k)
+            if step==None: self.set_conf_value(k,v)
+            else:
+                if type(v) != type({}):
+                    raise ConfigError("In section %s of %s, the value must be a hash (ie, an indented section); got %s instead"
+                                      % (k, user_config_file, type(v)))
+                step.update(v)
+        return self
+                                     
+                                   
 
 
 #print __file__,"checking in"

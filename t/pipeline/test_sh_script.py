@@ -10,16 +10,18 @@ class TestInputs(unittest.TestCase):
         argv=RnaseqGlobals.initialize(__file__, testing=True)       # not to be confused with sys.argv
         template_dir=RnaseqGlobals.abs_dir('testing', 'template_dir')
         templated.template_dir=template_dir
-        self.readset=Readset(name='readset').load()
+        self.readset=Readset(name='readset', filename='../readset/readset.syml').load()
         self.pipeline=Pipeline(name='filter', readset=self.readset)
-        self.pipeline.load_steps()
 
 class TestListExpansion(TestInputs):
     def runTest(self):
-        step=self.pipeline.stepWithName('export2fq')
-        self.assertTrue(isinstance(step, Step))
-        self.assertEqual(step.inputs()[0], self.readset.reads_file)
-        self.assertEqual(step.outputs()[0], "%s.fq" % self.readset.reads_file)
+        reads_path=self.readset.path_iterator()[0]
+        self.readset['reads_file']=reads_path
+        pipeline=Pipeline(name='filter', readset=self.readset)            
+        pipeline.load_steps()
+        print pipeline.sh_script(force=True)
+
+
 
 
 

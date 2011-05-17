@@ -1,5 +1,5 @@
-reads_file: s_?_export.txt
-description: this is a sample readset
+reads_file: ../readset/s_?_export.txt
+description: this is a sample readset fart
 org: mouse
 readlen: 75
 working_dir: rnaseq_wf
