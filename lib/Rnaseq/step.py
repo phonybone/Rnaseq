@@ -9,7 +9,7 @@ from step_run import *
 
 from sqlalchemy import *
 from sqlalchemy.orm import mapper, relationship, backref
-
+from hash_helpers import obj2dict
 
 class Step(dict):                     # was Step(templated)
     def __init__(self,*args,**kwargs):
@@ -57,7 +57,6 @@ class Step(dict):                     # was Step(templated)
         except: return None
             
         template_dir=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'),"templates","sh_template")
-        
         domain=Domain(template_dir, errors=4)
         template=domain.get_template(sh_template)
         
@@ -70,13 +69,10 @@ class Step(dict):                     # was Step(templated)
         vars['pipeline']=self.pipeline
         vars['ID']=self.pipeline.ID()
         vars.update(kwargs)
-        #print vars
-        
-        try:
-            script=template.evoque(vars)
-            return script
-        except NameError as ne:
-            raise ConfigError("%s while processing step '%s'" %(ne,self.name))
+
+        try: script=template.evoque(vars)
+        except NameError as ne: raise ConfigError("%s while processing step '%s'" %(ne,self.name))
+        return script
 
     # use the self.usage formatting string to create the command line that executes the script/program for
     # this step.  Return as a string.  Throws exceptions as die()'s.
@@ -95,29 +91,31 @@ class Step(dict):                     # was Step(templated)
             pass
 
 
-        # fill h with all attributes of self that aren't reserved ("__") or functions:
-        # note: doesn't expand ${} stuff, since not going through evoque; so those have to be expanded already...
-        l=[x for x in dir(self) if not (re.match('__', x) or callable(getattr(self,x)))]
-        h=self.__dict__
+        h={}
+        h.update(self.__dict__)
         try: h.update(self.pipeline[self.name])
         except: pass
-        for attr in l:
-            h[attr]=getattr(self,attr)
-        return usage % h
-    
-        '''
-        # fixme: you don't really know what you're doing in these except blocks...
-        except KeyError as e:
-            raise ConfigError("Missing value %s in\n%s" % (e, self.name))
-        except AttributeError as e:
-            raise ConfigError("Missing value %s in\n%s" % (e.args, self.name))
-        except ValueError as e:
-            warn(e)
-            warn("%s.usage: %s" % (self.name,usage))
-            raise "%s.keys(): %s" % (self.name, ", ".join(self.__dict__.keys()))
-        except TypeError as te:
-            raise ConfigError("step %s: usage='%s': %s" % (self.name, usage, te))
-        '''
+
+        # fill h with all attributes of self that aren't reserved ("__") or functions:
+        # note: doesn't expand ${} stuff, since not going through evoque; so those have to be expanded already...
+        h.update(obj2dict(self))
+        #l=[x for x in dir(self) if not (re.match('__', x) or callable(getattr(self,x)))]
+        #for attr in l:
+            #h[attr]=getattr(self,attr)
+        ver1=usage % h
+       
+        # evoque the cmd str:
+        domain=Domain(os.getcwd())
+        domain.set_template(self.name, src=ver1)
+        tmp=domain.get_template(self.name)
+        vars={}
+        vars.update(self.__dict__)
+        vars.update(h)
+        vars.update(self.pipeline)
+        vars.update(RnaseqGlobals.config)
+        cmd=tmp.evoque(vars)
+        return cmd
+
 
     # entry point to step's sh "presence"; calls appropriate functions, as above.
     def sh_cmd(self, **args):
@@ -130,6 +128,7 @@ class Step(dict):                     # was Step(templated)
             sh_script=self.sh_cmdline()+"\n" # 
 
         script="\n".join([echo_part,sh_script]) # tried using echo_part+sh_script, got weird '>' -> '&gt;' substitutions
+
         return script
 
 ########################################################################

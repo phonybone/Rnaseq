@@ -2,7 +2,7 @@
 
 # step_object version
 
-import sys, yaml, re, time, os
+import sys, yaml, re, time, os, re
 
 from step import *
 from warn import *
@@ -14,7 +14,7 @@ from step_run import *
 import path_helpers
 from sqlalchemy import *
 from sqlalchemy.orm import mapper
-
+from hash_helpers import obj2dict
 
 class Pipeline(templated):
     def __init__(self,*args,**kwargs):
@@ -141,6 +141,20 @@ class Pipeline(templated):
             raise ConfigError("pipeline %s does not define stepnames" % self.name)
         for stepname in self.stepnames:
             step=self.new_step(stepname)
+
+            # fix any ${} vars in self[stepname]: what a hack
+            for k,v in self[stepname].items():
+                if type(v)!=type('str'): continue
+                if re.search('\$\{',v):
+                    vars=evoque_dict()
+                    vars.update(step.__dict__)
+                    vars.update(obj2dict(step))
+                    domain=Domain(os.getcwd())
+                    domain.set_template(k, src=v)
+                    tmpl=domain.get_template(k)
+                    v=tmpl.evoque(vars)
+                    self[stepname][k]=v
+
             step.update(self[stepname])
             self.steps.append(step)
         return self
