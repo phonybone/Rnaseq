@@ -201,7 +201,6 @@ class Pipeline(templated):
 
         script+=pipeline_start.sh_cmd()
 
-        last_stepname=self.steps[-1].name
         current_flag=True               # once one step isn't current, the rest aren't either
         try: force_flag=not RnaseqGlobals.conf_value('force') or kwargs['force']
         except: force_flag=False

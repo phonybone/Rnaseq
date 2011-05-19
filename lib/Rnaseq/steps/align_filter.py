@@ -5,7 +5,8 @@ class align_filter(Step):
     def __init__(self,**kwargs):
         Step.__init__(self,**kwargs)
 
-        aligner=RnaseqGlobals.conf_value('rnaseq','aligner')
+        try: aligner=kwargs['aligner']
+        except: aligner=RnaseqGlobals.conf_value('rnaseq','aligner')
         if aligner=='bowtie':
             self.usage='%(exe)s %(ewbt)s %(args)s --un %(output)s %(input)s'
             self.exe='bowtie'
