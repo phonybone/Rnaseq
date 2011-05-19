@@ -1,22 +1,35 @@
 name: Juan's pipeline (text filters only)
-stepnames: header export2fq filterQuality filterLowComplex 
+description: Juan's pipeline (text filters only)
+stepnames: header export2fq filterQuality filterLowComplex ribosomal_mit remove_erccs
 
 header: 
   pass:
 
 export2fq:
-  input: ${readsfile}
-  output: ${readsfile}.fq
+  input: ${readset['reads_file']}
+  output: ${ID}.fq
 
 filterQuality:
-  input: ${readsfile}.fq
-  output: ${readsfile}.qual_OK.fq
-  filtered: ${readsfile}.bowtie_qual_BAD.fq
+  input: ${ID}.fq
+  output: ${ID}.qual_OK.fq
+  filtered: ${ID}.bowtie_qual_BAD.fq
   args: -v
 
 filterLowComplex:
-  input: ${readsfile}.qual_OK.fq
-  output: ${readsfile}.complex_OK.fq
-  filtered: ${readsfile}.bowtie_complex_BAD.fq
+  input: ${ID}.qual_OK.fq
+  output: ${ID}.complex_OK.fq
+  filtered: ${ID}.bowtie_complex_BAD.fq
   args: -v
+
+ribosomal_mit:
+  input: ${ID}.complex_OK.${align_suffix}
+  output: ${ID}.riboMT_OK.${align_suffix}
+  filtered: ${ID}.bowtie_riboMT_BAD.sam
+  psl: ${ID}.blat_riboMT_BAD.psl
+
+remove_erccs:
+  input: ${ID}.riboMT_OK.${align_suffix}
+  output: ${ID}.ercc_OK.${align_suffix}
+  filtered: ${ID}.bowtie_ercc_BAD.sam
+  psl: ${ID}.blat_ercc_BAD.psl
 

@@ -1,6 +1,8 @@
 #-*-python-*-
 
-import sys, yaml, re, time, os
+# step_object version
+
+import sys, yaml, re, time, os, re
 
 from step import *
 from warn import *
@@ -12,7 +14,7 @@ from step_run import *
 import path_helpers
 from sqlalchemy import *
 from sqlalchemy.orm import mapper
-
+from hash_helpers import obj2dict
 
 class Pipeline(templated):
     def __init__(self,*args,**kwargs):
@@ -48,11 +50,13 @@ class Pipeline(templated):
 
     ########################################################################
 
+    # return the step with the given step name, or None if not found:
     def stepWithName(self,stepname):
         for step in self.steps:
             if step.name==stepname: return step 
         return None
 
+    # return the step after the given step (by name), or None if not found:
     def stepAfter(self,stepname):
         prev_step=self.steps[0]
         for step in self.steps[1:]:
@@ -60,6 +64,10 @@ class Pipeline(templated):
             prev_step=step
         return None
 
+    # read in the (s)yml file that defines the pipeline, passing the contents the evoque as needed.
+    # load in all of the steps (via a similar mechanism), creating a list in self.steps
+    # raise errors as needed (mostly ConfigError's)
+    # returns self
     def load(self):
         vars={}
         if hasattr(self,'dict'): vars.update(self.dict)
@@ -124,11 +132,51 @@ class Pipeline(templated):
             raise ConfigError("\n".join(errors))
         
         return self
-    
+
+
+    def load_steps(self):
+        self.load_template()
+        try:
+            self.stepnames=re.split('[,\s]+',self['stepnames'])
+        except AttributeError as ae:
+            raise ConfigError("pipeline %s does not define stepnames" % self.name)
+        for stepname in self.stepnames:
+            step=self.new_step(stepname)
+
+            # fix any ${} vars in self[stepname]: what a hack
+            for k,v in self[stepname].items():
+                if type(v)!=type('str'): continue
+                if re.search('\$\{',v):
+                    vars=evoque_dict()
+                    vars.update(step.__dict__)
+                    vars.update(obj2dict(step))
+                    domain=Domain(os.getcwd())
+                    domain.set_template(k, src=v)
+                    tmpl=domain.get_template(k)
+                    v=tmpl.evoque(vars)
+                    self[stepname][k]=v
+
+            step.update(self[stepname])
+            self.steps.append(step)
+        return self
+
+    def load_template(self):
+        vars={}
+        vars.update(self.dict)
+        #vars.update(self.readset)
+        vars.update(RnaseqGlobals.config)
+        vars['ID']=self.ID()
+
+        ev=evoque_dict()
+        ev.update(vars)
+        templated.load(self, vars=ev, final=False)
+        
+
+
     # return an entire shell script that runs the pipeline
     # warning: this will add a "current" check, which might become out of date if
     # things change between when this script is created and when it is executed.
-    def sh_script(self):
+    def sh_script(self, **kwargs):
         
         script="#!/bin/sh\n\n"
 
@@ -141,7 +189,7 @@ class Pipeline(templated):
         # create step_run objects:
         step_runs={}
         for step in self.steps:
-            step_run=StepRun(step_id=step.id, pipeline_run_id=pipeline_run.id, status='standby')
+            step_run=StepRun(step_name=step.name, pipeline_run_id=pipeline_run.id, status='standby')
             for output in step.outputs():
                 step_run.file_outputs.append(FileOutput(path=output))
             session.add(step_run)
@@ -149,19 +197,21 @@ class Pipeline(templated):
         session.commit()                # we need the pipelinerun_id below
         
         # create auxillary steps:
-        pipeline_start=Step(name='pipeline_start', pipeline=self, pipelinerun_id=pipeline_run.id).load()
+        pipeline_start=self.new_step('pipeline_start',pipelinerun_id=pipeline_run.id)
         pipeline_start.next_steprun_id=step_runs[self.steps[0].name].id
-        mid_step=Step(name='mid_step', pipeline=self, pipeline_run_id=pipeline_run.id).load()
-        pipeline_end=Step(name='pipeline_end', pipeline=self, pipelinerun_id=pipeline_run.id).load()
+        mid_step=self.new_step('mid_step', pipeline_run_id=pipeline_run.id)
+        pipeline_end=self.new_step('pipeline_end', pipelinerun_id=pipeline_run.id)
 
         script+=pipeline_start.sh_cmd()
 
-        last_stepname=self.steps[-1].name
         current_flag=True               # once one step isn't current, the rest aren't either
+        try: force_flag=not RnaseqGlobals.conf_value('force') or kwargs['force']
+        except: force_flag=False
+            
+            
         for step in self.steps:
-            # put in check_current step:
-            # fixme: test this!!!
-            if not RnaseqGlobals.conf_value('force') and current_flag:
+            # do we need to skip this step based on currency issues?
+            if current_flag and not force_flag:
                 if step.is_current() and not step.force:
                     print "step %s is current, skipping" % step.name
                     step_runs[step.name].status='skipped'
@@ -241,8 +291,9 @@ class Pipeline(templated):
     # or the specified working directory are relative or absolute.
     # fixme: why doesn't this call self.working_dir() anywhere?
     def ID(self):
-        reads_file=self.readset['reads_file']
-
+        try: reads_file=self.readset['reads_file']
+        except: return '${ID}'
+        
         # try a few different things to get the working directory:
         try:
             wd=self.readset['working_dir']
@@ -400,15 +451,20 @@ class Pipeline(templated):
         else:
             self.id=other_self.id
 
-        for step in self.steps:
-            other_step=session.query(Step).filter_by(name=step.name).first()
-            if other_step == None:
-                session.add(step)
-            else:
-                step.id=other_step.id
-
         session.commit()
         return self
         
+
+########################################################################
+
+    def new_step(self, stepname, **kwargs):
+        mod=__import__('Rnaseq.steps.%s' % stepname)
+        mod=getattr(mod,"steps")
+        mod=getattr(mod,stepname)
+        kls=getattr(mod,stepname)
+        kwargs['pipeline']=self
+        step=kls(**kwargs)
+        return step
+
 
 #print "%s checking in: Pipeline.__name__ is %s" % (__file__,Pipeline.__name__)

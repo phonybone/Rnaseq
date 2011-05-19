@@ -44,17 +44,14 @@ class RunPipeline(Command):
         # fixme: condense this loop
         for reads_path in readset.path_iterator():
             readset['reads_file']=reads_path
-            pipeline=Pipeline(name=pipeline_name, readset=readset).load() # 
+            pipeline=Pipeline(name=pipeline_name, readset=readset).load_steps() # 
             pipeline.update(RnaseqGlobals.config)
+            RnaseqGlobals.read_user_config(pipeline)
             pipeline.store_db()
             
-            # Don't Create the PipelineRun object:
-            if not RnaseqGlobals.conf_value('no_run') and False:
-                pipeline_run=PipelineRun(pipeline_id=pipeline.id, start_time=int(time.time()), status='standby')
-                session.add(pipeline_run)
-                session.commit()
-            
-
+            # We don't create a PipelineRun object here, but rather let the
+            # sh script take care of that.  But could we pass it (and the StepRun
+            # objects) to it?
 
             # create and store the pipeline's shell script:
             script=pipeline.sh_script()

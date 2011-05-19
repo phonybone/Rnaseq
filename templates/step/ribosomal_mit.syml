@@ -3,4 +3,3 @@ description: remove rRNA/MT matches
 ewbt: human.GRCh37.61.rRNA-MT
 blat_index: ${pipeline['blat_index']}/human.GRCh37.61.rRNA-MT.2bit
 prototype: ${config['rnaseq']['aligner']}_filter
-

@@ -4,7 +4,6 @@ import yaml, socket, os, glob
 from sqlalchemy import *
 from warn import *
 
-#class Readset(templated, TableBase):
 class Readset(dict):
     def __init__(self,*args,**kwargs):
         self.suffix='syml'
@@ -33,8 +32,11 @@ class Readset(dict):
     ########################################################################
 
     def load(self):
+        try: filename=self.filename
+        except AttributeError: filename=self.name+'.syml'
+
         try:
-            f=open(self.filename)
+            f=open(filename)
             yml=yaml.load(f)
             f.close()
         except IOError as ioe:
