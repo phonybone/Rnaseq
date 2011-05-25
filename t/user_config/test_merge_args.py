@@ -1,4 +1,4 @@
-import unittest, os, sys
+import unittest, os, sys, re
 
 sys.path.append(os.path.normpath(os.path.abspath(__file__)+"/../../../lib"))
 from Rnaseq import *
@@ -30,11 +30,22 @@ class TestMergePipeline(TestSetup):
 
         self.assertEqual(pipeline_args['remove_erccs']['aligner'], 'blat')
         re_step=pipeline.stepWithName('remove_erccs')
-        self.assertTrue(re_step.aligner, 'blat')
+        self.assertEqual(re_step.aligner(), 'blat')
 
-        print re_step.sh_cmd()
-        #print yaml.dump(pipeline)
-        
+        script=re_step.sh_cmd()
+        mg=re.search('align_suffix=(\w+)',script)
+        self.assertEqual(mg.group(1), 'fa')
+
+        expected_script='''
+align_suffix=fa
+/proj/hoodlab/share/vcassen/rna-seq/rnaseq/programs/blat ERCC_reference_081215.2bit /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/user_config/rnaseq_wf/s_?_export.txt.riboMT_OK.fq -fastMap -q=DNA -t=DNA /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/user_config/rnaseq_wf/s_?_export.txt.blat_ercc_BAD.psl
+#exit_on_failure $? remove_erccs
+perl /proj/hoodlab/share/vcassen/rna-seq/rnaseq/bin/removeBlatHit.pl /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/user_config/rnaseq_wf/s_?_export.txt.blat_ercc_BAD.psl /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/user_config/rnaseq_wf/s_?_export.txt.riboMT_OK.fq > /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/user_config/rnaseq_wf/s_?_export.txt.ercc_OK.fq
+'''
+        self.assertEqual(script,expected_script)
+
+
+        print pipeline.sh_script()
 
 if __name__=='__main__':
     unittest.main()
