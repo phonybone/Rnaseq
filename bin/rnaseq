@@ -25,7 +25,7 @@ def main():
 
     # run the command 
     cmd.run(argv, config=RnaseqGlobals.config)
-    print "rnaseq: done"
+
 
 ########################################################################
 

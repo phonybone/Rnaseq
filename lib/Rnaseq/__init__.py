@@ -12,7 +12,7 @@ from RnaseqGlobals import RnaseqGlobals
 from pipeline_run import *
 from step_run import *
 from file_output import *
+from user_config import *
 
-from fred import *
    
 #print __file__,"checking in"

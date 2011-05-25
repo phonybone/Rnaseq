@@ -73,11 +73,7 @@ class Pipeline(templated):
         if hasattr(self,'dict'): vars.update(self.dict)
         if hasattr(self, 'readset'): vars.update(self.readset)
         vars.update(RnaseqGlobals.config)
-        
-        #vars['readsfile']=self.readset.reads_file # fixme: might want to make reads_file a function, if iterated
         vars['ID']=self.ID()
-        #vars['align_suffix']=RnaseqGlobals.conf_value('rnaseq','align_suffix') # fixme: this really, really shouldn't be here
-        #vars['fq_cmd']=RnaseqGlobals.conf_value('rnaseq','fq_cmd') # fixme: this shouldn't be here either
         ev=evoque_dict()
         ev.update(vars)
         templated.load(self, vars=ev, final=False)
@@ -174,8 +170,6 @@ class Pipeline(templated):
 
 
     # return an entire shell script that runs the pipeline
-    # warning: this will add a "current" check, which might become out of date if
-    # things change between when this script is created and when it is executed.
     def sh_script(self, **kwargs):
         
         script="#!/bin/sh\n\n"
@@ -204,25 +198,20 @@ class Pipeline(templated):
 
         script+=pipeline_start.sh_cmd()
 
-        current_flag=True               # once one step isn't current, the rest aren't either
         try: force_flag=not RnaseqGlobals.conf_value('force') or kwargs['force']
         except: force_flag=False
             
-            
+        errors=[]
         for step in self.steps:
-            # do we need to skip this step based on currency issues?
-            if current_flag and not force_flag:
-                if step.is_current() and not step.force:
-                    print "step %s is current, skipping" % step.name
-                    step_runs[step.name].status='skipped'
-
-                    continue
-                else:
-                    current_flag=False
+            if step.skip:
+                continue
             
             # actual step
             script+="# %s\n" % step.name
-            step_script=step.sh_cmd(echo_name=True)
+
+            try: step_script=step.sh_cmd(echo_name=True)
+            except Exception as e: errors.append("%s: %s" % (step.name,str(e)))
+
             script+=step_script
             script+="\n"
 
@@ -243,6 +232,9 @@ class Pipeline(templated):
 
             script+="\n"
             print "step %s added" % step.name
+
+        if len(errors)>0:
+            raise ConfigError("\n".join(errors))
             
         session.commit()                # to store updated step_run objects
         
@@ -261,26 +253,34 @@ class Pipeline(templated):
     # each of the first two can be a directory, or a "policy".
     # valid policies include "timestamp" (and nothing else, for the moment)
     # If nothing found, use default found in config file under "default_working_dir"
-    def working_dir(self):
+    def working_dir(self,*args):
+        try: self['working_dir']=args[0]
+        except IndexError: pass
+
+        
+        # (try to) get the base dir from the readset:
         try:
             readset=self.readset
             readsfile=readset['reads_file']
             base_dir=os.path.dirname(readsfile)
         except KeyError as ke:
-            raise UserError("Missing key: "+ke)
+            raise UserError("Missing key: "+ke) # fixme: UserError?  really?
 
+        # see if self['working_dir'] is defined
         try:
             wd=os.path.join(base_dir, self['working_dir'])
             return wd
         except KeyError as ie:
             pass
 
+        # see if the readset defines a working_dir:
         try:
             wd=os.path.join(base_dir, readset['working_dir'])
             return wd
         except KeyError as ie:
             pass
 
+        # nothing found: generate a working_dir from a timestamp:
         default='rnaseq_'+time.strftime(self.wd_time_format)
         return os.path.join(base_dir, default)
 
@@ -420,7 +420,8 @@ class Pipeline(templated):
         return path_helpers.sanitize(os.path.join(self.working_dir(), "%s.err" % self.name))
         
 
-    def write_qsub_script(self, script_filename, out_filename=None, err_filename=None):
+    # create the qsub script using a template:
+    def qsub_script(self, script_filename, out_filename=None, err_filename=None):
         if out_filename==None: out_filename=self.out_filename()
         if err_filename==None: err_filename=self.err_filename()
         qsub=templated(name='qsub', type='sh_template', suffix='tmpl')
