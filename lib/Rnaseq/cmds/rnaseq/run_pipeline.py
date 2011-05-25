@@ -91,7 +91,7 @@ class RunPipeline(Command):
             for output in step.outputs():
                 step_run.file_outputs.append(FileOutput(path=output))
 
-            if step.skip:               # as set by set_current(pipeline)
+            if step.skip:               # as set by set_steps_current(pipeline)
                 print "step %s is current, skipping" % step.name
                 step_run.status='skipped'
 
