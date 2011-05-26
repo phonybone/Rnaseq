@@ -107,8 +107,8 @@ class RunPipeline(Command):
         force_rest=False
         for step in pipeline.steps:
             skip_step=not (global_force or step.force or force_rest) and step.is_current()
-            if skip_step:
-                setattr(step, 'skip', True)
+            print "%s: skip_step is %s" % (step.name, skip_step)
+            setattr(step, 'skip', skip_step)
             else:
                 setattr(step, 'skip', False)
                 # once one step is out of date, all following steps will be, too, unless it's a "special" step:

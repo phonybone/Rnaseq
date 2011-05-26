@@ -203,8 +203,10 @@ class Pipeline(templated):
             
         errors=[]
         for step in self.steps:
-            if step.skip:
-                continue
+            try:
+                if step.skip: continue
+            except: pass
+                
             
             # actual step
             script+="# %s\n" % step.name
