@@ -23,11 +23,13 @@ class UserConfig(dict):
             self.update(user_config)
         except yaml.scanner.ScannerError as barf:
             raise ConfigError(barf)
-        
+
+        setattr(self,'filename',filename)
         return self
 
     def merge_args(self,pipeline,args):
-        assert(args['pipeline']==pipeline.name)
+        if args['pipeline']!=pipeline.name:
+            raise UserError("pipeline name mismatch in %s: attempt to match user_config for '%s' with pipeline '%s'" % (self.filename, args['pipeline'], pipeline.name))
         for k,v in args.items():
             step=pipeline.stepWithName(k)
             if step != None:
@@ -42,3 +44,7 @@ class UserConfig(dict):
             else:
                 setattr(pipeline,k,v)
         return self
+
+    def user_runs(self):
+        return self['pipeline_runs']
+    

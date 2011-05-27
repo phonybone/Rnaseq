@@ -253,7 +253,7 @@ class Pipeline(templated):
         return script
 
     def scriptname(self):
-        reads_file_root=os.path.splitext(os.path.basename(self.readset['reads_file']))[0]
+        reads_file_root=os.path.splitext(os.path.basename(self.readset.readsfile()))[0]
         return path_helpers.sanitize(self.name+'.'+reads_file_root)+".sh"
 
     # get the working directory for the pipeline.
@@ -270,7 +270,7 @@ class Pipeline(templated):
         # (try to) get the base dir from the readset:
         try:
             readset=self.readset
-            readsfile=readset['reads_file']
+            readsfile=readset.readsfile()
             base_dir=os.path.dirname(readsfile)
         except KeyError as ke:
             raise UserError("Missing key: "+ke) # fixme: UserError?  really?
@@ -300,7 +300,7 @@ class Pipeline(templated):
     # or the specified working directory are relative or absolute.
     # fixme: why doesn't this call self.working_dir() anywhere?
     def ID(self):
-        try: reads_file=self.readset['reads_file']
+        try: reads_file=self.readset.readsfile()
         except KeyError: return '${ID}'
 
         if re.search('[\*\?]', reads_file):
@@ -495,7 +495,7 @@ class Pipeline(templated):
         
         # create the pipeline_run object:
         pipeline_run=PipelineRun()
-        pipeline_run=PipelineRun(pipeline_id=self.id, status='standby', input_file=self.readset['reads_file'])
+        pipeline_run=PipelineRun(pipeline_id=self.id, status='standby', input_file=self.readset.readsfile())
         session.add(pipeline_run)
         session.commit()                # we need the pipelinerun_id below
 

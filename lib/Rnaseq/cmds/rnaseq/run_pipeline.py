@@ -43,7 +43,7 @@ class RunPipeline(Command):
         for reads_path in readset.path_iterator():
 
             # set up the pipeline:
-            readset['reads_file']=reads_path
+            readset.readsfile(reads_path)
             pipeline=Pipeline(name=pipeline_name, readset=readset).load_steps()
             pipeline.update(RnaseqGlobals.config)
             if (RnaseqGlobals.conf_value('user_config')):

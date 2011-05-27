@@ -66,3 +66,18 @@ class Readset(dict):
         l.sort()
         return l
 
+
+    def readsfile(self,*args):
+        try: self['reads_file']=args[0]
+        except IndexError: pass
+        return self['reads_file']
+
+    def next_reads_file(self):
+        try: path_it=self.current_path_list
+        except AttributeError: setattr(self,'current_path_list',self.path_iterator())
+
+        try: next_rf=self.current_path_list[0]
+        except IndexError: return None
+
+        del self.current_path_list[0]
+        return next_rf

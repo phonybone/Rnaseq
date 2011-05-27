@@ -21,7 +21,7 @@ class TestListExpansion(TestInputs):
         pipeline=Pipeline(name='filter', readset=self.readset)            
         pipeline.load_steps()
         script=pipeline.sh_script(force=True) # neglecting to add pipeline_run or step_runs should exclude checks
-        #print script
+
         mg=re.search('exit_on_failure',script)
         self.assertEqual(mg.group(0),'exit_on_failure') # this is from the header, should be only one
         try:
