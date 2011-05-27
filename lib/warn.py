@@ -56,3 +56,5 @@ if __name__ == "__main__":
     warn("about to die!")
     die("gasp!")
     
+
+#print __file__,"checking in"

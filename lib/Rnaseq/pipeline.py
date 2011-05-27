@@ -132,6 +132,7 @@ class Pipeline(templated):
 
     def load_steps(self):
         self.load_template()
+
         try:
             self.stepnames=re.split('[,\s]+',self['stepnames'])
         except AttributeError as ae:
@@ -159,7 +160,7 @@ class Pipeline(templated):
     def load_template(self):
         vars={}
         vars.update(self.dict)
-        #vars.update(self.readset)
+        #vars.update(self.readset)       # why not?
         vars.update(RnaseqGlobals.config)
         vars['ID']=self.ID()
 
@@ -169,42 +170,48 @@ class Pipeline(templated):
         
 
 
+    ########################################################################
+    # Write the pipeline's shell script to disk.
+    # Returns full path of script name.
+    def write_sh_script(self, **kwargs):
+        script=self.sh_script(**kwargs)
+        script_filename=os.path.join(self.working_dir(), self.scriptname())
+        try:
+            os.makedirs(self.working_dir())
+        except OSError:
+            pass                    # already exists, that's ok (fixme: could be permissions error)
+        with open(script_filename, "w") as f:
+            f.write(script)
+            print "%s written" % script_filename
+        return script_filename
+
+
+
+
     # return an entire shell script that runs the pipeline
     def sh_script(self, **kwargs):
         
         script="#!/bin/sh\n\n"
 
-        session=RnaseqGlobals.get_session()
-        self.store_db();                # insure self.id exists
-        pipeline_run=PipelineRun(pipeline_id=self.id, status='standby', input_file=self.readset['reads_file'])
-        session.add(pipeline_run)
-        session.commit()                # we need the pipelinerun_id below
-
-        # create step_run objects:
-        step_runs={}
-        for step in self.steps:
-            step_run=StepRun(step_name=step.name, pipeline_run_id=pipeline_run.id, status='standby')
-            for output in step.outputs():
-                step_run.file_outputs.append(FileOutput(path=output))
-            session.add(step_run)
-            step_runs[step.name]=step_run
-        session.commit()                # we need the pipelinerun_id below
-        
-        # create auxillary steps:
-        pipeline_start=self.new_step('pipeline_start',pipelinerun_id=pipeline_run.id)
-        pipeline_start.next_steprun_id=step_runs[self.steps[0].name].id
-        mid_step=self.new_step('mid_step', pipeline_run_id=pipeline_run.id)
-        pipeline_end=self.new_step('pipeline_end', pipelinerun_id=pipeline_run.id)
-
-        script+=pipeline_start.sh_cmd()
-
-        try: force_flag=not RnaseqGlobals.conf_value('force') or kwargs['force']
-        except: force_flag=False
+        try:
+            pipeline_run=kwargs['pipeline_run']
+            step_runs=kwargs['step_runs']
+            include_provenance=True
+        except KeyError:
+            include_provenance=False
             
+        # create auxillary steps:
+        if include_provenance:
+            pipeline_start=self.new_step('pipeline_start',pipelinerun_id=pipeline_run.id)
+            pipeline_start.next_steprun_id=step_runs[self.steps[0].name].id
+            mid_step=self.new_step('mid_step', pipeline_run_id=pipeline_run.id)
+            pipeline_end=self.new_step('pipeline_end', pipelinerun_id=pipeline_run.id)
+            script+=pipeline_start.sh_cmd()
+
         errors=[]
         for step in self.steps:
             try:
-                if step.skip: continue
+                if step.skip_step: continue  # in a try block in case step.skip doesn't even exist
             except: pass
                 
             
@@ -218,30 +225,30 @@ class Pipeline(templated):
             script+="\n"
 
             # insert check success step:
-            try: skip_check=step['skip_success_check'] 
-            except: skip_check=False
-            if not skip_check:
-                step_run=step_runs[step.name]
-                step_run.cmd=step_script
-                mid_step.stepname=step.name
-                mid_step.steprun_id=step_run.id
-                next_step=self.stepAfter(step.name)
-                try:
-                    mid_step.next_steprun_id=step_runs[self.stepAfter(step.name).name].id # sheesh
-                except:
-                    mid_step.next_steprun_id=0
-                script+=mid_step.sh_cmd()
+            if include_provenance:
+                try: skip_check=step['skip_success_check'] 
+                except: skip_check=False
+                if not skip_check:
+                    step_run=step_runs[step.name]
+                    step_run.cmd=step_script
+                    mid_step.stepname=step.name
+                    mid_step.steprun_id=step_run.id
+                    next_step=self.stepAfter(step.name)
+                    try:
+                        mid_step.next_steprun_id=step_runs[self.stepAfter(step.name).name].id # sheesh
+                    except:
+                        mid_step.next_steprun_id=0
+                    script+=mid_step.sh_cmd()
 
-            script+="\n"
-            print "step %s added" % step.name
+            if not RnaseqGlobals.conf_value('silent'):
+                print "step %s added" % step.name
 
         if len(errors)>0:
             raise ConfigError("\n".join(errors))
             
-        session.commit()                # to store updated step_run objects
-        
         # record finish:
-        script+=pipeline_end.sh_cmd()
+        if include_provenance:
+            script+=pipeline_end.sh_cmd()
 
         return script
 
@@ -294,8 +301,11 @@ class Pipeline(templated):
     # fixme: why doesn't this call self.working_dir() anywhere?
     def ID(self):
         try: reads_file=self.readset['reads_file']
-        except: return '${ID}'
-        
+        except KeyError: return '${ID}'
+
+        if re.search('[\*\?]', reads_file):
+            raise ProgrammerGoof("%s contains glob chars; need to expand readset.path_iterator()" % reads_file)
+
         # try a few different things to get the working directory:
         try:
             wd=self.readset['working_dir']
@@ -461,13 +471,66 @@ class Pipeline(templated):
 ########################################################################
 
     def new_step(self, stepname, **kwargs):
-        mod=__import__('Rnaseq.steps.%s' % stepname)
+        try:
+            mod=__import__('Rnaseq.steps.%s' % stepname)
+        except ImportError as ie:
+            raise ConfigError("error loading step %s: %s" % (stepname, str(ie)))
+        
         mod=getattr(mod,"steps")
-        mod=getattr(mod,stepname)
-        kls=getattr(mod,stepname)
+
+        try:
+            mod=getattr(mod,stepname)
+            kls=getattr(mod,stepname)            
+        except AttributeError as ae:
+            raise ConfigError("step %s not defined: "+str(ae))
+
         kwargs['pipeline']=self
         step=kls(**kwargs)
         return step
+
+
+    # return a tuple containing a pipeline_run object and a dict of step_run objects (keyed by step name):
+    def make_run_objects(self, session):
+        self.store_db()
+        
+        # create the pipeline_run object:
+        pipeline_run=PipelineRun()
+        pipeline_run=PipelineRun(pipeline_id=self.id, status='standby', input_file=self.readset['reads_file'])
+        session.add(pipeline_run)
+        session.commit()                # we need the pipelinerun_id below
+
+        # create step_run objects:
+        step_runs={}
+        for step in self.steps:
+            step_run=StepRun(step_name=step.name, pipeline_run_id=pipeline_run.id, status='standby')
+            for output in step.outputs():
+                step_run.file_outputs.append(FileOutput(path=output))
+
+            if step.skip_step:               # as set by self.set_steps_current()
+                print "step %s is current, skipping" % step.name
+                step_run.status='skipped'
+
+            session.add(step_run)
+            step_runs[step.name]=step_run
+        session.commit()                # we need the pipelinerun_id below
+
+        return (pipeline_run, step_runs)
+
+
+    # for each step, set an attribute 'skip' indicating whether or not to skip the step when creating the sh script:
+    def set_steps_current(self, global_force=False):
+        force_rest=False
+        for step in self.steps:
+            skip_step=not (global_force or step.force or force_rest) and step.is_current()
+            #print "%s: skip_step is %s" % (step.name, skip_step)
+            setattr(step, 'skip', skip_step)
+
+            # once one step is out of date, all following steps will be, too:
+            if not step.skip_step: force_rest=True
+
+    
+
+
 
 
 #print "%s checking in: Pipeline.__name__ is %s" % (__file__,Pipeline.__name__)

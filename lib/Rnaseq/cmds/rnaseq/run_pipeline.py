@@ -4,8 +4,6 @@ from Rnaseq import *
 from Rnaseq.command import *
 import sys, yaml, subprocess, os
 
-# usage: provenance load <readset pipeline>
-# This is sort of a test command, probably won't be used in production
 
 class RunPipeline(Command):
     def usage(self):
@@ -46,20 +44,23 @@ class RunPipeline(Command):
 
             # set up the pipeline:
             readset['reads_file']=reads_path
-            pipeline=Pipeline(name=pipeline_name, readset=readset).load_steps() # 
+            pipeline=Pipeline(name=pipeline_name, readset=readset).load_steps()
             pipeline.update(RnaseqGlobals.config)
             if (RnaseqGlobals.conf_value('user_config')):
                 RnaseqGlobals.set_user_step_params(pipeline) # fixme: not exactly what's needed here
-            pipeline.store_db()         # generally redundant, but gets us the pipeline id
 
             user_runs=RnaseqGlobals.user_config['pipeline_runs']
             print "user_runs(%s, len=%d) is %s" %(type(user_runs), len(user_runs), user_runs)
             
-            # create pipeline_run and step_run objects:
-            (pipeline_run, step_runs)=self.make_run_objects(pipeline)
+            # create pipeline_run and step_run objects (unless not running):
+            if not RnaseqGlobals.conf_value('no_run'):
+                (pipeline_run, step_runs)=pipeline.make_run_objects()
+                script_filename=pipeline.write_sh_script(pipeline_run=pipeline_run, step_runs=step_runs)
+            else:
+                script_filename=pipeline.write_sh_script()
+
 
             # create and store the pipeline's shell script:
-            script_filename=self.write_sh_script(pipeline)
 
             # if running on the cluster, generate a calling (qsub) script and invoke that;
             # if not a cluster job, just assemble cmd[].
@@ -72,65 +73,6 @@ class RunPipeline(Command):
 
 
     ########################################################################
-
-    # return a tuple containing a pipeline_run object and a dict of step_run objects (keyed by step name):
-    def make_run_objects(self,pipeline):
-        session=RnaseqGlobals.get_session()
-        self.set_steps_current(pipeline)
-        
-        # create the pipeline_run object:
-        pipeline_run=PipelineRun()
-        pipeline_run=PipelineRun(pipeline_id=pipeline.id, status='standby', input_file=pipeline.readset['reads_file'])
-        session.add(pipeline_run)
-        session.commit()                # we need the pipelinerun_id below
-
-        # create step_run objects:
-        step_runs={}
-        for step in pipeline.steps:
-            step_run=StepRun(step_name=step.name, pipeline_run_id=pipeline_run.id, status='standby')
-            for output in step.outputs():
-                step_run.file_outputs.append(FileOutput(path=output))
-
-            if step.skip:               # as set by set_steps_current(pipeline)
-                print "step %s is current, skipping" % step.name
-                step_run.status='skipped'
-
-            session.add(step_run)
-            step_runs[step.name]=step_run
-        session.commit()                # we need the pipelinerun_id below
-
-        return (pipeline_run, step_runs)
-
-
-    def set_steps_current(self,pipeline):
-        global_force=RnaseqGlobals.conf_value('force')
-        force_rest=False
-        for step in pipeline.steps:
-            skip_step=not (global_force or step.force or force_rest) and step.is_current()
-            print "%s: skip_step is %s" % (step.name, skip_step)
-            setattr(step, 'skip', skip_step)
-            else:
-                setattr(step, 'skip', False)
-                # once one step is out of date, all following steps will be, too, unless it's a "special" step:
-                force_rest=not step.skip_success_check          
-
-    
-
-    # Write the pipeline's shell script to disk.
-    # Returns full path of script name.
-    def write_sh_script(self,pipeline):
-        script=pipeline.sh_script()
-        script_filename=os.path.join(pipeline.working_dir(), pipeline.scriptname())
-        try:
-            os.makedirs(pipeline.working_dir())
-        except OSError:
-            pass                    # already exists, that's ok (fixme: could be permissions error)
-        with open(script_filename, "w") as f:
-            f.write(script)
-            print "%s written" % script_filename
-        return script_filename
-
-
 
     # write the qsub script.  Return cmd[], which can be passed to subprocess.Popen()
     def write_qsub_script(self,pipeline, script_filename):

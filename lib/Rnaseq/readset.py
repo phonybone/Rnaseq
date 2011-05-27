@@ -10,6 +10,7 @@ class Readset(dict):
         self.type='readset'
         for k,v in kwargs.items():
             setattr(self,k,v)
+            self[k]=v
         
     ########################################################################
         
@@ -34,7 +35,7 @@ class Readset(dict):
     def load(self):
         try: filename=self.filename
         except AttributeError: filename=self.name+'.syml'
-
+            
         try:
             f=open(filename)
             yml=yaml.load(f)
@@ -57,6 +58,11 @@ class Readset(dict):
             return "@".join((user,suffix))
 
     def path_iterator(self):
-        try: return glob.glob(self['reads_files'])
-        except KeyError: return glob.glob(self['reads_file']) # danger! will get overwritten!
+        try:
+            l=glob.glob(self['reads_files'])
+        except Exception:
+            l=glob.glob(self['reads_file']) # danger! will get overwritten!
+
+        l.sort()
+        return l
 
