@@ -4,7 +4,7 @@ from Rnaseq import *
 from warn import *
 
 from sqlalchemy import *
-from sqlalchemy.orm import mapper, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
 # This should really be a singleton class
 class RnaseqGlobals(object):
@@ -39,7 +39,8 @@ class RnaseqGlobals(object):
         self.fix_align_params()         # ugh (fixme)
         self.add_options_to_conf(values) # converts "__" entries, et al
         self.get_session()
-
+        self.read_user_config()
+        
         return argv
 
     @classmethod
@@ -66,6 +67,7 @@ class RnaseqGlobals(object):
         parser.add_option("-f","--force",    dest="force",           help="force execution of pipelines and steps even if targets are up to date", action='store_true', default=False)
         parser.add_option("-n","--no_run",   dest="no_run",          help="supress actuall running", default=False, action='store_true')
         parser.add_option("-p","--pipeline", dest="pipeline_name",   help="pipeline name")
+        parser.add_option('-q',"--quiet",    dest="silent",          help="supress diagnostics and other messages", default=False)
         parser.add_option("-r","--readset",  dest="readset_file",    help="readset filename")
         parser.add_option("--pr", "--pipeline-run", dest="pipeline_run_id", help="pipeline run id")
         parser.add_option('-u', "--user_config", dest='user_config', help="additional user specified parameters (config file)")
@@ -165,7 +167,7 @@ class RnaseqGlobals(object):
 
             # have to import these explicitly because we're in a classmethod: (or something)
             from Rnaseq import Pipeline, Step, Readset, StepRun, PipelineRun, FileOutput 
-            classes=[Pipeline,Readset,PipelineRun,StepRun] # omit step
+            classes=[Pipeline,Readset,PipelineRun,StepRun,FileOutput] # omit step
             tables={}
             for cls in classes:
                 tables[cls]=cls.create_table(metadata,engine)
@@ -215,7 +217,7 @@ class RnaseqGlobals(object):
     # global config hash.
     # Returns self.
     @classmethod
-    def read_user_config(self, pipeline):
+    def read_user_config(self):
         try: user_config_file=self.conf_value('user_config')
         except: return self
 
@@ -223,11 +225,18 @@ class RnaseqGlobals(object):
         except IOError as ioe: raise UserError(ioe)
         except TypeError: return self
         
-        try: yml=yaml.load(f)
+        try:
+            user_config=yaml.load(f)
+            setattr(self,'user_config',user_config)
         except yaml.scanner.ScannerError as barf:
             raise ConfigError(barf)
+        return user_config
 
-        for k,v in yml.items():
+    # 
+    @classmethod
+    def set_user_step_params(self, pipeline):
+        # override any listed step attributes:
+        for k,v in self.user_config.items():
             step=pipeline.stepWithName(k)
             if step==None: self.set_conf_value(k,v)
             else:

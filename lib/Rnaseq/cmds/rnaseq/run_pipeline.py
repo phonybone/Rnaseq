@@ -4,8 +4,6 @@ from Rnaseq import *
 from Rnaseq.command import *
 import sys, yaml, subprocess, os
 
-# usage: provenance load <readset pipeline>
-# This is sort of a test command, probably won't be used in production
 
 class RunPipeline(Command):
     def usage(self):
@@ -43,61 +41,62 @@ class RunPipeline(Command):
         # Iterate through reads files defined in readset:
         # fixme: condense this loop
         for reads_path in readset.path_iterator():
-            readset['reads_file']=reads_path
-            pipeline=Pipeline(name=pipeline_name, readset=readset).load_steps() # 
+
+            # set up the pipeline:
+            readset.readsfile(reads_path)
+            pipeline=Pipeline(name=pipeline_name, readset=readset).load_steps()
             pipeline.update(RnaseqGlobals.config)
-            RnaseqGlobals.read_user_config(pipeline)
-            pipeline.store_db()
+            if (RnaseqGlobals.conf_value('user_config')):
+                RnaseqGlobals.set_user_step_params(pipeline) # fixme: not exactly what's needed here
+
+            user_runs=RnaseqGlobals.user_config['pipeline_runs']
+            print "user_runs(%s, len=%d) is %s" %(type(user_runs), len(user_runs), user_runs)
             
-            # We don't create a PipelineRun object here, but rather let the
-            # sh script take care of that.  But could we pass it (and the StepRun
-            # objects) to it?
+            # create pipeline_run and step_run objects (unless not running):
+            if not RnaseqGlobals.conf_value('no_run'):
+                (pipeline_run, step_runs)=pipeline.make_run_objects()
+                script_filename=pipeline.write_sh_script(pipeline_run=pipeline_run, step_runs=step_runs)
+            else:
+                script_filename=pipeline.write_sh_script()
+
 
             # create and store the pipeline's shell script:
-            script=pipeline.sh_script()
-            script_filename=os.path.join(pipeline.working_dir(), pipeline.scriptname())
-            try:
-                os.makedirs(pipeline.working_dir())
-            except OSError:
-                pass                    # already exists, that's ok (fixme: could be permissions error)
-            with open(script_filename, "w") as f:
-                f.write(script)
-                print "%s written" % script_filename
 
             # if running on the cluster, generate a calling (qsub) script and invoke that;
-            out_filename=pipeline.out_filename()
-            err_filename=pipeline.err_filename()
-            if RnaseqGlobals.conf_value('use_cluster'):
-                script_filename=pipeline.write_qsub_script(script_filename)
-                cmd=self.qsub_launcher()
-                output=sys.stdout
-                err=sys.stderr
-            else:
-                # otherwise, just execute as a subprocess
-                cmd=['sh']
-                output=open(out_filename, 'w')
-                err=open(err_filename, 'w')
-
-            # create the cmd list:
-            cmd.append(script_filename)
-            print "launch cmd is '%s'" % " ".join(cmd)
+            # if not a cluster job, just assemble cmd[].
+            (cmd,output,err)=self.write_qsub_script(pipeline, script_filename)
+            print "launch cmd%s is '%s'" % (('(skipped)' if RnaseqGlobals.conf_value('no_run') else ''), " ".join(cmd))
 
             # launch the subprocess and check for success:
             if not RnaseqGlobals.conf_value('no_run'):
-                pipe=subprocess.Popen(cmd, stdout=output, stderr=err)
-                retcode=pipe.wait()
-                if cmd[0]=="sh":
-                    output.close()
-                    err.close()
-                    retcode=0   # why???
-                if retcode != 0:
-                    raise UserError("pipeline failed with return code %d\nsee %s.out and %s.err for diagnostics (in %s)" % \
-                                        (retcode, pipeline.name, pipeline.name, pipeline.working_dir()))
-                
+                self.launch(cmd, output, err)
+
+
+    ########################################################################
+
+    # write the qsub script.  Return cmd[], which can be passed to subprocess.Popen()
+    def write_qsub_script(self,pipeline, script_filename):
+        out_filename=pipeline.out_filename()
+        err_filename=pipeline.err_filename()
+        if RnaseqGlobals.conf_value('use_cluster'):
+            script_filename=pipeline.qsub_script(script_filename) # script_filename becomes name of qsub script
+            cmd=self.qsub_launcher()
+            cmd.append(script_filename)
+            output=sys.stdout
+            err=sys.stderr
+        else:
+            # otherwise, just execute as a subprocess
+            cmd=['sh', script_filename]
+            output=open(out_filename, 'w')
+            err=open(err_filename, 'w')
+        return (cmd, output, err)
+
+        
 
     ########################################################################
 
 
+    # returns a list comprising the qsub command.  List is suitable for passing to subprocess.Popen()
     def qsub_launcher(self):
         # want to build list that looks like "ssh user@host /bin/qsub /working_dir/qsub_file
         launcher=[]
@@ -111,5 +110,18 @@ class RunPipeline(Command):
         return launcher
 
         
+    def launch(self, cmd, output, err):
+        pipe=subprocess.Popen(cmd, stdout=output, stderr=err)
+        retcode=pipe.wait()
+        if cmd[0]=="sh":
+            output.close()
+            err.close()
+            retcode=0   # why???
+            if retcode != 0:
+                raise UserError("pipeline failed with return code %d\nsee %s.out and %s.err for diagnostics (in %s)" % \
+                                (retcode, pipeline.name, pipeline.name, pipeline.working_dir()))
+            
+
+
 
 #print __file__, "checking in"

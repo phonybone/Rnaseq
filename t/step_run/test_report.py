@@ -7,14 +7,12 @@ from warn import *
 
 class TestReport(unittest.TestCase):
     def setUp(self):
-        argv=RnaseqGlobals.initialize(__file__)       # not to be confused with sys.argv
+        argv=RnaseqGlobals.initialize(__file__, testing=True)       # not to be confused with sys.argv
 
     def runTest(self):
-        session=RnaseqGlobals.get_session()
-        step_run=session.query(StepRun).filter_by(id=4).first()
-        print "step_run is %s" % step_run
-        print "report is %s" % step_run.report()
-
+        step_run=StepRun(step_name='header', status='failed', successful=False, start_time=2, finish_time=5)
+        expected='header                    '+"\t".join(['status: failed','success: failed','duration: 3 secs'])
+        self.assertEqual(step_run.report(),expected)
 
 if __name__=='__main__':
     unittest.main()

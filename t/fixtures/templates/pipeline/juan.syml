@@ -1,42 +1,40 @@
 name: Juan's pipeline testing version
-stepnames: preprocess filterQuality filterVectors filterLowComplex ribosomal_mit remove_erccs repeats_consensus echo
+stepnames: preprocess filterQuality filterVectors filterLowComplex ribosomal_mit remove_erccs repeats_consensus
 
 preprocess:
-  input: ${readset['reads_file']}
-  output: ${readset['reads_file']}.fq
+  input: ${readset.readsfile()}
+  output: ${ID}.fq
   args: '-s 1:45'
 
 filterQuality:
-  input: ${readset['reads_file']}.fq
-  output: ${readset['reads_file']}.qual_OK.fq
-  filtered: ${readset['reads_file']}.bowtie_qual_BAD.fq
+  input: ${ID}.fq
+  output: ${ID}.qual_OK.fq
+  filtered: ${ID}.bowtie_qual_BAD.fq
   args: -v
 
 filterVectors:
-  input: ${readset['reads_file']}.fQ
-  output: ${readset['reads_file']}.vector_OK.fq
-  filtered: ${readset['reads_file']}.bowtie_vector_BAD.sam
+  input: ${ID}.fQ
+  output: ${ID}.vector_OK.fq
+  filtered: ${ID}.bowtie_vector_BAD.sam
 
 filterLowComplex:
-  input: ${readset['reads_file']}.vector_OK.fq
-  output: ${readset['reads_file']}.complex_OK.fq
-  filtered: ${readset['reads_file']}.bowtie_complex_BAD.fq
+  input: ${ID}.vector_OK.fq
+  output: ${ID}.complex_OK.fq
+  filtered: ${ID}.bowtie_complex_BAD.fq
   args: -v
 
 ribosomal_mit:
-  input: ${readset['reads_file']}.complex_OK.fq
-  output: ${readset['reads_file']}.riboMT_OK.fq
-  filtered: ${readset['reads_file']}.bowtie_riboMT_BAD.sam
+  input: ${ID}.complex_OK.fq
+  output: ${ID}.riboMT_OK.fq
+  filtered: ${ID}.bowtie_riboMT_BAD.sam
 
 remove_erccs:
-  input: ${readset['reads_file']}.riboMT_OK.fq
-  output: ${readset['reads_file']}.ercc_OK.fq
-  filtered: ${readset['reads_file']}.bowtie_ercc_BAD.sam
+  input: ${ID}.riboMT_OK.fq
+  output: ${ID}.ercc_OK.fq
+  filtered: ${ID}.bowtie_ercc_BAD.sam
 
 repeats_consensus:
-  input: ${readset['reads_file']}.ercc_OK.fq
-  output: ${readset['reads_file']}.repeat_OK.fq
-  filtered: ${readset['reads_file']}.bowtie_repeat_BAD.sam
+  input: ${ID}.ercc_OK.fq
+  output: ${ID}.repeat_OK.fq
+  filtered: ${ID}.bowtie_repeat_BAD.sam
 
-echo:
-  dummy: pass

@@ -2,8 +2,13 @@
 #-*-python-*-
 
 
-# what happens if these fail?  Can that be user's responsbility?
-import yaml, os, sys, re
+
+import sys, os
+sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../ext_libs"))
+sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../lib"))
+from pkg_resources import require
+require("sqlalchemy")
+
 from Rnaseq import *
 from RnaseqGlobals import RnaseqGlobals
 

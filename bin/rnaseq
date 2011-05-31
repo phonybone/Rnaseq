@@ -2,11 +2,15 @@
 #-*-python-*-
 
 # The main rnaseq entry point
-# fixme: right now it's just a testbed for development
 
-import sys, os, yaml, optparse
-from warn import *
+import sys, os
+sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../ext_libs"))
+sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../lib"))
+from pkg_resources import require
+require("sqlalchemy")
+
 from Rnaseq import *
+
 
 
 ########################################################################
@@ -25,7 +29,7 @@ def main():
 
     # run the command 
     cmd.run(argv, config=RnaseqGlobals.config)
-    print "rnaseq: done"
+
 
 ########################################################################
 

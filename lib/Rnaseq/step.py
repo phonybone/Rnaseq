@@ -20,8 +20,35 @@ class Step(dict):                     # was Step(templated)
             if not hasattr(self,'name'): self.name=self.__class__.__name__
             if not hasattr(self,'description'): self.description=self.name
             if not hasattr(self,'force'): self.force=False
+            if not hasattr(self,'skip_success_check'): self.skip_success_check=False
         except Exception as e:
             print "Step.__init__: caught %s" % e
+
+    def __setitem__(self,k,v):
+        #self.__dict__[k]=v
+        super(Step,self).__setitem__(k,v)
+        if hasattr(self,k):
+            if callable(getattr(self,k)):
+                m=getattr(self,k)
+                m(v)
+        else:
+            setattr(self,k,v)
+
+    # update() and setdefault() taken from http://stackoverflow.com/questions/2060972/subclassing-python-dictionary-to-override-setitem
+    def update(self, *args, **kwargs):
+        if args:
+            if len(args) > 1:
+                raise TypeError("update expected at most 1 arguments, got %d" % len(args))
+            other = dict(args[0])
+            for key in other:
+                self[key] = other[key]
+        for key in kwargs:
+            self[key] = kwargs[key]
+
+    def setdefault(self, key, value=None):
+        if key not in self:
+            self[key] = value
+        return self[key]
 
     ########################################################################
     __tablename__='step'
@@ -91,21 +118,16 @@ class Step(dict):                     # was Step(templated)
             pass
 
 
+        # expand the usage string, using a built hash (dict):
         h={}
         h.update(self.__dict__)
         try: h.update(self.pipeline[self.name])
         except: pass
-
-        # fill h with all attributes of self that aren't reserved ("__") or functions:
-        # note: doesn't expand ${} stuff, since not going through evoque; so those have to be expanded already...
         h.update(obj2dict(self))
-        #l=[x for x in dir(self) if not (re.match('__', x) or callable(getattr(self,x)))]
-        #for attr in l:
-            #h[attr]=getattr(self,attr)
         ver1=usage % h
        
         # evoque the cmd str:
-        domain=Domain(os.getcwd())
+        domain=Domain(os.getcwd(), errors=4)
         domain.set_template(self.name, src=ver1)
         tmp=domain.get_template(self.name)
         vars={}
@@ -113,7 +135,10 @@ class Step(dict):                     # was Step(templated)
         vars.update(h)
         vars.update(self.pipeline)
         vars.update(RnaseqGlobals.config)
-        cmd=tmp.evoque(vars)
+
+        try: cmd=tmp.evoque(vars)
+        except AttributeError as ae:
+            raise ConfigError(ae)
         return cmd
 
 

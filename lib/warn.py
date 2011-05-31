@@ -27,7 +27,7 @@ class UserError(RnaseqException):
     show_traceback=False
 
 class ConfigError(RnaseqException):
-    show_traceback=True
+    show_traceback=False
 
 class ProgrammerGoof(RnaseqException):
     pass
@@ -56,3 +56,5 @@ if __name__ == "__main__":
     warn("about to die!")
     die("gasp!")
     
+
+#print __file__,"checking in"

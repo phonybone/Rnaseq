@@ -25,9 +25,12 @@ class UserConfig(dict):
             raise ConfigError(barf)
         
         return self
+        setattr(self,'filename',filename)
+
 
     def merge_args(self,pipeline,args):
-        assert(args['pipeline']==pipeline.name)
+        if args['pipeline']!=pipeline.name:
+            raise UserError("pipeline name mismatch in %s: attempt to match user_config for '%s' with pipeline '%s'" % (self.filename, args['pipeline'], pipeline.name))
         for k,v in args.items():
             step=pipeline.stepWithName(k)
             if step != None:
@@ -44,5 +47,5 @@ class UserConfig(dict):
         return self
 
     def user_runs(self):
-        try:
-            return self['pipeline_runs']
+        return self['pipeline_runs']
+    

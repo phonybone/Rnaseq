@@ -1,0 +1,15 @@
+# this is a comment
+
+
+pipeline_runs:
+ -  pipeline: filter
+    label: filter with blat
+    working_dir: rnaseq_wf1
+    remove_erccs:
+      aligner: blat
+
+ -  pipeline: filter
+    label: filter with bowtie
+    working_dir: rnaseq_wf2
+    remove_erccs:
+      aligner: bowtie

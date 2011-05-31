@@ -7,6 +7,13 @@ class align_filter(Step):
 
         try: aligner=kwargs['aligner']
         except: aligner=RnaseqGlobals.conf_value('rnaseq','aligner')
+        self.aligner(aligner)
+
+    def aligner(self,*args):
+        try: self.__aligner__=args[0]
+        except: pass
+
+        aligner=self.__aligner__
         if aligner=='bowtie':
             self.usage='%(exe)s %(ewbt)s %(args)s --un %(output)s %(input)s'
             self.exe='bowtie'
@@ -22,4 +29,7 @@ class align_filter(Step):
         else:
             raise UserError("unknown aligner '%s'" % aligner)
         
-
+        try: setattr(self.pipeline,'align_suffix',self.align_suffix)
+        except: pass
+        return aligner
+    
