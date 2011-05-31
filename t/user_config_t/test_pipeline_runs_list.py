@@ -18,17 +18,14 @@ class TestWithPipeline(TestSetup):
 
         user_runs=user_config.user_runs()
         for user_run in user_runs:
-            print "user_run['remove_erccs']['aligner'] is %s" % user_run['remove_erccs']['aligner']
             readset=self.readset
             for reads_path in readset.path_iterator():
-                print "reads_path is %s" % reads_path
                 readset['reads_file']=reads_path # this messes up the iterator
                 pipeline=Pipeline(name='juan',readset=readset)
                 pipeline.load_steps()
                 user_config.merge_args(pipeline, user_run)
                 step=pipeline.stepWithName('remove_erccs')
                 self.assertEqual(step.aligner(), user_run['remove_erccs']['aligner'])
-                print "got correct aligner %s" % step.aligner()
 
 class TestWithoutPipeline(TestSetup):
     pass
