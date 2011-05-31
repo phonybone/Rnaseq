@@ -1,0 +1,21 @@
+#!/usr/bin/env python
+#-*-python-*-
+
+# The main rnaseq entry point
+
+import sys, os
+
+from pkg_resources import require
+ext_libs=os.path.abspath(os.path.dirname(__file__)+"/../ext_libs")
+print "ext_libs is %s" % ext_libs
+print "isdir(%s): %s" % (ext_libs, os.path.isdir(ext_libs))
+print "
+
+sys.path.append(ext_libs)
+
+import evoque
+import yaml
+print "yay1"
+
+
+print "fart"
