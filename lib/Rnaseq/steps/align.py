@@ -15,7 +15,7 @@ class align(Step):
 
         aligner=self.__aligner__
         if aligner=='bowtie':
-            self.usage='%(exe)s %(ewbt)s %(args)s --un %(unmapped)s %(input)s'
+            self.usage='%(exe)s %(ewbt)s %(args)s --al %(output)s --un %(unmapped)s %(input)s'
             self.exe='bowtie'
             self.sh_template='bowtie.tmpl'
             self.args='--quiet -p 4 -S --sam-nohead -k 1 -v 2 -q'

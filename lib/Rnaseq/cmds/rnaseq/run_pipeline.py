@@ -51,11 +51,11 @@ class RunPipeline(Command):
                 pipeline=Pipeline(name=pipeline_name, readset=readset).load_steps()
                 pipeline.update(RnaseqGlobals.config)
                 RnaseqGlobals.user_config.merge_args(pipeline, user_run)
+                pipeline.set_steps_current(global_force=RnaseqGlobals.conf_value('force'))
 
-            
                 # create pipeline_run and step_run objects (unless not running):
                 if not RnaseqGlobals.conf_value('no_run'):
-                    (pipeline_run, step_runs)=pipeline.make_run_objects()
+                    (pipeline_run, step_runs)=pipeline.make_run_objects(session)
                     script_filename=pipeline.write_sh_script(pipeline_run=pipeline_run, step_runs=step_runs)
                 else:
                     script_filename=pipeline.write_sh_script()

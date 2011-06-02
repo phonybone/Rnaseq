@@ -64,6 +64,10 @@ class Pipeline(templated):
             prev_step=step
         return None
 
+    def stepnames(self):
+        l=[s.name for s in self.steps]
+        return l
+
     # read in the (s)yml file that defines the pipeline, passing the contents the evoque as needed.
     # load in all of the steps (via a similar mechanism), creating a list in self.steps
     # raise errors as needed (mostly ConfigError's)
@@ -190,7 +194,7 @@ class Pipeline(templated):
 
     # return an entire shell script that runs the pipeline
     def sh_script(self, **kwargs):
-        
+
         script="#!/bin/sh\n\n"
 
         try:
@@ -211,8 +215,9 @@ class Pipeline(templated):
         errors=[]
         for step in self.steps:
             try:
-                if step.skip_step: continue  # in a try block in case step.skip doesn't even exist
-            except: pass
+                if step.skip: continue  # in a try block in case step.skip doesn't even exist
+            except:
+                print "skipping step %s" % step.name
                 
             
             # actual step
@@ -508,7 +513,7 @@ class Pipeline(templated):
             for output in step.outputs():
                 step_run.file_outputs.append(FileOutput(path=output))
 
-            if step.skip_step:               # as set by self.set_steps_current()
+            if step.skip:               # as set by self.set_steps_current()
                 print "step %s is current, skipping" % step.name
                 step_run.status='skipped'
 
@@ -520,15 +525,20 @@ class Pipeline(templated):
 
 
     # for each step, set an attribute 'skip' indicating whether or not to skip the step when creating the sh script:
+    # fixme: convoluted logic, needs testing!
     def set_steps_current(self, global_force=False):
         force_rest=False
+        
         for step in self.steps:
-            skip_step=not (global_force or step.force or force_rest) and step.is_current()
-            print "%s: skip_step is %s" % (step.name, skip_step)
-            setattr(step, 'skip', skip_step)
+            #print "%s.is_current=%s" % (step.name, step.is_current())
+            skip=not (global_force or step.force or force_rest) and step.is_current()
+            setattr(step, 'skip', skip)
+            #print "%s.skip is %s" % (step.name, step.skip)
 
             # once one step is out of date, all following steps will be, too:
-            if not step.skip_step: force_rest=True
+            if not step.skip and not step.force:
+                force_rest=True
+                #print "step %s setting force_rest to True" % step.name
 
     
 
