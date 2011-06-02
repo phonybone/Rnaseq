@@ -2,6 +2,7 @@
 import os, sys, optparse, yaml, re
 from Rnaseq import *
 from warn import *
+from user_config import *
 
 from sqlalchemy import *
 from sqlalchemy.orm import sessionmaker
@@ -70,7 +71,7 @@ class RnaseqGlobals(object):
         parser.add_option('-q',"--quiet",    dest="silent",          help="supress diagnostics and other messages", default=False)
         parser.add_option("-r","--readset",  dest="readset_file",    help="readset filename")
         parser.add_option("--pr", "--pipeline-run", dest="pipeline_run_id", help="pipeline run id")
-        parser.add_option('-u', "--user_config", dest='user_config', help="additional user specified parameters (config file)")
+        parser.add_option('-u', "--user_config", dest='user_config_file', help="additional user specified parameters (config file)")
         self.parser=parser
 
 
@@ -218,19 +219,11 @@ class RnaseqGlobals(object):
     # Returns self.
     @classmethod
     def read_user_config(self):
-        try: user_config_file=self.conf_value('user_config')
-        except: return self
+        user_config=UserConfig()
+        setattr(self,'user_config',user_config)
 
-        try: f=open(user_config_file)
-        except IOError as ioe: raise UserError(ioe)
-        except TypeError: return self
-        
-        try:
-            user_config=yaml.load(f)
-            setattr(self,'user_config',user_config)
-        except yaml.scanner.ScannerError as barf:
-            raise ConfigError(barf)
-        return user_config
+        try: user_config.read(self.conf_value('user_config_file'))
+        except IOError: return self
 
     # 
     @classmethod
@@ -246,7 +239,10 @@ class RnaseqGlobals(object):
                 step.update(v)
         return self
                                      
-                                   
+    @classmethod
+    def user_runs(self):
+        return self.user_config.user_runs()
+
 
 
 #print __file__,"checking in"

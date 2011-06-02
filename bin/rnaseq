@@ -7,6 +7,7 @@ import sys, os
 if sys.version < '2.7':
     print "version 2.7 or better of python required.  You are running %s.  Please see your system administrator about upgrading"
     sys.exit(1)
+
 sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../ext_libs"))
 sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../lib"))
 from pkg_resources import require
@@ -58,4 +59,5 @@ except RnaseqException as re:
         import traceback
         traceback.print_exc()
     die(re)
+
 

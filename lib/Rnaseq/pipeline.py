@@ -219,7 +219,9 @@ class Pipeline(templated):
             script+="# %s\n" % step.name
 
             try: step_script=step.sh_cmd(echo_name=True)
-            except Exception as e: errors.append("%s: %s" % (step.name,str(e)))
+            except Exception as e:
+                errors.append("%s: %s" % (step.name,str(e)))
+                continue
 
             script+=step_script
             script+="\n"
@@ -522,7 +524,7 @@ class Pipeline(templated):
         force_rest=False
         for step in self.steps:
             skip_step=not (global_force or step.force or force_rest) and step.is_current()
-            #print "%s: skip_step is %s" % (step.name, skip_step)
+            print "%s: skip_step is %s" % (step.name, skip_step)
             setattr(step, 'skip', skip_step)
 
             # once one step is out of date, all following steps will be, too:

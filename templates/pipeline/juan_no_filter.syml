@@ -1,0 +1,37 @@
+name: pipeline de Juan
+stepnames: header export2fq align mapsplice mapsplice2 cufflinks cuffcompare footer
+blat_index: /proj/hoodlab/share/programs/RNAseq-Pi/data/blat-indexes
+
+header:
+  name: header
+
+export2fq:
+  input: ${readset['reads_file']}
+  output: ${ID}.${rnaseq['align_suffix']}
+  args: ${rnaseq['fq_cmd']} 
+
+align: 
+  input:  ${ID}.${rnaseq['align_suffix']}
+  output: ${ID}.bowtie
+  ewbt: hg19
+  unmapped: ${ID}.unmapped
+
+mapsplice:
+  input: ${ID}.bowtie
+  output: ${ID}.mapsplice
+  create: ${ID}.mapsplice.sam
+
+mapsplice2:
+  name: mapsplice2
+
+cufflinks:
+  input: ${ID}.mapsplice.sam
+  output: ${ID}.cufflinks
+  create: ${ID}.cufflinks/transcripts.gtf
+
+cuffcompare:
+  input: ${ID}.cufflinks/transcripts.gtf
+  output: ${ID}.cuff
+
+footer:
+  name: footer

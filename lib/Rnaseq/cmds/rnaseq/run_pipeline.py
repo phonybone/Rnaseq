@@ -42,34 +42,35 @@ class RunPipeline(Command):
         # fixme: condense this loop
         for reads_path in readset.path_iterator():
 
-            # set up the pipeline:
-            readset.readsfile(reads_path)
-            pipeline=Pipeline(name=pipeline_name, readset=readset).load_steps()
-            pipeline.update(RnaseqGlobals.config)
-            if (RnaseqGlobals.conf_value('user_config')):
-                RnaseqGlobals.set_user_step_params(pipeline) # fixme: not exactly what's needed here
+            user_runs=RnaseqGlobals.user_runs()
+            #print "user_runs(%s, len=%d) is %s" %(type(user_runs), len(user_runs), user_runs)
+            for user_run in user_runs:
+                
+                # set up the pipeline:
+                readset.readsfile(reads_path)
+                pipeline=Pipeline(name=pipeline_name, readset=readset).load_steps()
+                pipeline.update(RnaseqGlobals.config)
+                RnaseqGlobals.user_config.merge_args(pipeline, user_run)
 
-            user_runs=RnaseqGlobals.user_config['pipeline_runs']
-            print "user_runs(%s, len=%d) is %s" %(type(user_runs), len(user_runs), user_runs)
             
-            # create pipeline_run and step_run objects (unless not running):
-            if not RnaseqGlobals.conf_value('no_run'):
-                (pipeline_run, step_runs)=pipeline.make_run_objects()
-                script_filename=pipeline.write_sh_script(pipeline_run=pipeline_run, step_runs=step_runs)
-            else:
-                script_filename=pipeline.write_sh_script()
+                # create pipeline_run and step_run objects (unless not running):
+                if not RnaseqGlobals.conf_value('no_run'):
+                    (pipeline_run, step_runs)=pipeline.make_run_objects()
+                    script_filename=pipeline.write_sh_script(pipeline_run=pipeline_run, step_runs=step_runs)
+                else:
+                    script_filename=pipeline.write_sh_script()
 
 
-            # create and store the pipeline's shell script:
+                # create and store the pipeline's shell script:
 
-            # if running on the cluster, generate a calling (qsub) script and invoke that;
-            # if not a cluster job, just assemble cmd[].
-            (cmd,output,err)=self.write_qsub_script(pipeline, script_filename)
-            print "launch cmd%s is '%s'" % (('(skipped)' if RnaseqGlobals.conf_value('no_run') else ''), " ".join(cmd))
-
-            # launch the subprocess and check for success:
-            if not RnaseqGlobals.conf_value('no_run'):
-                self.launch(cmd, output, err)
+                # if running on the cluster, generate a calling (qsub) script and invoke that;
+                # if not a cluster job, just assemble cmd[].
+                (cmd,output,err)=self.write_qsub_script(pipeline, script_filename)
+                print "launch cmd%s is '%s'" % (('(skipped)' if RnaseqGlobals.conf_value('no_run') else ''), " ".join(cmd))
+                
+                # launch the subprocess and check for success:
+                if not RnaseqGlobals.conf_value('no_run'):
+                    self.launch(cmd, output, err)
 
 
     ########################################################################
