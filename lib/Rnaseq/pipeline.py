@@ -511,8 +511,21 @@ class Pipeline(templated):
         self.store_db()
         
         # create the pipeline_run object:
-        pipeline_run=PipelineRun()
-        pipeline_run=PipelineRun(pipeline_id=self.id, status='standby', input_file=self.readset.readsfile())
+        try: 
+            label=RnaseqGlobals.conf_value('label') or self.readset.label
+        except AttributeError as ae:
+            raise UserError("No label defined.  Please specify a label for the pipeline run, either in the readset or using the '--label' command line option")
+
+        # check uniqueness of label (not):
+        #self.check_label_unique(session, label)
+        
+        pipeline_run=PipelineRun(pipeline_id=self.id,
+                                 status='standby',
+                                 input_file=self.readset.readsfile(),
+                                 user=RnaseqGlobals.conf_value('user'),
+                                 label=label,
+                                 working_dir=self.working_dir())
+
         session.add(pipeline_run)
         session.commit()                # we need the pipelinerun_id below
 
@@ -533,6 +546,18 @@ class Pipeline(templated):
 
         return (pipeline_run, step_runs)
 
+
+    # check uniqueness of label:
+    def check_label_unique(self, session, label):
+        other_pr=session.query(PipelineRun).filterBy(label=label).first()
+        if other_pr:
+            if RnaseqGlobals.conf_value('force'):
+                session.delete(other_pr) # delete existing run, will get over written
+                session.commit()
+            else:
+                raise UserError("The label '%s' is already in use.\n  Please provide a new label (either in the readset or by use of the '--label' command line option), or use the '--force' option to fully override the old pipeline run.  \n  This will cause all steps to be run, also." % label)
+
+        
 
     # for each step, set an attribute 'skip' indicating whether or not to skip the step when creating the sh script:
     # fixme: convoluted logic, needs testing!

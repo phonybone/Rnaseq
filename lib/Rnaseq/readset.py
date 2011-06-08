@@ -5,12 +5,14 @@ from sqlalchemy import *
 from warn import *
 
 class Readset(dict):
+    required_attrs=['reads_file']
     def __init__(self,*args,**kwargs):
         self.suffix='syml'
         self.type='readset'
         for k,v in kwargs.items():
             setattr(self,k,v)
             self[k]=v
+        
         
     ########################################################################
         
@@ -52,10 +54,23 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
 '''
             msg = msg % (filename, str(se))
             raise ConfigError(msg)
+        
         self.update(yml)
         for k,v in yml.items():
             setattr(self,k,v)
+
+        self.verify_complete(filename)          # throws UserException
         return self
+
+    def verify_complete(self, filename):
+        missing=[]
+        for attr in self.required_attrs:
+            if not hasattr(self,attr): missing.append(attr)
+        if len(missing) > 0:
+            raise UserError(("The readset in %s is missing required fields:\n\t - " % filename) + "\n\t - ".join(missing))
+
+
+    ########################################################################
 
     def get_email(self):
         try:

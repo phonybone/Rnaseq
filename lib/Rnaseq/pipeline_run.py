@@ -19,7 +19,8 @@ class PipelineRun(object):
         pipeline_run_table=Table(self.__tablename__, metadata,
                                  Column('id', Integer, primary_key=True),
                                  Column('pipeline_id', String, ForeignKey('pipeline.id'), nullable=False),
-                                 Column('label',String),
+                                 Column('label', String, nullable=False),
+                                 Column('working_dir', String),
                                  Column('input_file',  String),
                                  Column('current_step_run_id', Integer),
                                  Column('start_time', Integer),
@@ -29,7 +30,7 @@ class PipelineRun(object):
                                  Column('successful', Boolean))
         metadata.create_all(engine)
 
-        sa_properties={'step_runs':relationship(StepRun, backref='pipeline_run')}
+        sa_properties={'step_runs':relationship(StepRun, backref='pipeline_run', cascade='all, delete, delete-orphans')}
         mapper(PipelineRun, pipeline_run_table, sa_properties)
         return pipeline_run_table
 

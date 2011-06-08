@@ -1,2 +1,0 @@
-export BOWTIE_INDEXES=${config['rnaseq']['bowtie_indexes']}
-${sh_cmd} | perl -lane 'print unless($$F[1] == 4)' > ${filtered}

@@ -20,13 +20,14 @@ FAQ:
 <li><a href="#pipeline_contents">How to see what steps are in a pipeline</a></li>
 <li><a href="#how_to_launch">How to launch a pipeline</a></li>
 <li><a href="#readsets">What is a "readset"?</a></li>
+<li><a href="#multiple_files">How do I run the pipeline on multiple files all at once?</a></li>
 <li><a href="#working_dir">What are "working directories" and how are they determined?</a></li>
 <li><a href="#notifications">How do I know when my pipeline is finished?</a></li>
 <li><a href="#results">How do I tell what the pipeline actually did?</a></li>
 <li><a href="#status">How do I examine the status of my pipeline?</a></li>
 <li><a href="#errors">Was the pipeline successful?</a></li>
-<li><a href="#rerunning">Re-running a failed pipeline</a></li>
 <li><a href="#performance_stats">How long did my pipeline take to run?</a></li>
+<li><a href="#rerunning">Re-running a failed pipeline</a></li>
 <li><a href="#modifying_pipelines">How do I change the steps of a pipeline?</a></li>
 <li><a href="#"></a></li>
 <li><a href="#"></a></li>
@@ -85,7 +86,7 @@ and a list of how many times that pipeline has been run.  </p>
 <p>fixme: how to find out exactly what each step does, without having to look at the shell script.</p>
 </div>
 
-<div id='working_dir'><h2>What are "readsets"?</h2>
+<div id='readsets'><h2>What is a "readset"?</h2>
 <p>In order to process your data, the pipeline has to know a certain
 amount of information about it including:<ul> 
 
@@ -95,7 +96,8 @@ amount of information about it including:<ul>
 consider when you run the same pipeline on completely different sets
 of data.  It would be convenient to have a short name by which to
 identify the results of the run, and the label serves that
-purpose.</li> <li>Other pipeline-specific information: This can very
+purpose.</li> 
+<li>Other pipeline-specific information: This can very
 from pipeline to pipeline, but some examples might be the length of
 the reads, the organism in question, and so on.</li>
 </ul>
@@ -105,6 +107,7 @@ This file is expected to be in <a href='http://en.wikipedia.org/wiki/YAML#Sample
 format.  An example might look like this:</p>
 <pre>
 reads_file: /proj/hoodlab/share/vcassen/sandbox/s_6_export.1M.txt
+label: my data
 description: this is a sample readset
 org: mouse
 readlen: 75
@@ -112,12 +115,51 @@ working_dir: rnaseq_wf
 </pre>
 
 <p>This example specifies the data file to be processed ('reads_file'),
+a label by which to refer to the readset ('my data'),
 an optional description, organism ('org'), read length ('readlen'), and a
-working directory ('working_dir').
+working directory ('working_dir').  The 'reads_file' and 'label' entries are
+require, although the 'label' may be specified on the command line using the 
+'--label' (or '-l') flag.
 </p>
+
+<p>In order to create a readset file, use a text editor or word
+processor.  However, make sure that you save the readset in 'text'
+mode, which doesn't have any formatting information associated with
+it.  If you are warned that you might loose formatting information,
+that is ok.  You can also use the Unix programs 'cat', 'more', or
+'less' to examine your readset file to insure no formatting
+information is embedded in the file.  Type 
+<pre>less &lt;filename&gt;</pre> (substituting "&lt;filename&gt;" for the actual
+name of your file), and what you see should be the same as what you
+have in your editor, without other words or special
+characters.</p>
 
 </div>
 
+<div id='multiple_files'><h2>How do I run the pipeline on multiple files all at once?</h2>
+<p>The <code>reads_file</code> entry in a readset file may contain
+"file globs".  These are special patterns that use wildcard characters
+to specify patterns that match the names of multiple files.  See <a
+href='http://docstore.mik.ua/orelly/unix/upt/ch15_02.htm'>this
+link</a> for details, but the basics are:<ul>
+<li><code>'*'</code>: match zero or more characters.  For example, '*.txt' would match any filename ending in '.txt'.</li>
+<li><code>'+'</code>: match one or more characters.  For example, 'file+.txt' would match any filename starting with 'file', ending in '.txt', and having at least one character in between.  For example, 'file1.txt' would match, but not 'file.txt' or 'data.txt'.</li>
+<li><code>'?'</code>: match exactly one character.  For example, 'file?.txt' would match 'file1.txt' or 'file2.txt', but not 'file10.txt' or 'file.txt'.</li>
+<li><code>'[x-y]'</code>: match a range of characters.  For example, 'file_[a-z].txt' would match 'file_c.txt', but not 'file_1.txt', 'file.txt', or 'file_az.txt'</li>
+</ul>
+Also note that constructs can be combined.  For example, <code>file[a-z]+.txt</code> would match any file name that started with 'file' followed by one or more characters between 'a' and 'z', and ended in '.txt'.
+</p>
+
+<p>So if the data files that you want to process can be described with
+a file glob, you can use that file glob in the 'reads_file' entry of
+the readset to cause each file to be processed in it's own pipeline
+job.  For example, if you had six files, all in a directory named,
+say, "/path/to/my/rnaseq_data" and each file was of the form "data1.fq",
+"data2.fq", ..., "data6.fq", then your reads_files entry would like this:
+<pre>
+reads_file: /path/to/my/rnaseq_data/data[1-6].fq
+</pre>
+</div>
 
 <div id='working_dir'><h2>What are "working directories" and how are they determined?</h2>
 <p>In general, pipelines can produce a lot of data contained in many
@@ -137,7 +179,28 @@ Working directories are specified in the readset.
 
 
 <div id="how_to_launch"><h2>How to launch a pipeline</h2>
-You have to create a configuration file :(
+<p>In order to launch a pipeline, you give run the pipeline software providing two key pieces of information: 
+<ul>
+<li>the pipeline you want to run, and</li>
+<li>the data you want processed</li>
+</ul>
+</p>
+<p>The basic format of the command is:
+<div><code>
+rnaseq run -p &lt;pipeline&gt; -r &lt;readset&gt;
+</code></div>
+</p>
+<p>Each of these two items is defined by a configuration file.  The pipeline configuration files are pre-written
+and, unless you need to change or customize the pipeline, may be used as is.  However, you will have to create a 
+simple configuration file called a <a href='#readsets'>readset</a> that describes your data.
+</p>
+<p>
+Once you have decided which pipeline you want to run and have created
+your readset, you launch the pipeline by typing the command shown just
+above.  See the <a href='#reference'>reference</a> section for a list
+of added options that can modify how your pipeline is run.
+
+</p>
 </div>
 
 <div id="notifications"><h2>How do I know when the pipeline is finished?</h2></div>
@@ -154,10 +217,15 @@ you receive when your cluster job finishes will contain some statistics about ho
 much memory it used, and what it's exit status was.  See <a href='#errors'>here</a> for more details.
 
 <div id="results"><h2>How do I tell what the pipeline actually did?</h2></div>
-<ul>
-<li>Rnaseq ls -p &lt;pipeline&gt; --pr &lt;pipeline_run_id&gt;
+<div id="#status"><h2>How do I examine the status of my pipeline?</h2></div>
+<div id="errors"><h2>Was the pipeline successful?</h2></div>
+<div id="performance_stats"><h2>How long did my pipeline take to run?</h2></div>
 
-<p>You can use the <code>rnaseq ls --pr &lt;pipeline_run_id&gt;</code>
+All of these questions can be answered by doing one of the following:
+<ul>
+<li>rnaseq ls -p &lt;pipeline&gt; -l &lt;label&gt;
+
+<p>You can use the <code>rnaseq ls -l &lt;label&gt;</code>
 command to check the status of any pipeline, running or finished.  It
 will tell you which steps were run, how long each step took, and what
 files were produced.  If the pipeline is currently running, it will
@@ -179,21 +247,18 @@ flag) suffixed with '.out' or '.err', respectively.</p>
 that your data files are in <span
 class='red_text'>/some/path/in/your/computer</span>/s_1_export.txt,
 and it also specifies 'working_dir:<span class='blue_text'>
-rnaseq</span>', and you run a pipeline named <span
+rnaseq_wf</span>', and you run a pipeline named <span
 class='green_text'>"gene_exp"</span>, then the output log will have
 the names <span
 class='red_text'>/some/path/in/your/computer/</span><span
-class='blue_text'>rnaseq/</span><span
-class='green_text'>gene_exp.out</span>.  Likewise, the error log will
+class='blue_text'>rnaseq_wf/</span><span
+class='green_text'>gene_exp</span>.out.  Likewise, the error log will
 have the same name, except with a '.err' suffix instead of '.out'.
 </p>
 </li>
 
 </ul>
 
-<div id="#status"><h2>How do I examine the status of my pipeline?</h2></div>
-
-<div id="errors"><h2>Was the pipeline successful?</h2>
 <p>There are two ways to tell if your pipeline ran successfully.</p>
 
 <p>As mentioned in the <a href="#notifications">notifications</a> section, depending on how you launched
@@ -206,7 +271,6 @@ program.  On Unix-type systems, that value can be found in the '$?' environment 
 '0' indicates success and anything else contains failure.<p>
 
 Of more use are the output and error logs.  See <a href='#notifications'>here</a> for more details.
-</div>
 
 <div id="rerunning"><h2>Re-running a failed pipeline</h2>
 <p>To re-launch a failed pipeline, presumably after fixing the error
@@ -218,8 +282,6 @@ filesystem.  Use the '-f' or '--force' command line option to force
 all the steps to be re-run regardless of whether they are up to date.</p>
 </div>
 
-
-<div id="performance_stats"><h2>How long did my pipeline take to run?</h2></div>
 
 <div id="modifying_pipelines"><h2>How do I change the steps of a pipeline?</h2></div>
 
