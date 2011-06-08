@@ -9,6 +9,8 @@ import yaml, os, sys
 
 class Help(Command):
     def run(self, *argv, **args):
+        RnaseqGlobals.parser.print_help()
+
         prog_name=os.path.basename(sys.argv[0])
         cmds=RnaseqGlobals.conf_value(prog_name,'cmds').keys()
         cmds.sort()

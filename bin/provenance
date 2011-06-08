@@ -4,8 +4,8 @@
 
 
 import sys, os
-if sys.version < '2.7':
-    print "version 2.7 or better of python required.  You are running %s.  Please see your system administrator about upgrading" % sys.version
+if sys.version < '2.6.2':
+    print "version 2.6.2 or better of python required.  You are running %s.  Please see your system administrator about upgrading" % sys.version
     sys.exit(1)
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../ext_libs"))

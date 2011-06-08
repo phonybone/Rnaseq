@@ -23,6 +23,10 @@ class Ls(Command):
 
         session=RnaseqGlobals.get_session()
 
+        # fixme: re-work the logic on this:
+        # 'rnaseq ls --pr' ought to do the obvious thing.
+        # Reverse order of determining what to do; empty case
+        # should be what to do when you don't know what else to do.
 
         # get pipeline name; if none, ls all pipelines:
         pipeline_name=RnaseqGlobals.conf_value('pipeline_name') # set with -p option
@@ -36,6 +40,9 @@ class Ls(Command):
             pipeline=session.query(Pipeline).filter_by(name=pipeline_name).first()
             if pipeline==None:
                 raise UserError("%s: no such pipeline" % pipeline_name)
+            pipeline.__init__(readset=Readset(reads_file='dummy'))         # sqlalchemy doesn't call that for us???
+            # but we need a dummy readset anyway
+            pipeline.load_steps()
             self.ls_pipeline(pipeline)
             return
 
@@ -48,13 +55,18 @@ class Ls(Command):
     def ls_all_pipelines(self):
         session=RnaseqGlobals.get_session()
         pipelines=session.query(Pipeline).all()
+        print "Available pipelines:"
         for p in pipelines:
             print "pipeline %s" % p.name
 
     def ls_pipeline(self,pipeline):
         print "pipeline: %s" % pipeline.name
+        print "steps: %s" % ", ".join(pipeline.stepnames)
+        
         for pr in pipeline.pipeline_runs:
             print "\trun: %s" % pr.summary()
+        else:
+            print "no pipeline runs yet"
 
     def ls_pipeline_run(self,pipeline_run):
         print pipeline_run.report()

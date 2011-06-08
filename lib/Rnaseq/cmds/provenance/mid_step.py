@@ -31,8 +31,8 @@ class MidStep(Command):
         if not step_run:
             print "steprun_id=%s: no last step_run???" % steprun_id
             return
-        step=step_run.step
-        print "mid_step: step is %s" % step.name
+        step_name=step_run.step_name
+        print "mid_step: step is %s" % step_name
         
         now=int(time.time())
         if retcode==0:                   # last step was a success!
@@ -52,11 +52,11 @@ class MidStep(Command):
                 next_steprun.status='started'
                 print "next_step_run(%d) updated" % next_steprun.id
 
-                pipeline_run.status="%s started" % next_steprun.step.name
+                pipeline_run.status="%s started" % next_steprun.step_name
                 pipeline_run.current_step_run_id=next_steprun_id
 
             else:
-                pipeline_run.status="%s finished" % step.name
+                pipeline_run.status="%s finished" % step_name
                 #pipeline_run.current_step_run_id=0 # let the last step id stand for reporting purposes
 
         else:                           # last step failed (boo)
@@ -66,7 +66,7 @@ class MidStep(Command):
             print "step_run(%d) updated" % step_run.id
 
             # pipeline_run status:
-            pipeline_run.status="%s failed" % step.name
+            pipeline_run.status="%s failed" % step_name
             pipeline_run.successful=False
             pipeline_run.finish_time=now
             print "pipeline_run(%d) updated" % pipeline_run.id

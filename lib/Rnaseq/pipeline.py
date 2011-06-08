@@ -135,7 +135,7 @@ class Pipeline(templated):
 
 
     def load_steps(self):
-        self.load_template()
+        self.load_template()            # this barfs (in ID()) if no self.readset
 
         try:
             self.stepnames=re.split('[,\s]+',self['stepnames'])
@@ -215,17 +215,21 @@ class Pipeline(templated):
         errors=[]
         for step in self.steps:
             try:
-                if step.skip: continue  # in a try block in case step.skip doesn't even exist
-            except:
-                print "skipping step %s" % step.name
+                if step.skip:
+                    print "skipping step %s" % step.name
+                    continue  # in a try block in case step.skip doesn't even exist
+            except:                     # really? step.skip doesn't exist, so assume it's True???
+                pass
                 
             
             # actual step
             script+="# %s\n" % step.name
+            print "p.sh_script: step %s" % step.name
 
             try: step_script=step.sh_cmd(echo_name=True)
             except Exception as e:
                 errors.append("%s: %s" % (step.name,str(e)))
+                print e
                 continue
 
             script+=step_script
@@ -268,6 +272,7 @@ class Pipeline(templated):
     # second, see if the pipeline itself defines a pipeline (it shouldn't)
     # each of the first two can be a directory, or a "policy".
     # valid policies include "timestamp" (and nothing else, for the moment)
+    # fixme: add a check to see if a label is defined (in the readset).
     # If nothing found, use default found in config file under "default_working_dir"
     def working_dir(self,*args):
         try: self['working_dir']=args[0]
@@ -308,7 +313,12 @@ class Pipeline(templated):
     # fixme: why doesn't this call self.working_dir() anywhere?
     def ID(self):
         try: reads_file=self.readset.readsfile()
-        except KeyError: return '${ID}'
+        except KeyError: return '${ID}' # defer until later???
+        except AttributeError as ae:
+            if re.search("'Pipeline' object has no attribute 'readset'", str(ae)): return '${ID}'
+            else:
+                print "ae is %s" % str(ae)
+                raise ae
 
         if re.search('[\*\?]', reads_file):
             raise ProgrammerGoof("%s contains glob chars; need to expand readset.path_iterator()" % reads_file)
@@ -530,7 +540,7 @@ class Pipeline(templated):
         force_rest=False
         
         for step in self.steps:
-            #print "%s.is_current=%s" % (step.name, step.is_current())
+            print "%s.is_current=%s" % (step.name, step.is_current())
             skip=not (global_force or step.force or force_rest) and step.is_current()
             setattr(step, 'skip', skip)
             #print "%s.skip is %s" % (step.name, step.skip)

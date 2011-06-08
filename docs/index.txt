@@ -46,6 +46,7 @@ Git also requires the following python packages to be installed on your system:
 - evoque
 - qpy
 - yaml
+- sqlalchemy
 
 These can be install using the python module intaller "easy_install".  If you
 don't have root/administrator privileges on your system, you can define the

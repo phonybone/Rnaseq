@@ -44,6 +44,14 @@ class Readset(dict):
             raise UserError(str(ioe))
         except AttributeError as ae:
             raise ProgrammerGoof(ae)
+        except yaml.scanner.ScannerError as se:
+            msg='''
+There was an error in the readset file %s:\n%s.
+This file must be in correct YAML format.  Please carefully check the file and correct the error.
+See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
+'''
+            msg = msg % (filename, str(se))
+            raise ConfigError(msg)
         self.update(yml)
         for k,v in yml.items():
             setattr(self,k,v)

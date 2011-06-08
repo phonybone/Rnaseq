@@ -27,9 +27,8 @@ provenance:
 # database
 db: 
   db_name: db/provenance.sqlite3
-#  db_name: t/fixtures/dbs/simple_orm.db
 
-# "qsub" is the command used to submit a job to the cluster.  These items
+# "qsub" is the command used to submit a job to and SGE cluster.  These items
 # all relate to the submissing of cluster jobs.
 qsub:
   host: aegir

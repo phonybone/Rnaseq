@@ -19,11 +19,13 @@ class PipelineRun(object):
         pipeline_run_table=Table(self.__tablename__, metadata,
                                  Column('id', Integer, primary_key=True),
                                  Column('pipeline_id', String, ForeignKey('pipeline.id'), nullable=False),
+                                 Column('label',String),
                                  Column('input_file',  String),
                                  Column('current_step_run_id', Integer),
                                  Column('start_time', Integer),
                                  Column('finish_time', Integer),
                                  Column('status', String),
+                                 Column('user',String),
                                  Column('successful', Boolean))
         metadata.create_all(engine)
 
@@ -52,7 +54,7 @@ class PipelineRun(object):
         try:
             session=RnaseqGlobals.get_session()
             last_step=session.query(StepRun).filter_by(id=self.current_step_run_id).first()
-            last_step_name=last_step.step.name
+            last_step_name=last_step.step_name
         except Exception as e:
             last_step_name='n/a'
 
