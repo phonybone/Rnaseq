@@ -23,7 +23,8 @@ class Pipeline(templated):
         self.suffix='syml'
         self.steps=[]
         self._ID=None
-
+        self.step_exports={}
+        
     wd_time_format="%d%b%y.%H%M%S"
 
     def __str__(self):
@@ -53,7 +54,7 @@ class Pipeline(templated):
     # return the step with the given step name, or None if not found:
     def stepWithName(self,stepname):
         for step in self.steps:
-            if step.name==stepname: return step 
+            if step.name==stepname: return step
         return None
 
     # return the step after the given step (by name), or None if not found:
@@ -64,74 +65,9 @@ class Pipeline(templated):
             prev_step=step
         return None
 
-    def stepnames(self):
+    def step_names(self):               # not sure this is actually called by anyone
         l=[s.name for s in self.steps]
         return l
-
-    # read in the (s)yml file that defines the pipeline, passing the contents the evoque as needed.
-    # load in all of the steps (via a similar mechanism), creating a list in self.steps
-    # raise errors as needed (mostly ConfigError's)
-    # returns self
-    def load(self):
-        vars={}
-        if hasattr(self,'dict'): vars.update(self.dict)
-        if hasattr(self, 'readset'): vars.update(self.readset)
-        vars.update(RnaseqGlobals.config)
-        vars['ID']=self.ID()
-        ev=evoque_dict()
-        ev.update(vars)
-        templated.load(self, vars=ev, final=False)
-        
-        # load steps.  (We're going to replace the current steps field, which holds a string of stepnames,
-        # with a list of step objects.
-        # fixme: explicitly add header and footer steps; 
-
-        try:
-            self.stepnames=re.split('[,\s]+',self['stepnames'])
-        except AttributeError as ae:
-            raise ConfigError("pipeline %s does not define stepnames" % self.name)
-            
-        self.steps=[]                   # resest, just in case
-        for sn in self.stepnames:
-            step=Step(name=sn, pipeline=self)
-            assert step.pipeline==self
-            # load the step's template and self.update with the values:
-            try:
-                vars={}
-                vars.update(self.dict)
-                vars.update(RnaseqGlobals.config)
-                vars['ID']=self.ID()
-                step.load(vars=vars)
-            except IOError as ioe:      # IOError??? Where does this generate an IOError?
-                raise ConfigError("Unable to load step %s" % sn, ioe)
-            step.merge(self.readset)
-
-            # add in items from step sections in <pipeline.syml>
-            try:
-                step_hash=self[step.name]
-            except Exception as e:
-                raise ConfigError("Missing section: '%s' is listed as a step name in %s, but section with that name is absent." % \
-                                  (step.name, self.template_file()))
-                                  
-            #print "%s: step_hash is %s" % (step.name, step_hash)
-
-            try:
-                step.update(step_hash)
-            except KeyError as e:
-                raise ConfigError("no %s in\n%s" % (step.name, yaml.dump(self.__dict__)))
-
-            self.steps.append(step)
-            
-
-        # Check to see that the list of step names and the steps themselves match; dies on errors
-        errors=[]
-        errors.extend(self.verify_steps())
-        errors.extend(self.verify_continuity())
-        errors.extend(self.verify_exes())
-        if len(errors)>0:
-            raise ConfigError("\n".join(errors))
-        
-        return self
 
 
     def load_steps(self):
@@ -141,24 +77,22 @@ class Pipeline(templated):
             self.stepnames=re.split('[,\s]+',self['stepnames'])
         except AttributeError as ae:
             raise ConfigError("pipeline %s does not define stepnames" % self.name)
+
+        # start here
         for stepname in self.stepnames:
             step=self.new_step(stepname)
-
-            # fix any ${} vars in self[stepname]: what a hack
-            for k,v in self[stepname].items():
-                if type(v)!=type('str'): continue
-                if re.search('\$\{',v):
-                    vars=evoque_dict()
-                    vars.update(step.__dict__)
-                    vars.update(obj2dict(step))
-                    domain=Domain(os.getcwd())
-                    domain.set_template(k, src=v)
-                    tmpl=domain.get_template(k)
-                    v=tmpl.evoque(vars)
-                    self[stepname][k]=v
-
-            step.update(self[stepname])
             self.steps.append(step)
+
+        # end here
+        
+        # Check to see that the list of step names and the steps themselves match; dies on errors
+        errors=[]
+        errors.extend(self.verify_steps()) 
+        errors.extend(self.verify_continuity())
+        errors.extend(self.verify_exes())
+        if len(errors)>0:
+            raise ConfigError("\n".join(errors))
+        
         return self
 
     def load_template(self):
@@ -224,12 +158,10 @@ class Pipeline(templated):
             
             # actual step
             script+="# %s\n" % step.name
-            print "p.sh_script: step %s" % step.name
-
             try: step_script=step.sh_cmd(echo_name=True)
             except Exception as e:
                 errors.append("%s: %s" % (step.name,str(e)))
-                print e
+                print "Exception in pipeline.sh_script(%s): %s (%s)" % (step.name, e, type(e))
                 continue
 
             script+=step_script
@@ -368,8 +300,13 @@ class Pipeline(templated):
     #  check to see that all defined steps are listed, and vice verse:
     def verify_steps(self):
         errors=[]
-        a=set(self.stepnames)
+        a=set(self.keys())
+        for pos in ['name', 'stepnames', 'description']:
+            try: a.remove(pos)
+            except: pass
         b=set(s.name for s in self.steps)
+        #print "%s: a is %s" % (self.name, a)
+        #print "%s: b is %s" % (self.name, b)
         
         if a==b: return errors            # set equality! we just love over-ridden operators
 
@@ -402,10 +339,16 @@ class Pipeline(templated):
             print "added %s" % created
 
         # subsequent steps: check inputs exist in dataset2stepname, add outputs to dataset2stepname:
-        for step in self.steps[1:]:        # skip first
+        for step in self.steps[1:]:        # skip first step
+            #print "%s: dataset2stepname:" % step.name
+            for k,v in dataset2stepname.items():
+                pass
+                #print "%s: %s\n" % (v,k)
+            #print ""
+
             for input in step.inputs():
                 if input not in dataset2stepname and not os.path.exists(input):
-                    errors.append("input %s (in step '%s') is not produced by any previous step and does not currently exist" % (input, step.name))
+                    errors.append("pipeline '%s':\n  input %s \n  (in step '%s') is not produced by any previous step and does not currently exist" % (self.name, input, step.name))
             for output in step.outputs():
                 dataset2stepname[output]=step.name
             for created in step.creates():
@@ -420,25 +363,16 @@ class Pipeline(templated):
             
         errors=[]
         for step in self.steps:
-            for d in dirs:
-                try:
-                    path=os.path.join(d,step.exe) # how does this generate an AttributeError??? on step.exe???
-                except AttributeError as ae:
-                    break
-
-                if os.access(path, os.X_OK) and not os.path.isdir(path): break
-                if 'interpreter' in step.dict and os.access(path, os.R_OK): break
-                try: intr=step.interpreter
-                except: intr=None
-            else:                       # gets executed if for loop exits normally
-                errors.append("Missing executable in %s: %s" %(step.name, step.exe))
-
+            if not step.verify_exe():
+                errors.append("Missing executable in step %s: %s" %(step.name, step.exe))
+                
         if len(errors)>0:
             errors.append("Please link these executables from the %s/programs directory, or make sure they are on the path defined in the config file." \
                           % RnaseqGlobals.conf_value('rnaseq', 'root_dir'))
-            
 
         return errors
+        
+
 
     ########################################################################
 
@@ -503,6 +437,18 @@ class Pipeline(templated):
 
         kwargs['pipeline']=self
         step=kls(**kwargs)
+        
+        # If the step defines an attribute named export (fixme: and it's a list),
+        # copy the step's exorted attributes to the pipeline:
+        if hasattr(step,'export'):
+            try:
+                for attr in step.export:
+                    attr_val=getattr(step,attr)
+                    setattr(self,attr,attr_val)
+                    self.step_exports[attr]=attr_val
+            except AttributeError as ae:
+                raise ConfigError("step %s tries to export missing attr '%s'" % (step.name, attr))
+        
         return step
 
 
@@ -579,5 +525,73 @@ class Pipeline(templated):
 
 
 
+########################################################################
+# Dead code:
+########################################################################
+    # read in the (s)yml file that defines the pipeline, passing the contents the evoque as needed.
+    # load in all of the steps (via a similar mechanism), creating a list in self.steps
+    # raise errors as needed (mostly ConfigError's)
+    # returns self
+    def load_obsolete(self):
+        vars={}
+        if hasattr(self,'dict'): vars.update(self.dict)
+        if hasattr(self, 'readset'): vars.update(self.readset)
+        vars.update(RnaseqGlobals.config)
+        vars['ID']=self.ID()
+        ev=evoque_dict()
+        ev.update(vars)
+        templated.load(self, vars=ev, final=False)
+        
+        # load steps.  (We're going to replace the current steps field, which holds a string of stepnames,
+        # with a list of step objects.
+        # fixme: explicitly add header and footer steps; 
 
+        try:
+            self.stepnames=re.split('[,\s]+',self['stepnames'])
+        except AttributeError as ae:
+            raise ConfigError("pipeline %s does not define stepnames" % self.name)
+            
+        self.steps=[]                   # resest, just in case
+        for sn in self.stepnames:
+            step=Step(name=sn, pipeline=self)
+            assert step.pipeline==self
+            # load the step's template and self.update with the values:
+            try:
+                vars={}
+                vars.update(self.dict)
+                vars.update(RnaseqGlobals.config)
+                vars['ID']=self.ID()
+                step.load(vars=vars)
+            except IOError as ioe:      # IOError??? Where does this generate an IOError?
+                raise ConfigError("Unable to load step %s" % sn, ioe)
+            step.merge(self.readset)
+
+            # add in items from step sections in <pipeline.syml>
+            try:
+                step_hash=self[step.name]
+            except Exception as e:
+                raise ConfigError("Missing section: '%s' is listed as a step name in %s, but section with that name is absent." % \
+                                  (step.name, self.template_file()))
+                                  
+            #print "%s: step_hash is %s" % (step.name, step_hash)
+
+            try:
+                step.update(step_hash)
+            except KeyError as e:
+                raise ConfigError("no %s in\n%s" % (step.name, yaml.dump(self.__dict__)))
+
+            self.steps.append(step)
+            
+
+        # Check to see that the list of step names and the steps themselves match; dies on errors
+        errors=[]
+        errors.extend(self.verify_steps())
+        errors.extend(self.verify_continuity())
+        errors.extend(self.verify_exes())
+        if len(errors)>0:
+            raise ConfigError("\n".join(errors))
+        
+        return self
+
+                
 #print "%s checking in: Pipeline.__name__ is %s" % (__file__,Pipeline.__name__)

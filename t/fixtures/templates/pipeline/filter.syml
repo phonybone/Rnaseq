@@ -7,18 +7,18 @@ header:
 
 export2fq:
   input: ${readset.readsfile()}
-  output: ${ID}.fq
+  output: ${ID}.${align_suffix}
 
 filterQuality:
-  input: ${ID}.fq
-  output: ${ID}.qual_OK.fq
-  filtered: ${ID}.bowtie_qual_BAD.fq
+  input: ${ID}.${align_suffix}
+  output: ${ID}.qual_OK.${align_suffix}
+  filtered: ${ID}.bowtie_qual_BAD.${align_suffix}
   args: -v
 
 filterLowComplex:
-  input: ${ID}.qual_OK.fq
-  output: ${ID}.complex_OK.fq
-  filtered: ${ID}.bowtie_complex_BAD.fq
+  input: ${ID}.qual_OK.${align_suffix}
+  output: ${ID}.complex_OK.${align_suffix}
+  filtered: ${ID}.bowtie_complex_BAD.${align_suffix}
   args: -v
 
 ribosomal_mit:

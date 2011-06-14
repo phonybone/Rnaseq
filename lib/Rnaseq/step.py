@@ -10,6 +10,7 @@ from step_run import *
 from sqlalchemy import *
 from sqlalchemy.orm import mapper, relationship, backref
 from hash_helpers import obj2dict
+from path_helpers import exists_on_path
 
 class Step(dict):                     # was Step(templated)
     def __init__(self,*args,**kwargs):
@@ -26,7 +27,7 @@ class Step(dict):                     # was Step(templated)
 
     def __setitem__(self,k,v):
         #self.__dict__[k]=v
-        super(Step,self).__setitem__(k,v)
+        super(Step,self).__setitem__(k,v) # call dict.__setitem__()
         if hasattr(self,k):
             if callable(getattr(self,k)):
                 m=getattr(self,k)
@@ -82,7 +83,7 @@ class Step(dict):                     # was Step(templated)
     def sh_script(self, **kwargs):
         try: sh_template=self.sh_template
         except: return None
-            
+        
         template_dir=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'),"templates","sh_template")
         domain=Domain(template_dir, errors=4)
         template=domain.get_template(sh_template)
@@ -90,15 +91,24 @@ class Step(dict):                     # was Step(templated)
         vars={}
         vars.update(self)
         vars.update(self.__dict__)
+        vars.update(self.pipeline[self.name])
         vars['readset']=self.pipeline.readset # fixme: really? used by some steps, eg mapsplice
         vars['sh_cmd']=self.sh_cmdline() 
         vars['config']=RnaseqGlobals.config
-        vars['pipeline']=self.pipeline
         vars['ID']=self.pipeline.ID()
+
+        try:
+            vars.update(self.pipeline.step_exports)
+        except AttributeError as ae:
+            print "%s.sh_script(): pipeline has no step_exports? ae=%s" % (self.name, ae)
+
         vars.update(kwargs)
 
-        try: script=template.evoque(vars)
-        except NameError as ne: raise ConfigError("%s while processing step '%s'" %(ne,self.name))
+        try:
+            script=template.evoque(vars)
+        except NameError as ne: 
+            #print "%s.sh_script() not ok (ne=%s)" % (self.name, ne)
+            raise ConfigError("%s while processing step '%s'" %(ne,self.name))
         return script
 
     # use the self.usage formatting string to create the command line that executes the script/program for
@@ -135,7 +145,12 @@ class Step(dict):                     # was Step(templated)
         vars.update(h)
         vars.update(self.pipeline)
         vars.update(RnaseqGlobals.config)
-
+        vars.update(self.pipeline[self.name])
+        try:
+            vars.update(self.pipeline.step_exports)
+        except:
+            print "%s.sh_cmdline: no pipeline.exports" % self.name
+        
         try: cmd=tmp.evoque(vars)
         except AttributeError as ae:
             raise ConfigError(ae)
@@ -159,6 +174,8 @@ class Step(dict):                     # was Step(templated)
 ########################################################################
 
     def inputs(self):
+        try: print "%s.input is %s" % (self.name, self.input)
+        except: pass
         try: return re.split("[,\s]+",self.input)
         except: return []
 
@@ -207,5 +224,25 @@ class Step(dict):                     # was Step(templated)
     
 ########################################################################
 
+    # return True of False depending on if step.exe can be found on the
+    # global path, or if it's an interpreted step, if the interpreter
+    # can be found on the same path and the script is in the programs directory
+    
+    def verify_exe(self):
+        if not hasattr(self,'exe'): return True
+
+        dir_list=RnaseqGlobals.conf_value('rnaseq', 'path').split(":")
+        dir_list.extend([os.path.join(RnaseqGlobals.root_dir(),'programs')])
+
+        if exists_on_path(self.exe, dir_list, os.X_OK): return True
+        
+        # didn't find executable directly, see if there's an interpreter:
+        if hasattr(self,'interpreter'):
+            return exists_on_path(self.interpreter, dir_list, os.X_OK) and \
+                   exists_on_path(self.exe, dir_list, os.R_OK)
+
+        # couldn't find self.exe, no self.interpreter:
+        return False
+        
 
 #print __file__,"checking in"

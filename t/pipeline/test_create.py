@@ -12,24 +12,24 @@ class TestCreate(unittest.TestCase):
 
 class TestBasicCreate(TestCreate):
     def runTest(self):
-        readset=Readset(name='readset').load(vars=RnaseqGlobals.config)
+        readset=Readset(reads_file=os.path.abspath(__file__+'/../../readset/s_1_export.txt'))
         p=Pipeline(name='test', readset=readset)
         self.assertEqual(p.__class__,Pipeline)
         
 
 class TestMissingTemplate(TestCreate):
     def runTest(self):
-        readset=Readset(name='readset').load(vars=RnaseqGlobals.config)
+        readset=Readset(reads_file=os.path.abspath(__file__+'/../../readset/s_1_export.txt'))
         with self.assertRaises(UserError):
             p=Pipeline(name='test', readset=readset).load() # no template pipeline/test.syml
 
 
 class TestLoad(TestCreate):
     def runTest(self):
-        readset=Readset(name='readset').load(vars=RnaseqGlobals.config)
+        readset=Readset(reads_file=os.path.abspath(__file__+'/../../readset/s_1_export.txt'))
         p=Pipeline(name='juan', readset=readset)
         p.dict['readsfile']=readset['reads_file']
-        p.load() # no template pipeline/test.syml
+        p.load_steps() # no template pipeline/test.syml
         self.assertEqual(p.__class__,Pipeline)
         #print "TestLoad: pipeline is %s" % p
 

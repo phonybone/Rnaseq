@@ -13,7 +13,7 @@ filterQuality:
   args: -v
 
 filterVectors:
-  input: ${ID}.fQ
+  input: ${ID}.fq
   output: ${ID}.vector_OK.fq
   filtered: ${ID}.bowtie_vector_BAD.sam
 
