@@ -9,12 +9,13 @@ class TestCreate(unittest.TestCase):
         templated.template_dir=os.path.normpath(os.path.abspath(__file__)+"/../../fixtures/templates")
         RnaseqGlobals.initialize(__file__, testing=True)
 
-        readset=Readset(name='readset').load(vars=RnaseqGlobals.config)
-        self.readset=readset
-        self.pipeline=Pipeline(name='juan', readset=readset).load()
+        self.readset=Readset(reads_file=os.path.abspath(__file__+'/../../readset/s_1_export.txt'),
+                             readlen=75,
+                             working_dir='rnaseq_wf')
+        self.pipeline=Pipeline(name='juan', readset=self.readset).load_steps()
         
         self.session=RnaseqGlobals.get_session()
-        RnaseqGlobals.engine.execute("DROP TABLE IF EXISTS %s" % Pipeline.__tablename__)
+
         
         Pipeline.create_table(RnaseqGlobals.metadata, RnaseqGlobals.engine)
         print "Pipeline table created"
@@ -28,6 +29,7 @@ class TestId(TestCreate):
             
         session=self.session
         session.add(pipeline)
+        session.commit()
         session.flush()
 
         try:

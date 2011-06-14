@@ -24,7 +24,7 @@ class TestListExpansion(TestInputs):
         pipeline.load_steps()
         script=pipeline.sh_script(force=True)
         #print script
-        #self.assertEqual(len(script),2987) # based on a test run; will squawk if anything changes
+
         mg=re.search('exit_on_failure',script)
         self.assertEqual(mg.group(0),'exit_on_failure') # this is from the header, should be only one
         try:

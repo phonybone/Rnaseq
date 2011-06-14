@@ -84,23 +84,24 @@ class Step(dict):                     # was Step(templated)
         try: sh_template=self.sh_template
         except: return None
         
-        template_dir=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'),"templates","sh_template")
+        template_dir=os.path.join(RnaseqGlobals.root_dir(),"templates","sh_template")
         domain=Domain(template_dir, errors=4)
         template=domain.get_template(sh_template)
         
         vars={}
-        vars.update(self)
         vars.update(self.__dict__)
+        vars.update(self)
         vars.update(self.pipeline[self.name])
-        vars['readset']=self.pipeline.readset # fixme: really? used by some steps, eg mapsplice
-        vars['sh_cmd']=self.sh_cmdline() 
+
+        #vars['readset']=self.pipeline.readset # fixme: really? used by some steps, eg mapsplice
+        vars['sh_cmd']=self.sh_cmdline()
         vars['config']=RnaseqGlobals.config
         vars['ID']=self.pipeline.ID()
 
         try:
             vars.update(self.pipeline.step_exports)
         except AttributeError as ae:
-            print "%s.sh_script(): pipeline has no step_exports? ae=%s" % (self.name, ae)
+            pass
 
         vars.update(kwargs)
 
@@ -109,6 +110,7 @@ class Step(dict):                     # was Step(templated)
         except NameError as ne: 
             #print "%s.sh_script() not ok (ne=%s)" % (self.name, ne)
             raise ConfigError("%s while processing step '%s'" %(ne,self.name))
+
         return script
 
     # use the self.usage formatting string to create the command line that executes the script/program for
@@ -149,8 +151,9 @@ class Step(dict):                     # was Step(templated)
         try:
             vars.update(self.pipeline.step_exports)
         except:
-            print "%s.sh_cmdline: no pipeline.exports" % self.name
-        
+            #print "%s.sh_cmdline: no pipeline.exports" % self.name
+            pass
+
         try: cmd=tmp.evoque(vars)
         except AttributeError as ae:
             raise ConfigError(ae)
@@ -174,8 +177,6 @@ class Step(dict):                     # was Step(templated)
 ########################################################################
 
     def inputs(self):
-        try: print "%s.input is %s" % (self.name, self.input)
-        except: pass
         try: return re.split("[,\s]+",self.input)
         except: return []
 

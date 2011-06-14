@@ -30,7 +30,8 @@ class TestStepnames(TestBase):
         try: 
             pipeline=Pipeline(name='extra_stepname', readset=self.readset).load_steps()
         except Exception as e:
-            self.assertTrue(re.search('error loading step extra_step: No module named extra_step', str(e)))
+            print "e is %s" % e
+            self.assertTrue(re.search("error loading step 'extra_step': No module named extra_step", str(e)))
 
 
         

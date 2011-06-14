@@ -27,14 +27,12 @@ class TestListExpansion(TestInputs):
             cmd=step.sh_cmd()
             mg=re.search('\$\{.*\}',cmd)
             if mg != None:
-                print "found ${} in %s", cmd
-                self.Fail()
+                print "%s: found ${} in %s" % (step.name, cmd)
+                self.fail()
 
 
 
+suite = unittest.TestLoader().loadTestsFromTestCase(TestListExpansion)
+unittest.TextTestRunner(verbosity=2).run(suite)
 
-
-
-if __name__=='__main__':
-    unittest.main()
 

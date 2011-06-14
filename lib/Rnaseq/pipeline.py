@@ -40,6 +40,7 @@ class Pipeline(templated):
                              Column('id', Integer, primary_key=True, autoincrement=True),
                              Column('name', String, nullable=False, index=True, unique=True),
                              Column('description', String),
+                             useexisting=True
                              )
         metadata.create_all(engine)
 
@@ -81,9 +82,14 @@ class Pipeline(templated):
         # start here
         for stepname in self.stepnames:
             step=self.new_step(stepname)
+
+            self.fix_step_hash(step)
+            
+            step.update(self[stepname])
             self.steps.append(step)
 
-        # end here
+
+
         
         # Check to see that the list of step names and the steps themselves match; dies on errors
         errors=[]
@@ -94,6 +100,30 @@ class Pipeline(templated):
             raise ConfigError("\n".join(errors))
         
         return self
+
+
+    def fix_step_hash(self,step):
+        step_hash=self[step.name]
+        domain=Domain(os.getcwd())
+
+        print_flag=False
+        for attr,value in step_hash.items():
+            if type(value) != type(''): continue
+            if not re.search('\$\{', value): continue
+            #print_flag=True
+            vars=evoque_dict()
+            vars.update(step)
+            vars.update(self.step_exports)
+
+            domain.set_template(attr, src=value)
+            tmpl=domain.get_template(attr)
+            value=tmpl.evoque(vars)
+            step_hash[attr]=value
+
+        if print_flag:
+            print "%s: fixed step_hash is %s" % (step.name, step_hash)
+            
+        self[step.name]=step_hash
 
     def load_template(self):
         vars={}
@@ -425,7 +455,7 @@ class Pipeline(templated):
         try:
             mod=__import__('Rnaseq.steps.%s' % stepname)
         except ImportError as ie:
-            raise ConfigError("error loading step %s: %s" % (stepname, str(ie)))
+            raise ConfigError("error loading step '%s': %s" % (stepname, str(ie)))
         
         mod=getattr(mod,"steps")
 
