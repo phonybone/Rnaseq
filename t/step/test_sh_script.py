@@ -5,21 +5,19 @@ from Rnaseq import *
 from RnaseqGlobals import *
 from warn import *
 
-class TestInputs(unittest.TestCase):
+class TestShScript(unittest.TestCase):
     def setUp(self):
         argv=RnaseqGlobals.initialize(__file__, testing=True)       # not to be confused with sys.argv
         template_dir=RnaseqGlobals.abs_dir('testing', 'template_dir')
         templated.template_dir=template_dir
-        self.readset=Readset(reads_files=os.path.abspath(__file__+'/../../readset/s_?_export.txt'),
-                             readlen=75,
-                             working_dir='rnaseq_wf')
+
+
+        self.readset=Readset(reads_file=os.path.abspath(__file__+'/../../readset/s_1_export.txt'), label='test_missing_exe').resolve_reads_file().resolve_working_dir().set_ID()
         self.pipeline=Pipeline(name='filter', readset=self.readset)
         RnaseqGlobals.set_conf_value(['rnaseq','aligner'],'blat')
 
-class TestListExpansion(TestInputs):
-    def runTest(self):
-        reads_path=self.readset.path_iterator()[0]
-        self.readset['reads_file']=reads_path
+    def test_sh_script(self):
+        reads_path=self.readset.reads_file
         pipeline=self.pipeline
         pipeline.load_steps()
         for step in pipeline.steps:
@@ -32,7 +30,7 @@ class TestListExpansion(TestInputs):
 
 
 
-suite = unittest.TestLoader().loadTestsFromTestCase(TestListExpansion)
+suite = unittest.TestLoader().loadTestsFromTestCase(TestShScript)
 unittest.TextTestRunner(verbosity=2).run(suite)
 
 

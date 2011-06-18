@@ -2,7 +2,6 @@
 
 import yaml, time, re
 from RnaseqGlobals import RnaseqGlobals
-#from templated import *
 from warn import *
 from Rnaseq import *
 from step_run import *
@@ -51,6 +50,12 @@ class Step(dict):                     # was Step(templated)
             self[key] = value
         return self[key]
 
+
+    def __setattr__(self,attr,value):
+        super(Step,self).__setattr__(attr,value) # call dict.__setattr__()
+        self[attr]=value
+
+
     ########################################################################
     __tablename__='step'
 
@@ -80,7 +85,7 @@ class Step(dict):                     # was Step(templated)
     # within the templates/sh_templates subdir).  This routine fetches the template and calls evoque on it, and
     # returns the resulting string.
     # If no sh_template is required, return None.
-    def sh_script(self, **kwargs):
+    def sh_script_old(self, **kwargs):
         try: sh_template=self.sh_template
         except: return None
         
@@ -91,7 +96,8 @@ class Step(dict):                     # was Step(templated)
         vars={}
         vars.update(self.__dict__)
         vars.update(self)
-        vars.update(self.pipeline[self.name])
+        try: vars.update(self.pipeline[self.name])
+        except: pass
 
         #vars['readset']=self.pipeline.readset # fixme: really? used by some steps, eg mapsplice
         vars['sh_cmd']=self.sh_cmdline()
@@ -131,28 +137,27 @@ class Step(dict):                     # was Step(templated)
 
 
         # expand the usage string, using a built hash (dict):
-        h={}
-        h.update(self.__dict__)
-        try: h.update(self.pipeline[self.name])
-        except: pass
-        h.update(obj2dict(self))
-        ver1=usage % h
+#         h={}
+#         h.update(self.__dict__)
+#         try: h.update(self.pipeline[self.name])
+#         except: pass
+#         h.update(obj2dict(self))
+#         ver1=usage % h
        
         # evoque the cmd str:
         domain=Domain(os.getcwd(), errors=4)
-        domain.set_template(self.name, src=ver1)
+        domain.set_template(self.name, src=self.usage)
         tmp=domain.get_template(self.name)
         vars={}
         vars.update(self.__dict__)
-        vars.update(h)
-        vars.update(self.pipeline)
+#        vars.update(self.pipeline)
         vars.update(RnaseqGlobals.config)
-        vars.update(self.pipeline[self.name])
-        try:
-            vars.update(self.pipeline.step_exports)
-        except:
-            #print "%s.sh_cmdline: no pipeline.exports" % self.name
-            pass
+
+        try: vars.update(self.pipeline[self.name])
+        except: pass
+
+        try: vars.update(self.pipeline.step_exports)
+        except: pass
 
         try: cmd=tmp.evoque(vars)
         except AttributeError as ae:
@@ -162,13 +167,14 @@ class Step(dict):                     # was Step(templated)
 
     # entry point to step's sh "presence"; calls appropriate functions, as above.
     def sh_cmd(self, **args):
-        echo_part=''
         if 'echo_name' in args and args['echo_name']:
             echo_part="echo step %s 1>&2" % self.name
+        else:
+            echo_part=''
             
-        sh_script=self.sh_script()      # try the templated version first
-        if sh_script==None:
-            sh_script=self.sh_cmdline()+"\n" # 
+#        sh_script=self.sh_script()      # try the templated version first
+#        if sh_script==None:
+        sh_script=self.sh_cmdline()+"\n" # 
 
         script="\n".join([echo_part,sh_script]) # tried using echo_part+sh_script, got weird '>' -> '&gt;' substitutions
 

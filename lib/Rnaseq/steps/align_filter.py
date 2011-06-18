@@ -19,17 +19,36 @@ class align_filter(Step):
             self.exe='bowtie'
             self.sh_template='bowtie_filter.tmpl'
             self.args='--quiet -p 4 -S --sam-nohead -k 1 -v 2 -q'
-            #self.align_suffix='fq'
         elif aligner=='blat':
             self.usage='%(exe)s %(blat_index)s %(input)s %(args)s %(psl)s'
             self.exe='blat'
             self.sh_template='blat_filter.tmpl'
             self.args='-fastMap -q=DNA -t=DNA'
-            #self.align_suffix='fa'
         else:
             raise UserError("unknown aligner '%s'" % aligner)
         
-        #try: setattr(self.pipeline,'align_suffix',self.align_suffix)
-        #except: pass
         return aligner
     
+    def sh_cmd(self):
+        if self.aligner=='bowtie':
+            try: paired_reads=self.pipeline.readset.paired_reads
+            except AttributeError: paired_reads=False
+            if paired_reads:
+                usage='''
+export BOWTIE_INDEXES=${config['rnaseq']['bowtie_indexes']}
+${exe} ${ewbt} -1 ${input[0]} -2 ${input[1]} ${args} --un ${output}  | perl -lane 'print unless($$F[1] == 4)' > ${filtered}
+                '''
+                restore_indent=True
+            else:
+                usage='''
+export BOWTIE_INDEXES=${config['rnaseq']['bowtie_indexes']}
+${exe} ${ewbt} ${args} --un ${output} ${input} | perl -lane 'print unless($$F[1] == 4)' > ${filtered}
+                '''
+                restore_indent=True
+
+                
+
+        elif self.aligner=='blat':
+            pass
+        else:
+            raise ConfigError("Unknown alignment program '%s'" % self.aligner)

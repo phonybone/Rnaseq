@@ -2,7 +2,7 @@ name: Juan's pipeline testing version
 stepnames: preprocess filterQuality filterVectors filterLowComplex ribosomal_mit remove_erccs repeats_consensus
 
 preprocess:
-  input: ${readset.readsfile()}
+  input: ${readset.reads_file}
   output: ${ID}.fq
   args: '-s 1:45'
 

@@ -28,26 +28,19 @@ class RunPipeline(Command):
         except KeyError as e:
             raise MissingArgError(str(e))
             
-        try:
-            argv=argv[0]
-        except IndexError as e:
-            raise ProgrammerGoof(e)
-
-        # Create the pipeline and readset objects:
-        readset=Readset(filename=readset_file).load() 
-
         session=RnaseqGlobals.get_session()
 
+        # Create the pipeline and readset objects:
+        readsets=Readset.load(readset_file) 
+
         # Iterate through reads files defined in readset:
-        # fixme: condense this loop
-        for reads_path in readset.path_iterator():
+        for readset in readsets:
 
             user_runs=RnaseqGlobals.user_runs()
             #print "user_runs(%s, len=%d) is %s" %(type(user_runs), len(user_runs), user_runs)
             for user_run in user_runs:
                 
                 # set up the pipeline:
-                readset.readsfile(reads_path)
                 pipeline=Pipeline(name=pipeline_name, readset=readset).load_steps()
                 pipeline.update(RnaseqGlobals.config)
                 RnaseqGlobals.user_config.merge_args(pipeline, user_run)

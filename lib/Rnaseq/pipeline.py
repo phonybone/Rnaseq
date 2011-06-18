@@ -80,19 +80,17 @@ class Pipeline(templated):
             raise ConfigError("pipeline %s does not define stepnames" % self.name)
 
         # start here
+        errors=[]
         for stepname in self.stepnames:
             step=self.new_step(stepname)
-
+            if not stepname in self:
+                errors.append("missing step section for '%s'" % stepname)
+                continue
             self.fix_step_hash(step)
-            
             step.update(self[stepname])
             self.steps.append(step)
-
-
-
         
         # Check to see that the list of step names and the steps themselves match; dies on errors
-        errors=[]
         errors.extend(self.verify_steps()) 
         errors.extend(self.verify_continuity())
         errors.extend(self.verify_exes())
@@ -102,16 +100,20 @@ class Pipeline(templated):
         return self
 
 
+    
+    # run all step hashes through evoque if they still have ${} constrcuts:
     def fix_step_hash(self,step):
-        step_hash=self[step.name]
+        try: step_hash=self[step.name]
+        except: return
+        
         domain=Domain(os.getcwd())
-
         print_flag=False
         for attr,value in step_hash.items():
             if type(value) != type(''): continue
             if not re.search('\$\{', value): continue
             #print_flag=True
             vars=evoque_dict()
+            vars.update(self.readset)
             vars.update(step)
             vars.update(self.step_exports)
 
@@ -143,14 +145,14 @@ class Pipeline(templated):
     # Returns full path of script name.
     def write_sh_script(self, **kwargs):
         script=self.sh_script(**kwargs)
-        script_filename=os.path.join(self.working_dir(), self.scriptname())
+        script_filename=os.path.join(self.readset.working_dir, self.scriptname())
         try:
-            os.makedirs(self.working_dir())
+            os.makedirs(self.readset.working_dir)
         except OSError:
             pass                    # already exists, that's ok (fixme: could be permissions error)
         with open(script_filename, "w") as f:
             f.write(script)
-            print "%s written" % script_filename
+            if RnaseqGlobals.conf_value('verbose'): print "%s written" % script_filename
         return script_filename
 
 
@@ -213,7 +215,7 @@ class Pipeline(templated):
                         mid_step.next_steprun_id=0
                     script+=mid_step.sh_cmd()
 
-            if not RnaseqGlobals.conf_value('silent'):
+            if RnaseqGlobals.conf_value('verbose'):
                 print "step %s added" % step.name
 
         if len(errors)>0:
@@ -226,7 +228,7 @@ class Pipeline(templated):
         return script
 
     def scriptname(self):
-        reads_file_root=os.path.splitext(os.path.basename(self.readset.readsfile()))[0]
+        reads_file_root=os.path.splitext(os.path.basename(self.readset.reads_file))[0]
         return path_helpers.sanitize(self.name+'.'+reads_file_root)+".sh"
 
     # get the working directory for the pipeline.
@@ -236,7 +238,10 @@ class Pipeline(templated):
     # valid policies include "timestamp" (and nothing else, for the moment)
     # fixme: add a check to see if a label is defined (in the readset).
     # If nothing found, use default found in config file under "default_working_dir"
-    def working_dir(self,*args):
+    def working_dir(self):
+        return self.readset.working_dir
+
+    def working_dir_obsolete(self,*args):
         try: self['working_dir']=args[0]
         except IndexError: pass
 
@@ -244,7 +249,7 @@ class Pipeline(templated):
         # (try to) get the base dir from the readset:
         try:
             readset=self.readset
-            readsfile=readset.readsfile()
+            readsfile=readset.reads_file
             base_dir=os.path.dirname(readsfile)
         except KeyError as ke:
             raise UserError("Missing key: "+ke) # fixme: UserError?  really?
@@ -268,13 +273,17 @@ class Pipeline(templated):
         return os.path.join(base_dir, default)
 
 
+
     # Determine the path of the working reads file.  Path will be
     # a combination of a working_directory and the basename of the
     # readsfile.  Final value will depend on whether the reads file
     # or the specified working directory are relative or absolute.
-    # fixme: why doesn't this call self.working_dir() anywhere?
+    # fixme: why doesn't this call self.readset.working_dir anywhere?
     def ID(self):
-        try: reads_file=self.readset.readsfile()
+        return self.readset.ID
+    
+    def ID_obsolete(self):
+        try: reads_file=self.readset.reads_file
         except KeyError: return '${ID}' # defer until later???
         except AttributeError as ae:
             if re.search("'Pipeline' object has no attribute 'readset'", str(ae)): return '${ID}'
@@ -330,10 +339,9 @@ class Pipeline(templated):
     #  check to see that all defined steps are listed, and vice verse:
     def verify_steps(self):
         errors=[]
-        a=set(self.keys())
-        for pos in ['name', 'stepnames', 'description']:
-            try: a.remove(pos)
-            except: pass
+        l=[t[0] for t in self.items() if type(t[1])!=type('') and type(t[1])!=type(1) and type(t[1])!=type(1.0)]
+        a=set(l)
+
         b=set(s.name for s in self.steps)
         #print "%s: a is %s" % (self.name, a)
         #print "%s: b is %s" % (self.name, b)
@@ -366,7 +374,8 @@ class Pipeline(templated):
             dataset2stepname[output]=step.name
         for created in step.creates():
             dataset2stepname[created]=step.name
-            print "added %s" % created
+            if RnaseqGlobals.conf_value('verbose'):
+                print "added %s" % created
 
         # subsequent steps: check inputs exist in dataset2stepname, add outputs to dataset2stepname:
         for step in self.steps[1:]:        # skip first step
@@ -408,9 +417,9 @@ class Pipeline(templated):
 
 
     def out_filename(self):
-        return path_helpers.sanitize(os.path.join(self.working_dir(), "%s.out" % self.name))
+        return path_helpers.sanitize(os.path.join(self.readset.working_dir, "%s.out" % self.name))
     def err_filename(self):
-        return path_helpers.sanitize(os.path.join(self.working_dir(), "%s.err" % self.name))
+        return path_helpers.sanitize(os.path.join(self.readset.working_dir, "%s.err" % self.name))
         
 
     # create the qsub script using a template:
@@ -426,11 +435,11 @@ class Pipeline(templated):
         vars['err_filename']=err_filename
         qsub_script=qsub.eval_tmpl(vars=vars)
 
-        qsub_script_file=path_helpers.sanitize(os.path.join(self.working_dir(), "%s.qsub" % self.name))
+        qsub_script_file=path_helpers.sanitize(os.path.join(self.readset.working_dir, "%s.%s.qsub" % (self.name, self.readset.label)))
         f=open(qsub_script_file,"w")
         f.write(qsub_script)
         f.close()
-        warn("%s written" % qsub_script_file)
+        if RnaseqGlobals.conf_value('verbose'): print("%s written" % qsub_script_file)
         return qsub_script_file
 
     
@@ -497,10 +506,10 @@ class Pipeline(templated):
         
         pipeline_run=PipelineRun(pipeline_id=self.id,
                                  status='standby',
-                                 input_file=self.readset.readsfile(),
+                                 input_file=self.readset.reads_file,
                                  user=RnaseqGlobals.conf_value('user'),
                                  label=label,
-                                 working_dir=self.working_dir())
+                                 working_dir=self.readset.working_dir)
 
         session.add(pipeline_run)
         session.commit()                # we need the pipelinerun_id below
@@ -517,6 +526,7 @@ class Pipeline(templated):
                 step_run.status='skipped'
 
             session.add(step_run)
+            pipeline_run.step_runs.append(step_run)
             step_runs[step.name]=step_run
         session.commit()                # we need the pipelinerun_id below
 
@@ -541,10 +551,10 @@ class Pipeline(templated):
         force_rest=False
         
         for step in self.steps:
-            print "%s.is_current=%s" % (step.name, step.is_current())
+#            print "%s.is_current=%s" % (step.name, step.is_current())
             skip=not (global_force or step.force or force_rest) and step.is_current()
             setattr(step, 'skip', skip)
-            #print "%s.skip is %s" % (step.name, step.skip)
+#            print "%s.skip is %s" % (step.name, step.skip)
 
             # once one step is out of date, all following steps will be, too:
             if not step.skip and not step.force:

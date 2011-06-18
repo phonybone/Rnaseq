@@ -7,8 +7,8 @@ class TestBase(unittest.TestCase):
     def test_unknown_exe(self):
         templated.template_dir=os.path.normpath(os.path.abspath(__file__)+"/../../fixtures/templates")
         RnaseqGlobals.initialize(__file__, testing=True)
-        self.readset=Readset(reads_file=os.path.abspath(__file__+'/../../readset/s_1_export.txt'))
-        pipeline=Pipeline(name='juan', readset=self.readset).load_steps() # dying on badly configured i/o
+        readset=Readset(reads_file=os.path.abspath(__file__+'/../../readset/s_1_export.txt'), label='label').resolve_working_dir().set_ID()
+        pipeline=Pipeline(name='juan', readset=readset).load_steps() # dying on badly configured i/o
 
         try:
             unknown_step=pipeline.new_step('unknown')

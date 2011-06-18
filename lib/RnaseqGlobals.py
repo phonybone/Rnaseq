@@ -74,6 +74,7 @@ class RnaseqGlobals(object):
         parser.add_option("--pr", "--pipeline-run", dest="pipeline_run_id", help="pipeline run id")
         parser.add_option('-u', "--user_config", dest='user_config_file', help="additional user specified parameters (config file)")
         parser.add_option('--user',          dest='user',            help='specify alternate user', default=os.environ['USER'])
+        parser.add_option('-v','--verbose',  dest='verbose',         help='print addition progress messages', action='store_true', default=False)
 
         self.parser=parser
 

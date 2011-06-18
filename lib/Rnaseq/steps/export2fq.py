@@ -7,4 +7,4 @@ class export2fq(fq_all2std):
     def __init__(self, **kwargs):
         fq_all2std.__init__(self,**kwargs)
         self.args='solexa2fastq'
-        self.align_suffix='fq'
+        self.read_format='fq'

@@ -30,7 +30,7 @@ class PipelineRun(object):
                                  Column('successful', Boolean))
         metadata.create_all(engine)
 
-        sa_properties={'step_runs':relationship(StepRun, backref='pipeline_run', cascade='all, delete, delete-orphan')}
+        sa_properties={'step_runs':relationship(StepRun, backref='pipeline_run')}
         mapper(PipelineRun, pipeline_run_table, sa_properties)
         return pipeline_run_table
 

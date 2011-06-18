@@ -31,7 +31,7 @@ class StepRun(object):
                              Column('status',          String),
                              Column('successful',      Boolean))
         metadata.create_all(engine)
-        sa_properties={'file_outputs':relationship(FileOutput, backref='step_run', cascade='all, delete, delete-orphan')}
+        sa_properties={'file_outputs':relationship(FileOutput, backref='step_run')}
         mapper(StepRun, step_run_table, sa_properties)
         return step_run_table
 

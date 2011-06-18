@@ -35,6 +35,6 @@ class TestListExpansion(TestInputs):
 
 
 
-suite = unittest.TestLoader().loadTestsFromTestCase(TestListExpansion)
+suite = unittest.TestLoader().loadTestsFromTestCase(TestInputs)
 unittest.TextTestRunner(verbosity=2).run(suite)
 

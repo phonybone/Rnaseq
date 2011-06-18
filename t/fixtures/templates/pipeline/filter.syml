@@ -6,7 +6,7 @@ header:
   pass:
 
 export2fq:
-  input: ${readset.readsfile()}
+  input: ${readset.reads_file}
   output: ${ID}.${align_suffix}
 
 filterQuality:
