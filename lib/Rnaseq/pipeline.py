@@ -474,7 +474,9 @@ class Pipeline(templated):
         except AttributeError as ae:
             raise ConfigError("step %s not defined: "+str(ae))
 
+        # add items to kwargs:
         kwargs['pipeline']=self
+        kwargs['readset']=self.readset
         step=kls(**kwargs)
         
         # If the step defines an attribute named export (fixme: and it's a list),

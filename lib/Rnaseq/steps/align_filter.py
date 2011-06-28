@@ -15,34 +15,33 @@ class align_filter(Step):
 
         aligner=self.__aligner__
         if aligner=='bowtie':
-            self.usage='%(exe)s %(ewbt)s %(args)s --un %(output)s %(input)s'
             self.exe='bowtie'
-            self.sh_template='bowtie_filter.tmpl'
             self.args='--quiet -p 4 -S --sam-nohead -k 1 -v 2 -q'
         elif aligner=='blat':
-            self.usage='%(exe)s %(blat_index)s %(input)s %(args)s %(psl)s'
             self.exe='blat'
-            self.sh_template='blat_filter.tmpl'
             self.args='-fastMap -q=DNA -t=DNA'
         else:
             raise UserError("unknown aligner '%s'" % aligner)
         
         return aligner
     
-    def sh_cmd(self):
+    # fixme: usage in progress, ill-formed
+    def usage(self):
         if self.aligner=='bowtie':
-            try: paired_reads=self.pipeline.readset.paired_reads
-            except AttributeError: paired_reads=False
-            if paired_reads:
+            if self.paired_reads:
+
                 usage='''
 export BOWTIE_INDEXES=${config['rnaseq']['bowtie_indexes']}
-${exe} ${ewbt} -1 ${input[0]} -2 ${input[1]} ${args} --un ${output}  | perl -lane 'print unless($$F[1] == 4)' > ${filtered}
-                '''
-                restore_indent=True
+bowtie ${ewbt} -1 ${ID}_1.${format} -2 ${ID}_2.${format} ${args} --un ${output}  | perl -lane 'print unless($$F[1] == 4)' > ${filtered}
+                ''' % ()
+
+                context.outputs=["%s.qual_OK.%s" % (context.ID, context.format)]
+                context.creates=["%s.qual_BAD.%s" % (context.ID, context.format)]
+
             else:
                 usage='''
 export BOWTIE_INDEXES=${config['rnaseq']['bowtie_indexes']}
-${exe} ${ewbt} ${args} --un ${output} ${input} | perl -lane 'print unless($$F[1] == 4)' > ${filtered}
+bowtie ${ewbt} ${args} --un ${output} ${input} | perl -lane 'print unless($$F[1] == 4)' > ${filtered}
                 '''
                 restore_indent=True
 

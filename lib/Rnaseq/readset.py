@@ -22,8 +22,24 @@ class Readset(dict):
 
         self.resolve_reads_file().resolve_working_dir().set_ID().verify_complete()
         
+
+    def __str__(self):
+        str=''
+        for k,v in self.items():
+            str+="%s: %s\n" % (k,v)
+        return str
+        
+    def __setitem__(self,k,v):
+        super(Readset,self).__setitem__(k,v) # call dict.__setitem__()
+        setattr(self,k,v)
+
+    def __setattr__(self,attr,value):
+        super(Readset,self).__setattr__(attr,value) # call dict.__setattr__()
+        self.__dict__[attr]=value
         
         
+
+
     ########################################################################
         
     __tablename__='readset'
@@ -78,13 +94,6 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
         else:
             raise "wtf?"
 
-
-        #self.update(yml)
-        #for k,v in yml.items():
-            #setattr(self,k,v)
-
-#         for rs in rlist:
-#             rs.resolve_reads_file(filename).resolve_working_dir().set_ID().verify_complete(filename)
         return rlist
 
     # factory method to return an array of readset objects when yaml contains a 
@@ -137,6 +146,8 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
                 rs.reads_dir=reads_dir  # put it back
                 readset_objs.append(rs)
 
+        if len(readset_objs)==0:
+            raise UserConfig("%s: no matches for %s" % (filename, yml['reads_file']))
         return readset_objs
 
     def resolve_reads_file(self,filename=None):

@@ -1,0 +1,6 @@
+reads_file: /some/path/to/data/s_?_export.txt
+description: this is a sample readset (fixture)
+org: mouse
+readlen: 75
+working_dir: rnaseq_wf
+label: abs_glob

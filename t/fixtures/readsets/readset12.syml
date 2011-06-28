@@ -1,0 +1,54 @@
+org: mouse
+readlen: 75
+reads_dir: /some/path/to/data
+working_dir: working_dir
+
+readsets:
+- reads_file: s_10_1_sequence.txt
+  label: s_10_1
+  description: s_10_1
+
+- reads_file: s_10_2_sequence.txt
+  label: s_10_2
+  description: s_10_2
+
+- reads_file: s_1_1_sequence.txt
+  label: s_1_1
+  description: s_1_1
+
+- reads_file: s_1_2_sequence.txt
+  label: s_1_2
+  description: s_1_2
+
+- reads_file: s_2_1_sequence.txt
+  label: s_2_1
+  description: s_2_1
+
+- reads_file: s_2_2_sequence.txt
+  label: s_2_2
+  description: s_2_2
+
+- reads_file: s_3_1_sequence.txt
+  label: s_3_1
+  description: s_3_1
+
+- reads_file: s_3_2_sequence.txt
+  label: s_3_2
+  description: s_3_2
+
+- reads_file: s_5_1_sequence.txt
+  label: s_5_1
+  description: s_5_1
+
+- reads_file: s_5_2_sequence.txt
+  label: s_5_2
+  description: s_5_2
+
+- reads_file: s_6_1_sequence.txt
+  label: s_6_1
+  description: s_6_1
+
+- reads_file: s_6_2_sequence.txt
+  label: s_6_2
+  description: s_6_2
+

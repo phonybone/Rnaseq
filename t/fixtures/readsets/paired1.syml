@@ -1,0 +1,11 @@
+org: human
+readlen: 101
+reads_dir: /proj/hoodlab/share/vcassen/rna-seq/qiang_data
+working_dir: rnaseq
+format: fq
+paired_reads: True
+
+reads_file: s_1_1_sequence.txt, s_1_2_sequence.txt
+ID: s_1
+label: s_1_1
+description: s_1_1

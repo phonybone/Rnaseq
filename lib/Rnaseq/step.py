@@ -13,19 +13,24 @@ from path_helpers import exists_on_path
 
 class Step(dict):                     # was Step(templated)
     def __init__(self,*args,**kwargs):
+        # set defaults:
+        self.name=self.__class__.__name__
+        self.description=self.name
+        self.force=False
+        self.skip_success_check=False
+
         for k,v in kwargs.items():
             try: setattr(self,k,v)      # something in alchemy can eff this up
             except Exception as e: print "templated.__init__: caught %s" % e
+
         try:                    # something in alchemy can eff this up
-            if not hasattr(self,'name'): self.name=self.__class__.__name__
-            if not hasattr(self,'description'): self.description=self.name
-            if not hasattr(self,'force'): self.force=False
-            if not hasattr(self,'skip_success_check'): self.skip_success_check=False
+            pass                        # fixme: wtf went here?
         except Exception as e:
             print "Step.__init__: caught %s" % e
 
+
+    # 
     def __setitem__(self,k,v):
-        #self.__dict__[k]=v
         super(Step,self).__setitem__(k,v) # call dict.__setitem__()
         if hasattr(self,k):
             if callable(getattr(self,k)):
@@ -121,32 +126,13 @@ class Step(dict):                     # was Step(templated)
 
     # use the self.usage formatting string to create the command line that executes the script/program for
     # this step.  Return as a string.  Throws exceptions as die()'s.
-    def sh_cmdline(self):
-        try:
-            usage=self.usage
-            if usage==None: usage=''
-        except AttributeError:
-            usage=''
-
-        # look for exe in path, unless exe is an absolute path
-        try:
-            if os.path.abspath(self.exe)!=self.exe:
-                self.exe=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'), 'programs', self.exe)
-        except AttributeError as ae:          # not all steps have self.exe; eg header, footer
-            pass
+    def sh_cmdline_old(self):
+        usage=self.usage()
 
 
-        # expand the usage string, using a built hash (dict):
-#         h={}
-#         h.update(self.__dict__)
-#         try: h.update(self.pipeline[self.name])
-#         except: pass
-#         h.update(obj2dict(self))
-#         ver1=usage % h
-       
         # evoque the cmd str:
-        domain=Domain(os.getcwd(), errors=4)
-        domain.set_template(self.name, src=self.usage)
+        domain=Domain(os.getcwd(), errors=4) # we actually don't care about the first arg
+        domain.set_template(self.name, src=usage)
         tmp=domain.get_template(self.name)
         vars={}
         vars.update(self.__dict__)
@@ -156,7 +142,7 @@ class Step(dict):                     # was Step(templated)
         try: vars.update(self.pipeline[self.name])
         except: pass
 
-        try: vars.update(self.pipeline.step_exports)
+        try: vars.update(self.pipeline.step_exports) # fixme: still need this?
         except: pass
 
         try: cmd=tmp.evoque(vars)
@@ -165,16 +151,18 @@ class Step(dict):                     # was Step(templated)
         return cmd
 
 
+    # step.usage is 
+    def usage(self, context):
+        raise ProgrammerError("%s: method 'usage' not defined" % self.__class__.__name__) # fixme: use @abstractmethod, pass
+
     # entry point to step's sh "presence"; calls appropriate functions, as above.
-    def sh_cmd(self, **args):
+    def sh_script(self, **args):
         if 'echo_name' in args and args['echo_name']:
             echo_part="echo step %s 1>&2" % self.name
         else:
             echo_part=''
             
-#        sh_script=self.sh_script()      # try the templated version first
-#        if sh_script==None:
-        sh_script=self.sh_cmdline()+"\n" # 
+        sh_script=self.sh_script()      # try the templated version first
 
         script="\n".join([echo_part,sh_script]) # tried using echo_part+sh_script, got weird '>' -> '&gt;' substitutions
 

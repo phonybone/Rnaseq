@@ -1,0 +1,18 @@
+#!/bin/tcsh
+
+#$ -N paired_end_tmp
+#$ -m bea
+#$ -M vcassen@systemsbiology.org
+#$ -o /proj/hoodlab/share/vcassen/rna-seq/qiang_data/tmp_1K/paired_end.out
+#$ -e /proj/hoodlab/share/vcassen/rna-seq/qiang_data/tmp_1K/paired_end.err
+#$ -l h_rt=72:00:00
+#$ -P solexatrans
+
+time sh /proj/hoodlab/share/vcassen/rna-seq/qiang_data/paired_end.s_1.sh
+time sh /proj/hoodlab/share/vcassen/rna-seq/qiang_data/paired_end.s_2.sh
+time sh /proj/hoodlab/share/vcassen/rna-seq/qiang_data/paired_end.s_3.sh
+time sh /proj/hoodlab/share/vcassen/rna-seq/qiang_data/paired_end.s_5.sh
+time sh /proj/hoodlab/share/vcassen/rna-seq/qiang_data/paired_end.s_6.sh
+time sh /proj/hoodlab/share/vcassen/rna-seq/qiang_data/paired_end.s_10.sh
+
+

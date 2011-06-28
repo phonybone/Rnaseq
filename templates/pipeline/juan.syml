@@ -17,7 +17,7 @@ filterQuality:
   args: -v -f ${rnaseq['align_suffix']}
 
 filterVectors:
-  input: ${ID}.${rnaseq['align_suffix']}
+  input: ${ID}.qual_OK.${rnaseq['align_suffix']}
   output: ${ID}.vector_OK.${rnaseq['align_suffix']}
   filtered: ${ID}.bowtie_vector_BAD.sam
   psl: ${ID}.blat_vector_BAD.psl

@@ -8,4 +8,9 @@ class fq_all2std(Step):
         self.interpreter='perl'
         self.usage='%(interpreter)s %(exe)s %(args)s %(input)s %(output)s'
 
-#print __file__,"checking in"
+    def usage(self):
+        usage='''
+perl programs/fq_all2std.py ${cmd} ${input} ${output}
+        '''
+        return usage
+    
