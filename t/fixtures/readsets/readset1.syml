@@ -1,0 +1,5 @@
+org: mouse
+readlen: 75
+working_dir: working_dir
+reads_file: s_1_export.txt
+label: s_1
