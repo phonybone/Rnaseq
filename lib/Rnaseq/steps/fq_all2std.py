@@ -4,13 +4,14 @@ class fq_all2std(Step):
 
     def __init__(self, **kwargs):
         Step.__init__(self,**kwargs)
-        self.exe='fq_all2std.pl'
-        self.interpreter='perl'
-        self.usage='%(interpreter)s %(exe)s %(args)s %(input)s %(output)s'
+        # fixme: catch AttributeErrors for these:
+        assert self.cmd in cmds
+        assert self.format != None
+
 
     def usage(self):
         usage='''
-perl programs/fq_all2std.py ${cmd} ${input} ${output}
+perl ${programs}/fq_all2std.py ${cmd} ${inputs[0]} ${ID}.${format}
         '''
         return usage
     

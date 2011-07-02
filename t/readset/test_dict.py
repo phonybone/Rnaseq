@@ -13,13 +13,13 @@ class TestCreate(unittest.TestCase):
 
 class TestDict(TestCreate):
     def test_dict(self):
-        dir=os.path.abspath(os.path.dirname(__file__)+'../fixtures/readsets/')        
+        dir=RnaseqGlobals.root_dir()+'/t/fixtures/readsets'
         os.chdir(dir)
         filename=os.path.join(dir,'readset_rel_glob.syml')
         rlist=Readset.load(filename)
         readset=rlist[0]
         
-        self.assertRegexpMatches(readset['reads_file'],os.path.join(os.path.dirname(os.path.abspath(__file__)),'s_\d_export.txt'))
+        self.assertRegexpMatches(readset['reads_file'], dir+'/s_\d_export.txt')
         self.assertEqual(readset['description'],'this is a sample readset (fixture)')
         self.assertEqual(readset['org'],'mouse')
         self.assertEqual(readset['readlen'],75)

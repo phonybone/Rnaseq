@@ -2,6 +2,7 @@
 
 import yaml, socket, os, glob, re
 from sqlalchemy import *
+from sqlalchemy.orm import mapper, relationship, backref
 from warn import *
 from dict_helpers import scalar_values
 
@@ -48,7 +49,6 @@ class Readset(dict):
     def create_table(self, metadata, engine):
         readset_table=Table(self.__tablename__, metadata,
                             Column('id',Integer, primary_key=True),
-                            Column('name',String,nullable=False),
                             Column('reads_file', String),
                             Column('org', String),
                             Column('readlen', Integer),
@@ -56,6 +56,7 @@ class Readset(dict):
                             useexisting=True,
                          )
         metadata.create_all(engine)
+        mapper(Readset, readset_table)
         return readset_table
         
     ########################################################################
@@ -120,14 +121,8 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
     def load_glob(self,yml,filename):
         reads_file=yml['reads_file']
 
-        # slightly convoluted way to establish reads_dir, which is needed for glob.glob() below:
-        # create a 'fake' Readset object 'rs' so we can re-use code in resolve_reads_file, thus obtaining rs.reads_dir
         try: reads_dir=yml['reads_dir']
-        except KeyError:
-            reads_dir=None
-            rs=Readset(reads_file=reads_file, reads_dir=reads_dir, label='dummy').resolve_reads_file()
-            reads_dir=rs.reads_dir
-        
+        except KeyError: reads_dir=os.getcwd() # fixme: hope this is right thing to do
             
         # make one readset object for each path described in reads_file (which can contain glob chars):
         scalars=scalar_values(yml)
@@ -138,6 +133,7 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
         readset_objs=[]
         for reads_file in re.split('[\s,]+',yml['reads_file']):
             path=os.path.join(reads_dir,reads_file)
+#            print "path is %s" % path
             rlist=glob.glob(path)
             for rf in rlist:
                 rsd=scalars.copy()
@@ -147,21 +143,24 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
                 readset_objs.append(rs)
 
         if len(readset_objs)==0:
-            raise UserConfig("%s: no matches for %s" % (filename, yml['reads_file']))
+            raise ConfigError("%s: no matches for %s" % (filename, yml['reads_file']))
         return readset_objs
 
     def resolve_reads_file(self,filename=None):
+#        print "resolve_reads_file: self is %s" % yaml.dump(self)
         try:
             reads_dir=self.reads_dir
             reads_file=self.reads_file
             if (os.path.isabs(reads_file)):
                 raise ConfigError("%s: reads_file (%s) cannot be absolute in presence of reads_dir (%s)" % (filename, reads_file, reads_dir))
             self.reads_file=os.path.join(reads_dir, reads_file)
-            self['reads_file']=self.reads_file
+#            self['reads_file']=self.reads_file
             return self
         except AttributeError as e:
+#            print "attribute error: %s" % e
             self.reads_dir=os.getcwd()
-            self['reads_dir']=self.reads_dir
+#            print "reads_dir(cwd) is %s" % self.reads_dir
+#            self['reads_dir']=self.reads_dir
             return self
 
 
@@ -189,6 +188,7 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
         self.working_dir=working_dir
         return self
 
+    # set self.ID and self.id
     def set_ID(self, *ID):
         # try to assign self.ID from ID[0], which might not be there:
         try: self.ID=ID[0]
@@ -197,11 +197,14 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
         # see if self.ID exists, and if it does, is it an absolute path.  If so, do nothing
         try:
             if os.path.isabs(self.ID):
-                return self
+                pass
             else:
                 self.ID=os.path.join(self.working_dir, self.ID) # self.ID is relative
         except AttributeError: 
             self.ID=os.path.join(self.working_dir,os.path.basename(self.reads_file)) # self.ID didn't exist
+
+        # set self.id as 
+        self.id=os.path.basename(self.ID)
         return self
                 
 
@@ -225,6 +228,10 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
             user=os.environ['USER']
             suffix=".".join(socket.gethostname().split('.')[-2:])
             return "@".join((user,suffix))
+
+    ########################################################################
+    # Dead Code:
+    ########################################################################
 
     def path_iterator_deadcode(self):
         try:

@@ -9,3 +9,6 @@ class mapsplice(Step):
         self.interpreter='python'
         self.genome_dir='/proj/hoodlab/share/programs/Ensembl'
         self.genome='hs37.61'
+
+    def outputs(self):
+        return ['${working_dir}/${id}.mapsplice/alignments.sam','${working_dir}/${id}.mapsplice/best_junction.bed']

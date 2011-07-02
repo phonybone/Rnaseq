@@ -11,6 +11,11 @@ echo 1>&2 starting ${pipeline.name}
 date 1>&2
 echo 1>&2
 
+
+# exit script if any variable unset:
+set -u
+
+
 export PATH=${config['rnaseq']['path']}
 export PYTHONPATH=$${PYTHONPATH}:${config['rnaseq']['root_dir']}/lib
 

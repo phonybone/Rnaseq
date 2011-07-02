@@ -14,7 +14,7 @@ class TestPaired(unittest.TestCase):
         templated.template_dir=template_dir
 
     def test_load(self):
-        rs_filename=os.path.abspath(os.path.dirname(__file__)+'../fixtures/readsets/paired1.syml')
+        rs_filename=RnaseqGlobals.root_dir()+'/t/fixtures/readsets/paired1.syml'
         rlist=Readset.load(rs_filename)
         self.assertEqual(len(rlist),2)
 
@@ -29,6 +29,9 @@ class TestPaired(unittest.TestCase):
         self.assertEqual(rs.ID ,'/proj/hoodlab/share/vcassen/rna-seq/qiang_data/rnaseq/s_1')
         self.assertEqual(rs.label ,'s_1_1')
         self.assertEqual(rs.description ,'s_1_1')
+
+        rs=rlist[1]
+        self.assertEqual(rs.reads_file ,'/proj/hoodlab/share/vcassen/rna-seq/qiang_data/s_1_2_sequence.txt')
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TestPaired)

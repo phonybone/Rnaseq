@@ -7,15 +7,15 @@ class align_filter(Step):
 
         try: aligner=kwargs['aligner']
         except: aligner=RnaseqGlobals.conf_value('rnaseq','aligner')
-        self.aligner(aligner)
+        self.set_aligner(aligner)
 
-    def aligner(self,*args):
-        try: self.__aligner__=args[0]
+    def set_aligner(self,*args):
+        try: self.aligner=args[0]
         except: pass
 
-        aligner=self.__aligner__
+        aligner=self.aligner
         if aligner=='bowtie':
-            self.exe='bowtie'
+            self.exe='blat'
             self.args='--quiet -p 4 -S --sam-nohead -k 1 -v 2 -q'
         elif aligner=='blat':
             self.exe='blat'
@@ -26,7 +26,7 @@ class align_filter(Step):
         return aligner
     
     # fixme: usage in progress, ill-formed
-    def usage(self):
+    def usage(self, context):
         if self.aligner=='bowtie':
             if self.paired_reads:
 
@@ -51,3 +51,5 @@ bowtie ${ewbt} ${args} --un ${output} ${input} | perl -lane 'print unless($$F[1]
             pass
         else:
             raise ConfigError("Unknown alignment program '%s'" % self.aligner)
+
+

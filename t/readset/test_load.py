@@ -14,7 +14,7 @@ class TestLoad(unittest.TestCase):
         
 
     def test_list(self):
-        readset_file=os.path.abspath(os.path.dirname(__file__)+'../readsets/readset12.syml')
+        readset_file=RnaseqGlobals.root_dir()+'/t/fixtures/readsets/readset12.syml'
         rlist=Readset.load(readset_file)
         self.assertEqual(type(rlist),type([]))
         self.assertEqual(len(rlist),12)
@@ -29,7 +29,7 @@ class TestLoad(unittest.TestCase):
 
 
     def test_glob_rel(self):
-        readset_file=os.path.abspath(os.path.dirname(__file__)+'../readsets/readset_rel_glob.syml')
+        readset_file=RnaseqGlobals.root_dir()+'/t/fixtures/readsets/readset_rel_glob.syml'
         rlist=Readset.load(readset_file)
         for rs in rlist:
             self.assertTrue(re.match('s_\d\d?_export.txt',os.path.basename(rs.reads_file)))
@@ -44,6 +44,7 @@ class TestLoad(unittest.TestCase):
         rs=Readset(reads_file='subdir/some_data.txt',working_dir='some_dir', label='label')
         self.assertEqual(rs.working_dir, os.path.join(os.getcwd(),'some_dir'))
         self.assertEqual(rs.ID, os.path.join(os.getcwd(),'some_dir','some_data.txt'))
+        self.assertEqual(rs.id, 'some_data.txt')
 
     def test_wd_rel_abs(self):
         rs=Readset(reads_file='subdir/some_data.txt',working_dir='/some_dir', label='label')

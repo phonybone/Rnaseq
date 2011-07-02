@@ -8,3 +8,10 @@ class remove_erccs(align_filter):
         self.description='remove ercc reads'
         self.ewbt='ERCC_reference_081215'
         self.blat_index='ERCC_reference_081215.2bit'
+
+    def usage(self, context):
+        raise ProgrammerGoof("NYI")
+
+    def outputs(self):
+        return ['${ID}.erccs_OK.${format}', '${ID}.erccs_BAD.${format}']
+    

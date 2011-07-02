@@ -53,13 +53,13 @@ class Pipeline(templated):
     ########################################################################
 
     # return the step with the given step name, or None if not found:
-    def stepWithName(self,stepname):
+    def step_with_name(self,stepname):
         for step in self.steps:
             if step.name==stepname: return step
         return None
 
     # return the step after the given step (by name), or None if not found:
-    def stepAfter(self,stepname):
+    def step_after(self,stepname):
         prev_step=self.steps[0]
         for step in self.steps[1:]:
             if prev_step.name==stepname: return step
@@ -176,7 +176,7 @@ class Pipeline(templated):
             pipeline_start.next_steprun_id=step_runs[self.steps[0].name].id
             mid_step=self.new_step('mid_step', pipeline_run_id=pipeline_run.id)
             pipeline_end=self.new_step('pipeline_end', pipelinerun_id=pipeline_run.id)
-            script+=pipeline_start.sh_cmd()
+            script+=pipeline_start.sh_script()
 
         errors=[]
         for step in self.steps:
@@ -190,7 +190,7 @@ class Pipeline(templated):
             
             # actual step
             script+="# %s\n" % step.name
-            try: step_script=step.sh_cmd(echo_name=True)
+            try: step_script=step.sh_script(echo_name=True)
             except Exception as e:
                 errors.append("%s: %s" % (step.name,str(e)))
                 print "Exception in pipeline.sh_script(%s): %s (%s)" % (step.name, e, type(e))
@@ -213,7 +213,7 @@ class Pipeline(templated):
                         mid_step.next_steprun_id=step_runs[self.stepAfter(step.name).name].id # sheesh
                     except:
                         mid_step.next_steprun_id=0
-                    script+=mid_step.sh_cmd()
+                    script+=mid_step.sh_script()
 
             if RnaseqGlobals.conf_value('verbose'):
                 print "step %s added" % step.name
@@ -223,7 +223,7 @@ class Pipeline(templated):
             
         # record finish:
         if include_provenance:
-            script+=pipeline_end.sh_cmd()
+            script+=pipeline_end.sh_script()
 
         return script
 

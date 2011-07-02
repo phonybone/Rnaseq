@@ -6,25 +6,27 @@ from templated import *
 
 class TestAlchemy(unittest.TestCase):
     def setUp(self):
-        templated.template_dir=os.path.normpath(os.path.abspath(__file__)+"/../../fixtures/templates")
         RnaseqGlobals.initialize(__file__, testing=True)
+        templated.template_dir=RnaseqGlobals.root_dir()+'/t/fixtures/templates'
 
-        filename=os.path.abspath(os.path.dirname(__file__)+'readset.syml')        
-        readset=Readset(filename=filename).load()
+        os.chdir(RnaseqGlobals.root_dir()+'/t/fixtures/readsets')
+
+        filename=RnaseqGlobals.root_dir()+'/t/fixtures/readsets/readset_rel_glob.syml'
+        rlist=Readset.load(filename)
+        readset=rlist[0]
         self.readset=readset
         
         self.session=RnaseqGlobals.get_session()
-        RnaseqGlobals.engine.execute("DROP TABLE IF EXISTS %s" % Readset.__tablename__)
-        
-        readset.create_table(RnaseqGlobals.metadata, RnaseqGlobals.engine)
-        print "Readset table created"
-        
+        rlist=self.session.query(Readset)
+        for rs in rlist:
+            self.session.delete(rs)
+        self.session.commit()
 
-    def test_insert(self):
+    def dont_test_insert(self):
         self.session.add(self.readset)
         self.session.commit()
 
-    def test_query(self):
+    def dont_test_query(self):
         session=self.session
         readset=self.readset
         session.add(self.readset)

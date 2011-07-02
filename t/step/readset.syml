@@ -1,5 +1,0 @@
-reads_files: ../readset/s_?_export.txt
-description: this is a sample readset
-org: mouse
-readlen: 75
-working_dir: rnaseq_wf

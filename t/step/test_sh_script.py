@@ -5,6 +5,8 @@ from Rnaseq import *
 from RnaseqGlobals import *
 from warn import *
 
+# Test step.
+
 class TestShScript(unittest.TestCase):
     def setUp(self):
         argv=RnaseqGlobals.initialize(__file__, testing=True)       # not to be confused with sys.argv

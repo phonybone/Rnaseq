@@ -23,42 +23,7 @@ class Step(dict):                     # was Step(templated)
             try: setattr(self,k,v)      # something in alchemy can eff this up
             except Exception as e: print "templated.__init__: caught %s" % e
 
-        try:                    # something in alchemy can eff this up
-            pass                        # fixme: wtf went here?
-        except Exception as e:
-            print "Step.__init__: caught %s" % e
-
-
-    # 
-    def __setitem__(self,k,v):
-        super(Step,self).__setitem__(k,v) # call dict.__setitem__()
-        if hasattr(self,k):
-            if callable(getattr(self,k)):
-                m=getattr(self,k)
-                m(v)
-        else:
-            setattr(self,k,v)
-
-    # update() and setdefault() taken from http://stackoverflow.com/questions/2060972/subclassing-python-dictionary-to-override-setitem
-    def update(self, *args, **kwargs):
-        if args:
-            if len(args) > 1:
-                raise TypeError("update expected at most 1 arguments, got %d" % len(args))
-            other = dict(args[0])
-            for key in other:
-                self[key] = other[key]
-        for key in kwargs:
-            self[key] = kwargs[key]
-
-    def setdefault(self, key, value=None):
-        if key not in self:
-            self[key] = value
-        return self[key]
-
-
-    def __setattr__(self,attr,value):
-        super(Step,self).__setattr__(attr,value) # call dict.__setattr__()
-        self[attr]=value
+#        print "__init__: %s is %s" % (self.name, yaml.dump(self))
 
 
     ########################################################################
@@ -85,86 +50,40 @@ class Step(dict):                     # was Step(templated)
 
     ########################################################################
 
-    # If a step needs more than one line to invoke (eg bowtie: needs to set an environment variable),
-    # define the set of commands in a template and set the 'sh_template' attribute to point to the template
-    # within the templates/sh_templates subdir).  This routine fetches the template and calls evoque on it, and
-    # returns the resulting string.
-    # If no sh_template is required, return None.
-    def sh_script_old(self, **kwargs):
-        try: sh_template=self.sh_template
-        except: return None
-        
-        template_dir=os.path.join(RnaseqGlobals.root_dir(),"templates","sh_template")
-        domain=Domain(template_dir, errors=4)
-        template=domain.get_template(sh_template)
-        
-        vars={}
-        vars.update(self.__dict__)
-        vars.update(self)
-        try: vars.update(self.pipeline[self.name])
-        except: pass
-
-        #vars['readset']=self.pipeline.readset # fixme: really? used by some steps, eg mapsplice
-        vars['sh_cmd']=self.sh_cmdline()
-        vars['config']=RnaseqGlobals.config
-        vars['ID']=self.pipeline.ID()
-
-        try:
-            vars.update(self.pipeline.step_exports)
-        except AttributeError as ae:
-            pass
-
-        vars.update(kwargs)
-
-        try:
-            script=template.evoque(vars)
-        except NameError as ne: 
-            #print "%s.sh_script() not ok (ne=%s)" % (self.name, ne)
-            raise ConfigError("%s while processing step '%s'" %(ne,self.name))
-
-        return script
-
-    # use the self.usage formatting string to create the command line that executes the script/program for
-    # this step.  Return as a string.  Throws exceptions as die()'s.
-    def sh_cmdline_old(self):
-        usage=self.usage()
-
-
-        # evoque the cmd str:
-        domain=Domain(os.getcwd(), errors=4) # we actually don't care about the first arg
-        domain.set_template(self.name, src=usage)
-        tmp=domain.get_template(self.name)
-        vars={}
-        vars.update(self.__dict__)
-#        vars.update(self.pipeline)
-        vars.update(RnaseqGlobals.config)
-
-        try: vars.update(self.pipeline[self.name])
-        except: pass
-
-        try: vars.update(self.pipeline.step_exports) # fixme: still need this?
-        except: pass
-
-        try: cmd=tmp.evoque(vars)
-        except AttributeError as ae:
-            raise ConfigError(ae)
-        return cmd
-
-
-    # step.usage is 
-    def usage(self, context):
-        raise ProgrammerError("%s: method 'usage' not defined" % self.__class__.__name__) # fixme: use @abstractmethod, pass
 
     # entry point to step's sh "presence"; calls appropriate functions, as above.
-    def sh_script(self, **args):
+    def sh_script(self, context, **args):
+
         if 'echo_name' in args and args['echo_name']:
             echo_part="echo step %s 1>&2" % self.name
         else:
             echo_part=''
             
-        sh_script=self.sh_script()      # try the templated version first
+        sh_script=self.usage()
 
-        script="\n".join([echo_part,sh_script]) # tried using echo_part+sh_script, got weird '>' -> '&gt;' substitutions
+        domain=Domain(os.getcwd(), errors=4) # we actually don't care about the first arg
+        domain.set_template(self.name, src=sh_script)
+        tmp=domain.get_template(self.name)
+
+        vars={}
+        # vars.update(self)               # fixme: this does nothing, apparently
+        vars.update(context)
+        vars['pipeline']=self.pipeline
+        vars['config']=RnaseqGlobals.config
+        vars['readset']=self.pipeline.readset
+
+        # need to add shell variables for 'set': (in cufflinks.s_?.sh scripts)
+        # currently root_dir, programs, reads_file, ID, format, readlen
+        # but really, the pipeline should specify these?
+        # or only things that are truly universal
+        vars['root_dir']=RnaseqGlobals.root_dir()
+        vars['programs']=RnaseqGlobals.root_dir()+'/programs'
+        vars['reads_file']=self.pipeline.readset.reads_file
+        vars['ID']=self.pipeline.readset.ID
+        vars['working_dir']=self.pipeline.readset.working_dir
+
+        script=tmp.evoque(vars)
+        script="\n".join([echo_part,script]) # tried using echo_part+sh_script, got weird '>' -> '&gt;' substitutions
 
         return script
 
@@ -239,5 +158,111 @@ class Step(dict):                     # was Step(templated)
         # couldn't find self.exe, no self.interpreter:
         return False
         
+
+    ########################################################################
+    ########################################################################
+    # Dead code
+    dead_code='''
+
+    # If a step needs more than one line to invoke (eg bowtie: needs to set an environment variable),
+    # define the set of commands in a template and set the 'sh_template' attribute to point to the template
+    # within the templates/sh_templates subdir).  This routine fetches the template and calls evoque on it, and
+    # returns the resulting string.
+    # If no sh_template is required, return None.
+    def sh_script_old(self, **kwargs):
+        try: sh_template=self.sh_template
+        except: return None
+        
+        template_dir=os.path.join(RnaseqGlobals.root_dir(),"templates","sh_template")
+        domain=Domain(template_dir, errors=4)
+        template=domain.get_template(sh_template)
+        
+        vars={}
+        vars.update(self.__dict__)
+        vars.update(self)
+        try: vars.update(self.pipeline[self.name])
+        except: pass
+
+        #vars['readset']=self.pipeline.readset # fixme: really? used by some steps, eg mapsplice
+        vars['sh_cmd']=self.sh_cmdline()
+        vars['config']=RnaseqGlobals.config
+        vars['ID']=self.pipeline.ID()
+
+        try:
+            vars.update(self.pipeline.step_exports)
+        except AttributeError as ae:
+            pass
+
+        vars.update(kwargs)
+
+        try:
+            script=template.evoque(vars)
+        except NameError as ne: 
+            #print "%s.sh_script() not ok (ne=%s)" % (self.name, ne)
+            raise ConfigError("%s while processing step '%s'" %(ne,self.name))
+
+        return script
+
+    # use the self.usage formatting string to create the command line that executes the script/program for
+    # this step.  Return as a string.  Throws exceptions as die()'s.
+    def sh_cmdline_old(self):
+        usage=self.usage()
+
+
+        # evoque the cmd str:
+        domain=Domain(os.getcwd(), errors=4) # we actually don't care about the first arg
+        domain.set_template(self.name, src=usage)
+        tmp=domain.get_template(self.name)
+        vars={}
+        vars.update(self.__dict__)
+#        vars.update(self.pipeline)
+        vars.update(RnaseqGlobals.config)
+
+        try: vars.update(self.pipeline[self.name])
+        except: pass
+
+        try: vars.update(self.pipeline.step_exports) # fixme: still need this?
+        except: pass
+
+        try: cmd=tmp.evoque(vars)
+        except AttributeError as ae:
+            raise ConfigError(ae)
+        return cmd
+
+
+    # 
+#     def __setitem__(self,k,v):
+#         super(Step,self).__setitem__(k,v) # call dict.__setitem__()
+#         if hasattr(self,k):
+#             if callable(getattr(self,k)):
+#                 m=getattr(self,k)
+#                 m(v)
+#         else:
+#             setattr(self,k,v)
+
+#     # update() and setdefault() taken from http://stackoverflow.com/questions/2060972/subclassing-python-dictionary-to-override-setitem
+#     def update(self, *args, **kwargs):
+#         if args:
+#             if len(args) > 1:
+#                 raise TypeError("update expected at most 1 arguments, got %d" % len(args))
+#             other = dict(args[0])
+#             for key in other:
+#                 self[key] = other[key]
+#         for key in kwargs:
+#             self[key] = kwargs[key]
+
+#     def setdefault(self, key, value=None):
+#         if key not in self:
+#             self[key] = value
+#         return self[key]
+
+
+#     def __setattr__(self,attr,value):
+#         super(Step,self).__setattr__(attr,value) # call dict.__setattr__()
+#         self.__dict__[attr]=value
+
+
+    '''
+
 
 #print __file__,"checking in"
