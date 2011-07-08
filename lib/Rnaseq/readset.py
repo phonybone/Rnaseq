@@ -164,6 +164,30 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
             return self
 
 
+    def verify_paired_end_filenames(self):
+        '''for paired end reads, verify self.reads_file defines exactly two files'''
+        # Return if self.paired_end not defined or if set to false
+        try: return self if not self.paired_end
+        except AttributeError: return self 
+
+        # reads_file can be comma separated list or file glob
+        # try glob first:
+        rlist=glob.glob(self.reads_file)
+        if len(rlist) != 2:
+            rlist=re.split('[\s,]+',self.reads_file)
+        if len(rlist) != 2:
+            raise ConfigError("reads_file: '%s' is not a list or file glob defining exactly two files" % self.reads_file)
+
+        # reads_file correctly defines two files; are the filenames in the correct format?
+        errors=[]
+        for fn in rlist:
+            if not re.search('_[12]\.[\w_]$', fn):
+                errors.append("%s is ill-formed: must contain _1 or _2 followed by .<suffix>" % fn)
+        if len(errors) != 0:
+            raise ConfigError("\n".join(errors))
+        return self
+            
+
     # returns a "fixed" version of working_dir
     def resolve_working_dir(self):
         reads_file=self.reads_file
