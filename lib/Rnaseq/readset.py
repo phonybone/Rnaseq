@@ -167,7 +167,9 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
     def verify_paired_end_filenames(self):
         '''for paired end reads, verify self.reads_file defines exactly two files'''
         # Return if self.paired_end not defined or if set to false
-        try: return self if not self.paired_end
+        try:
+            if not self.paired_end:
+                return self
         except AttributeError: return self 
 
         # reads_file can be comma separated list or file glob

@@ -29,7 +29,8 @@ class TestNewStep(unittest.TestCase):
 
         readset=self.readset
         
-        script=header_step.sh_script()
+        context={}
+        script=header_step.sh_script(context)
         self.assertTrue(re.search('root_dir=%s' % RnaseqGlobals.root_dir(), script))
         self.assertTrue(re.search('programs=%s' % RnaseqGlobals.root_dir()+'/programs', script))
         self.assertTrue(re.search('reads_file=%s' % readset.reads_file, script))
@@ -45,7 +46,8 @@ class TestNewStep(unittest.TestCase):
         print "class is",e2f_step.__class__
         self.assertEqual(e2f_step.__class__.__name__, 'export2fq')
 
-        script=e2f_step.sh_script()
+        script=e2f_step.sh_script({'inputs':['/some/input/data.txt']})
+        print "e2f script:\n%s" % script
 
     def test_align_filter(self):
         af_step=self.factory.new_step('align_filter', aligner='bowtie')

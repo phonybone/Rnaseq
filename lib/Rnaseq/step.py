@@ -59,14 +59,14 @@ class Step(dict):                     # was Step(templated)
         else:
             echo_part=''
             
-        sh_script=self.usage()
+        sh_script=self.usage(context)
 
         domain=Domain(os.getcwd(), errors=4) # we actually don't care about the first arg
         domain.set_template(self.name, src=sh_script)
         tmp=domain.get_template(self.name)
 
         vars={}
-        # vars.update(self)               # fixme: this does nothing, apparently
+        vars.update(self.__dict__)               # fixme: this does nothing, apparently
         vars.update(context)
         vars['pipeline']=self.pipeline
         vars['config']=RnaseqGlobals.config

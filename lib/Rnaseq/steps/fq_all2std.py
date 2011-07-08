@@ -5,11 +5,11 @@ class fq_all2std(Step):
     def __init__(self, **kwargs):
         Step.__init__(self,**kwargs)
         # fixme: catch AttributeErrors for these:
-        assert self.cmd in cmds
+        assert self.cmd in self.cmds
         assert self.format != None
 
 
-    def usage(self):
+    def usage(self, context):
         usage='''
 perl ${programs}/fq_all2std.py ${cmd} ${inputs[0]} ${ID}.${format}
         '''
