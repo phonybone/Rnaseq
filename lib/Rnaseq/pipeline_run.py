@@ -76,3 +76,5 @@ class PipelineRun(object):
         for step_run in self.step_runs:
             report+="\t%s\n" % step_run.report()
         return report
+
+print __file__,"checking in"

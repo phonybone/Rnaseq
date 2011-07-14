@@ -23,8 +23,17 @@ class Step(dict):                     # was Step(templated)
             try: setattr(self,k,v)      # something in alchemy can eff this up
             except Exception as e: print "templated.__init__: caught %s" % e
 
-#        print "__init__: %s is %s" % (self.name, yaml.dump(self))
+        # print "__init__: %s is %s" % (self.name, yaml.dump(self))
 
+    def usage(self, context):
+        raise ProgrammerGoof("step class '%s' does not define usage(self,context)" % self.__class__.__name__)
+
+    def outputs(self):
+        raise ProgrammerGoof("step class '%s' does not define outputs(self)" % self.__class__.__name__)
+
+    def paired_end(self):
+        try: return self.readset.paired_end
+        except AttributeError: return False
 
     ########################################################################
     __tablename__='step'
@@ -67,7 +76,11 @@ class Step(dict):                     # was Step(templated)
 
         vars={}
         vars.update(self.__dict__)               # fixme: this does nothing, apparently
-        vars.update(context)
+        #vars.update(context)
+        print "step %s: inputs are %s" % (self.name, context.inputs[self.name])
+        vars['inputs']=context.inputs[self.name]
+        print "sh_script(%s): vars[inputs] are %s" % (self.name, vars['inputs'])
+        vars['outputs']=context.outputs[self.name]
         vars['pipeline']=self.pipeline
         vars['config']=RnaseqGlobals.config
         vars['readset']=self.pipeline.readset
@@ -89,15 +102,15 @@ class Step(dict):                     # was Step(templated)
 
 ########################################################################
 
-    def inputs(self):
+    def inputs_old(self):
         try: return re.split("[,\s]+",self.input)
         except: return []
 
-    def outputs(self):
+    def outputs_old(self):
         try: return re.split("[,\s]+",self.output)
         except: return []
     
-    def creates(self):
+    def creates_old(self):
         try: return re.split("[,\s]+",self.create)
         except: return []
     

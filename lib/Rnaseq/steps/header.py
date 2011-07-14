@@ -60,3 +60,11 @@ exit_on_failure()
         restore_indent=True
         return template
         
+    def outputs(self):
+        try: paired_end=self.readset.paired_end
+        except: paired_end=False
+
+        if paired_end:
+            return ['${ID}_1.${format}', '${ID}_2.${format}']
+        else:
+            return ['${ID}.${format}']

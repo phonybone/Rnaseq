@@ -146,22 +146,26 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
             raise ConfigError("%s: no matches for %s" % (filename, yml['reads_file']))
         return readset_objs
 
+    # 
     def resolve_reads_file(self,filename=None):
-#        print "resolve_reads_file: self is %s" % yaml.dump(self)
+        try:
+            reads_file=self.reads_file
+            if reads_file == None:
+                raise ConfigError("no reads_file")
+        except: 
+            print yaml.dump(self)
+            raise ConfigError("no reads_file")
+        
         try:
             reads_dir=self.reads_dir
-            reads_file=self.reads_file
             if (os.path.isabs(reads_file)):
                 raise ConfigError("%s: reads_file (%s) cannot be absolute in presence of reads_dir (%s)" % (filename, reads_file, reads_dir))
             self.reads_file=os.path.join(reads_dir, reads_file)
-#            self['reads_file']=self.reads_file
-            return self
+
         except AttributeError as e:
-#            print "attribute error: %s" % e
             self.reads_dir=os.getcwd()
-#            print "reads_dir(cwd) is %s" % self.reads_dir
-#            self['reads_dir']=self.reads_dir
-            return self
+
+        return self
 
 
     def verify_paired_end_filenames(self):

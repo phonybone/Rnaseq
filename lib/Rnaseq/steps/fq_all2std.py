@@ -9,9 +9,23 @@ class fq_all2std(Step):
         assert self.format != None
 
 
+
     def usage(self, context):
-        usage='''
+        if (self.paired_end()):
+            usage='''
+perl ${programs}/fq_all2std.py solexa2fq ${inputs[0]} ${inputs[1]} ${ID}_1.${format}
+            ''' 
+        else:
+            usage='''
 perl ${programs}/fq_all2std.py ${cmd} ${inputs[0]} ${ID}.${format}
-        '''
+            ''' 
+
         return usage
+
+
+    def outputs(self):
+        if self.paired_end():
+            return ['${ID}_1.${format}','${ID}_2.${format}']
+        else:
+            return ['${ID}.${format}']
     

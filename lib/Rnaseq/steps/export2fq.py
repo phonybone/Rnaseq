@@ -8,5 +8,6 @@ class export2fq(fq_all2std):
         kwargs['format']='fq'
         kwargs['description']='convert an Illumina export file to FASTQ format'
         fq_all2std.__init__(self,**kwargs)
+
         
         

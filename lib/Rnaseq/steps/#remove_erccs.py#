@@ -9,6 +9,3 @@ class remove_erccs(align_filter):
         self.ewbt='ERCC_reference_081215'
         self.blat_index='ERCC_reference_081215.2bit'
 
-    def outputs(self):
-        return ['${ID}.erccs_BAD.${format}']
-    

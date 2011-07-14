@@ -1,0 +1,23 @@
+name: test_convert_inputs
+stepnames: header, step1, step2, step3, step4, step5, footer
+
+header:
+  name: header
+
+step1:
+  inputs: header
+
+step2: 
+  inputs: step1
+
+step3:
+  inputs: step2[0]
+
+step4:
+  inputs: step2[1], step3
+
+step5:
+  inputs: step1[0], step2[0]
+
+footer:
+  name: footer

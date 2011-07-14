@@ -4,17 +4,15 @@
 
 import sys, yaml, re, time, os, re
 
-from step import *
-from warn import *
-from dict_like import *
-from templated import *
+from Rnaseq import *
 from RnaseqGlobals import RnaseqGlobals
-from pipeline_run import *
-from step_run import *
 import path_helpers
 from sqlalchemy import *
-from sqlalchemy.orm import mapper
+from sqlalchemy.orm import mapper, relationship, backref
 from hash_helpers import obj2dict
+
+from pipeline_run import PipelineRun
+from context import Context
 
 class Pipeline(templated):
     def __init__(self,*args,**kwargs):
@@ -24,6 +22,9 @@ class Pipeline(templated):
         self.steps=[]
         self._ID=None
         self.step_exports={}
+        assert self.readset
+        assert self.readset.__class__.__name__=='Readset'
+
         
     wd_time_format="%d%b%y.%H%M%S"
 
@@ -60,6 +61,8 @@ class Pipeline(templated):
 
     # return the step after the given step (by name), or None if not found:
     def step_after(self,stepname):
+        if stepname==None:
+            return self.steps[0]
         prev_step=self.steps[0]
         for step in self.steps[1:]:
             if prev_step.name==stepname: return step
@@ -76,23 +79,22 @@ class Pipeline(templated):
 
         try:
             self.stepnames=re.split('[,\s]+',self['stepnames'])
-        except AttributeError as ae:
+        except AttributeError:
             raise ConfigError("pipeline %s does not define stepnames" % self.name)
 
-        # start here
+        # 
         errors=[]
         for stepname in self.stepnames:
             step=self.new_step(stepname)
             if not stepname in self:
                 errors.append("missing step section for '%s'" % stepname)
                 continue
-            self.fix_step_hash(step)
+            # self.fix_step_hash(step)
             step.update(self[stepname])
             self.steps.append(step)
         
         # Check to see that the list of step names and the steps themselves match; dies on errors
         errors.extend(self.verify_steps()) 
-        errors.extend(self.verify_continuity())
         errors.extend(self.verify_exes())
         if len(errors)>0:
             raise ConfigError("\n".join(errors))
@@ -101,32 +103,6 @@ class Pipeline(templated):
 
 
     
-    # run all step hashes through evoque if they still have ${} constrcuts:
-    def fix_step_hash(self,step):
-        try: step_hash=self[step.name]
-        except: return
-        
-        domain=Domain(os.getcwd())
-        print_flag=False
-        for attr,value in step_hash.items():
-            if type(value) != type(''): continue
-            if not re.search('\$\{', value): continue
-            #print_flag=True
-            vars=evoque_dict()
-            vars.update(self.readset)
-            vars.update(step)
-            vars.update(self.step_exports)
-
-            domain.set_template(attr, src=value)
-            tmpl=domain.get_template(attr)
-            value=tmpl.evoque(vars)
-            step_hash[attr]=value
-
-        if print_flag:
-            print "%s: fixed step_hash is %s" % (step.name, step_hash)
-            
-        self[step.name]=step_hash
-
     def load_template(self):
         vars={}
         vars.update(self.dict)
@@ -163,6 +139,7 @@ class Pipeline(templated):
 
         script="#!/bin/sh\n\n"
 
+        # determine if provenance is desired:
         try:
             pipeline_run=kwargs['pipeline_run']
             step_runs=kwargs['step_runs']
@@ -178,8 +155,23 @@ class Pipeline(templated):
             pipeline_end=self.new_step('pipeline_end', pipelinerun_id=pipeline_run.id)
             script+=pipeline_start.sh_script()
 
+        # setup context object
+        #context=Context(self.readset).load_io(self)
+        context=Context(self.readset)
+        
+
+        # Do header step:
+        header_step=self.step_after(None)
+        assert(header_step.name=='header')
+        context=self.convert_io(header_step.name, context)
+        # print "header context: %s" % yaml.dump(context)
+        script+=header_step.sh_script(context)
+        print "header script written"
+        # context.outputs[header_step.name]=header_step.outputs()
+
+        # iterate through steps; 
         errors=[]
-        for step in self.steps:
+        for step in self.steps[1:]:
             try:
                 if step.skip:
                     print "skipping step %s" % step.name
@@ -188,9 +180,13 @@ class Pipeline(templated):
                 pass
                 
             
-            # actual step
+            # arrange context.inputs:
+
+            # append step.sh_script()
+            context=self.convert_io(step.name, context)
+            print "pipeline.sh_script(%s): context.inputs=%s" % (step.name, context.inputs[step.name])
             script+="# %s\n" % step.name
-            try: step_script=step.sh_script(echo_name=True)
+            try: step_script=step.sh_script(context, echo_name=True)
             except Exception as e:
                 errors.append("%s: %s" % (step.name,str(e)))
                 print "Exception in pipeline.sh_script(%s): %s (%s)" % (step.name, e, type(e))
@@ -198,6 +194,9 @@ class Pipeline(templated):
 
             script+=step_script
             script+="\n"
+
+            # update context:
+            # context.outputs[step.name]=step.outputs()
 
             # insert check success step:
             if include_provenance:
@@ -218,12 +217,16 @@ class Pipeline(templated):
             if RnaseqGlobals.conf_value('verbose'):
                 print "step %s added" % step.name
 
-        if len(errors)>0:
-            raise ConfigError("\n".join(errors))
-            
         # record finish:
         if include_provenance:
             script+=pipeline_end.sh_script()
+
+        # check for continuity and raise exception on errors:
+        errors.extend(self.verify_continuity(context))
+        if len(errors)>0:
+            raise ConfigError("\n".join(errors))
+            
+            
 
         return script
 
@@ -361,7 +364,31 @@ class Pipeline(templated):
 
     # check to see that all inputs and outputs connect up correctly and are accounted for
     # outputs also include files defined by "create"
-    def verify_continuity(self):
+    def verify_continuity(self, context):
+        step=self.steps[0]
+        errors=[]
+        dataset2stepname={}
+        
+        # first step: check that inputs exist on fs, prime dataset2stepname:
+        for input in context.inputs[step.name]:
+            if not os.path.exists(input):
+                errors.append("missing inputs for %s: %s" % (step.name, input))
+        for output in context.outputs[step.name]:
+            dataset2stepname[output]=step.name
+
+        # subsequent steps: check inputs exist in dataset2stepname, add outputs to dataset2stepname:
+        for step in self.steps[1:]:        # skip first step
+            for input in context.inputs[step.name]:
+                if input not in dataset2stepname and not os.path.exists(input):
+                    errors.append("pipeline '%s':\n  input %s \n  (in step '%s') is not produced by any previous step and does not currently exist" % (self.name, input, step.name))
+            for output in context.outputs[step.name]:
+                dataset2stepname[output]=step.name
+
+        return errors
+            
+    # check to see that all inputs and outputs connect up correctly and are accounted for
+    # outputs also include files defined by "create"
+    def verify_continuity_old(self):
         step=self.steps[0]
         errors=[]
         dataset2stepname={}
@@ -390,8 +417,8 @@ class Pipeline(templated):
                     errors.append("pipeline '%s':\n  input %s \n  (in step '%s') is not produced by any previous step and does not currently exist" % (self.name, input, step.name))
             for output in step.outputs():
                 dataset2stepname[output]=step.name
-            for created in step.creates():
-                dataset2stepname[created]=step.name
+            # for created in step.creates():
+                # dataset2stepname[created]=step.name
 
         return errors
             
@@ -563,7 +590,51 @@ class Pipeline(templated):
                 force_rest=True
                 #print "step %s setting force_rest to True" % step.name
 
-    
+
+    # convert the pipeline's depiction of a step's inputs into an array of input names:
+    # Note: the inputs to a step (noted here as 'inputs') are supposed to be the outputs of a previous step.
+    # for this function, everything is in the context of the step denoted by 'stepname'
+    # called by context.load_io
+    def convert_io(self,stepname,context):
+        try: stephash=self[stepname]
+        except KeyError: raise ConfigError("In pipeline '%s', step %s has no defining section" % (self.name, stepname))
+
+        print "stephash(%s): %s" % (stepname, stephash)
+        try: inputs=stephash['inputs']
+        except KeyError:
+            print "%s: missing inputs in stephash for step %s" % (self.name, stepname)
+            context.inputs[stepname]=[]
+            context.outputs[stepname]=self.step_with_name(stepname).outputs()
+            return context
+        
+        names=re.split('[\s,]+', inputs)
+        print >> sys.stderr, "convert(%s): names is %s" % (stepname, names)
+        input_list=[]
+        for term in names:
+            mg=re.search('(\w+)(\[\d+\])?$', term)
+            if mg==None:
+                raise ConfigError("%s: malformed input term" % term)
+
+            output_step=mg.group(1)
+            index=mg.group(2)      # can be None
+            try: outputs=context.outputs[output_step]
+            except KeyError: raise ConfigError("pipeline %s: unknown step '%s' for inputs '%s'" % (output_step, stepname))
+            # print >> sys.stderr, "convert(%s): term=%s, outputs_step=%s, index=%s" % (stepname, term, output_step, index)
+            
+            if index == None:
+                input_list.extend(outputs)
+            else:
+                index=int(re.sub('[[\]]','',index))
+                try:
+                    input_list.append(outputs[index])
+                except IndexError:
+                    raise ConfigError("step %s: outputs '%s': index %d out of range" % (stepname, outputs, index))
+
+        context.inputs[stepname]=input_list
+        context.outputs[stepname]=self.step_with_name(stepname).outputs()
+        print "context.inputs[%s]: %s" % (stepname, context.inputs[stepname])
+        print "context.outputs[%s]: %s" % (stepname, context.outputs[stepname])
+        return context
 
 
 
@@ -634,6 +705,33 @@ class Pipeline(templated):
             raise ConfigError("\n".join(errors))
         
         return self
+
+    ########################################################################
+    # run all step hashes through evoque if they still have ${} constrcuts:
+    def fix_step_hash_old(self,step):
+        try: step_hash=self[step.name]
+        except: return
+        
+        domain=Domain(os.getcwd())
+        print_flag=False
+        for attr,value in step_hash.items():
+            if type(value) != type(''): continue
+            if not re.search('\$\{', value): continue
+            #print_flag=True
+            vars=evoque_dict()
+            vars.update(self.readset)
+            vars.update(step)
+            vars.update(self.step_exports)
+
+            domain.set_template(attr, src=value)
+            tmpl=domain.get_template(attr)
+            value=tmpl.evoque(vars)
+            step_hash[attr]=value
+
+        if print_flag:
+            print "%s: fixed step_hash is %s" % (step.name, step_hash)
+            
+        self[step.name]=step_hash
 
                 
 #print "%s checking in: Pipeline.__name__ is %s" % (__file__,Pipeline.__name__)

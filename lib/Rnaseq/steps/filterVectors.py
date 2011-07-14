@@ -11,4 +11,9 @@ class filterVectors(align_filter):
         self
 
     def usage(self):
-        
+        pass
+
+    def outputs(self):
+        return ['${ID}.vector_BAD.${format}']
+
+    

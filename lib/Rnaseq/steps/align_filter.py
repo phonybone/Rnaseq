@@ -28,21 +28,19 @@ class align_filter(Step):
     # fixme: usage in progress, ill-formed
     def usage(self, context):
         if self.aligner=='bowtie':
-            if self.paired_reads:
+            if self.paired_end():
 
                 usage='''
 export BOWTIE_INDEXES=${config['rnaseq']['bowtie_indexes']}
-bowtie ${ewbt} -1 ${ID}_1.${format} -2 ${ID}_2.${format} ${args} --un ${output}  | perl -lane 'print unless($$F[1] == 4)' > ${filtered}
-                ''' % ()
+bowtie ${ewbt} -1 %s -2 %s ${args} | perl -lane 'print unless($$F[1] == 4)' > ${ID}.%s_BAD.${format}
+                ''' % (context.inputs[self.name][0], context.inputs[self.name][1], self.name)
 
-                context.outputs=["%s.qual_OK.%s" % (context.ID, context.format)]
-                context.creates=["%s.qual_BAD.%s" % (context.ID, context.format)]
 
             else:
                 usage='''
 export BOWTIE_INDEXES=${config['rnaseq']['bowtie_indexes']}
-bowtie ${ewbt} ${args} --un ${output} ${input} | perl -lane 'print unless($$F[1] == 4)' > ${filtered}
-                '''
+bowtie ${ewbt} ${args} %s | perl -lane 'print unless($$F[1] == 4)' > ${ID}.%s_BAD.${format}
+                ''' % (context.inputs[self.name][0], self.name)
                 restore_indent=True
 
                 
@@ -53,3 +51,10 @@ bowtie ${ewbt} ${args} --un ${output} ${input} | perl -lane 'print unless($$F[1]
             raise ConfigError("Unknown alignment program '%s'" % self.aligner)
 
 
+        return usage
+
+
+    def outputs(self):
+        output='${ID}.%s_BAD.${format}' % self.name
+        return [output]
+    
