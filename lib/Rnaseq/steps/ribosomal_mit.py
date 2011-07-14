@@ -12,4 +12,5 @@ class ribosomal_mit(align_filter):
     def outputs(self):
         return ['${ID}.riboMT_BAD.${format}']
 
-    
+    def usage(self):
+        
