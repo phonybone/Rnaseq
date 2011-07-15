@@ -58,8 +58,21 @@ exit_on_failure()
 
         '''
         restore_indent=True
+
+        if self.readset.paired_end:
+            template+='''
+ln -s ${reads_file}_1.${format} ${ID}_1.${format}
+ln -s ${reads_file}_2.${format} ${ID}_2.${format}
+'''
+        else:
+            template+='''
+ln -s ${reads_file}_1.${format} ${ID}
+'''
+            
         return template
         
+    ########################################################################
+
     def outputs(self):
         try: paired_end=self.readset.paired_end
         except: paired_end=False
@@ -67,4 +80,4 @@ exit_on_failure()
         if paired_end:
             return ['${ID}_1.${format}', '${ID}_2.${format}']
         else:
-            return ['${ID}.${format}']
+            return ['${ID}']

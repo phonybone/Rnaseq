@@ -1,4 +1,4 @@
-import unittest, os, yaml
+import sys, unittest, os, yaml
 from Rnaseq import *
 from RnaseqGlobals import *
 from warn import *
@@ -14,7 +14,7 @@ class TestBase(unittest.TestCase):
         
         self.readset=Readset.load(RnaseqGlobals.root_dir()+'/t/fixtures/readsets/'+self.readset_name)[0]
         self.pipeline=Pipeline(name=self.pipeline_name, readset=self.readset).load_steps()
-        self.context=Context(self.readset).load_io(self.pipeline)
+        self.context=self.pipeline.convert_io()
 
 
     def test_setup(self):
@@ -51,8 +51,9 @@ class TestBase(unittest.TestCase):
 
     def test_input_out_of_range(self):
         c=self.context
-        print "step3: %s" % c.outputs['step3']        
-        
+        print >> sys.stderr, "step3: %s" % c.outputs['step3']        
+        print >> sys.stderr, "input out of range NYI"
+        self.fail()
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TestBase)
 unittest.TextTestRunner(verbosity=2).run(suite)

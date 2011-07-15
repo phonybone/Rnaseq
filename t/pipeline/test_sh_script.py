@@ -21,7 +21,8 @@ class TestShScript(unittest.TestCase):
         self.assertEqual(self.pipeline.__class__.__name__,'Pipeline')
 
 
-    # not sure this is right...
+    # test to see if there is exactly one instance of 'exit_on_failure' in the script
+    # I guess it assumes we're not including provenance calls between steps...
     def test_exit_func(self):
         reads_path=self.readset.reads_file
         
@@ -44,9 +45,5 @@ class TestShScript(unittest.TestCase):
 
 
 
-#if __name__=='__main__':
-#    unittest.main()
-
-        
 suite = unittest.TestLoader().loadTestsFromTestCase(TestShScript)
 unittest.TextTestRunner(verbosity=2).run(suite)

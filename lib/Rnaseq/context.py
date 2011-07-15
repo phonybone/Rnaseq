@@ -7,12 +7,15 @@ class Context(object):
         self.inputs={}
         self.outputs={}
 
+    # this is only called for testing purposes; probably should get rid of it then...
     def load_io(self,pipeline):
         for step in pipeline.steps:
             try: self.outputs[step.name]=step.outputs()
             except AttributeError: self.outputs[step.name]=[]
             
-            self.inputs[step.name]=pipeline.convert_inputs(step.name, self)
+            # self.inputs[step.name]=pipeline.convert_io(step.name, self)
+            self=pipeline.convert_io(step.name, self)
+
         return self
 
-print __file__,"checking in"
+#print __file__,"checking in"

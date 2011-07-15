@@ -153,8 +153,8 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
             if reads_file == None:
                 raise ConfigError("no reads_file")
         except: 
-            print yaml.dump(self)
             raise ConfigError("no reads_file")
+
         
         try:
             reads_dir=self.reads_dir
@@ -164,6 +164,7 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
 
         except AttributeError as e:
             self.reads_dir=os.getcwd()
+            self.reads_file=os.path.join(self.reads_dir, reads_file)
 
         return self
 

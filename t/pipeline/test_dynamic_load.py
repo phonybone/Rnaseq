@@ -12,9 +12,9 @@ class TestBase(unittest.TestCase):
         RnaseqGlobals.initialize(__file__, testing=True)
         RnaseqGlobals.set_conf_value('force',True)
         RnaseqGlobals.set_conf_value('silent',True)
-        self.pipeline=Pipeline(name='filter')
-        readset=Readset(reads_file=os.path.abspath(__file__+'/../../readset/s_1_export.txt'))        
-        setattr(self.pipeline,'readset',readset)
+        readset=Readset.load(RnaseqGlobals.root_dir()+'/t/fixtures/readsets/readset1.syml')[0]
+        self.pipeline=Pipeline(name='filter', readset=readset)
+
 
 class TestLoad(TestBase):
     def runTest(self):
@@ -35,8 +35,9 @@ class TestShScript(TestBase):
             self.Fail()
         except Exception as e:
             self.assertEqual(str(e),'no such group')
-#        self.assertEqual(len(script),2857)
 
-if __name__=='__main__':
-    unittest.main()
+
+suite = unittest.TestLoader().loadTestsFromTestCase(TestBase)
+unittest.TextTestRunner(verbosity=2).run(suite)
+
 

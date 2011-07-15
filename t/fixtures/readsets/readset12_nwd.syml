@@ -1,7 +1,6 @@
 org: mouse
 readlen: 75
 reads_dir: /some/path/to/data
-working_dir: working_dir
 format: fq
 
 readsets:

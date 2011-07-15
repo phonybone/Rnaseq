@@ -1,4 +1,4 @@
-\org: human
+org: human
 readlen: 101
 reads_dir: /proj/hoodlab/share/vcassen/rna-seq/qiang_data
 working_dir: rnaseq

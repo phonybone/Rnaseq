@@ -8,3 +8,7 @@ class footer(Step):
         self.force='True'
         self.skip_success_check='True'
         self.sh_template='footer.tmpl'
+
+    def outputs(self):
+        return []
+    

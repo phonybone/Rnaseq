@@ -3,10 +3,15 @@ from Rnaseq import *
 from RnaseqGlobals import *
 from warn import *
 
+# OBSOLETE! ID functionality moved to readset
+
 class TestBase(unittest.TestCase):
     def setUp(self):
         RnaseqGlobals.initialize(__file__)
-        self.readset=Readset(reads_file=os.path.abspath(__file__+'/../../readset/s_1_export.txt'))
+
+        readset_file=RnaseqGlobals.root_dir()+'/t/fixtures/readsets/paired1.syml'
+        self.readset=Readset.load(filename=readset_file)[0]
+
         try: del self.readset['working_dir']
         except KeyError: pass
         
@@ -16,9 +21,7 @@ class TestBase(unittest.TestCase):
 
         RnaseqGlobals.set_conf_value('wd_timestamp',False)
 
-class TestCreate(TestBase):
-
-    def runTest(self):
+    def test_ID(self):
         readset=self.readset
         pipeline=self.pipeline
 
@@ -48,6 +51,6 @@ class TestCreate(TestBase):
 
         
 
-if __name__=='__main__':
-    unittest.main()
+suite = unittest.TestLoader().loadTestsFromTestCase(TestBase)
+unittest.TextTestRunner(verbosity=2).run(suite)
 

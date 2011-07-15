@@ -4,48 +4,51 @@ from RnaseqGlobals import RnaseqGlobals
 from warn import *
 from templated import *
 
+# sqlalchemy-related test that verifies pipeline object gets inserted into db,
+# and pipeline.id is set.
+# fixme:
+# add use_existing to call to table.create (or something)
+# get rid of __file__ refs, replace with 
+
 class TestCreate(unittest.TestCase):
     def setUp(self):
-        templated.template_dir=os.path.normpath(os.path.abspath(__file__)+"/../../fixtures/templates")
         RnaseqGlobals.initialize(__file__, testing=True)
+        templated.template_dir=RnaseqGlobals.root_dir()+"/t/fixtures/templates"
 
-        self.readset=Readset(reads_file=os.path.abspath(__file__+'/../../readset/s_1_export.txt'),
-                             readlen=75,
-                             working_dir='rnaseq_wf')
+        readset_file=RnaseqGlobals.root_dir()+"/t/fixtures/readsets/readset1.syml"
+        self.readset=Readset.load(readset_file)[0]
         self.pipeline=Pipeline(name='juan', readset=self.readset).load_steps()
-        
         self.session=RnaseqGlobals.get_session()
 
-        
-        Pipeline.create_table(RnaseqGlobals.metadata, RnaseqGlobals.engine)
-        print "Pipeline table created"
+        # delete all pre-existing pipeline objects from the db:
+        plist=self.session.query(Pipeline)
+        for p in plist:
+            self.session.delete(p)
+        self.session.commit()
+
+        # don't need to call this; RnaseqGlobals takes care of it (right?)
+        # Pipeline.create_table(RnaseqGlobals.metadata, RnaseqGlobals.engine)
+        # print "Pipeline table created"
         
 
-class TestId(TestCreate):
-    def runTest(self):
+    def test_pipeline_id(self):
         pipeline=self.pipeline
         try: id=pipeline.id 
         except AttributeError: self.assertTrue(True)
             
         session=self.session
+        
+
         session.add(pipeline)
         session.commit()
         session.flush()
 
-        try:
-            print "pipeline.id is %s" % pipeline.id
-        except AttributeError:
-            print "pipeline has no id attr"
+        self.assertEqual(pipeline.id, 1)
 
         mpipeline=session.merge(pipeline)
-        try:
-            print "mpipeline.id is %s" % mpipeline.id
-        except AttributeError:
-            print "mpipeline has no id attr"
-        
+        self.assertEqual(mpipeline.id, 1)
 
         
 
-if __name__=='__main__':
-    unittest.main()
-
+suite = unittest.TestLoader().loadTestsFromTestCase(TestCreate)
+unittest.TextTestRunner(verbosity=2).run(suite)

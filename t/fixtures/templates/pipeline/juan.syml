@@ -2,39 +2,26 @@ name: Juan's pipeline testing version
 stepnames: preprocess filterQuality filterVectors filterLowComplex ribosomal_mit remove_erccs repeats_consensus
 
 preprocess:
-  input: ${readset.reads_file}
-  output: ${ID}.fq
+  inputs: readset
   args: '-s 1:45'
 
 filterQuality:
-  input: ${ID}.fq
-  output: ${ID}.qual_OK.fq
-  filtered: ${ID}.bowtie_qual_BAD.fq
+  input: preprocess
   args: -v
 
 filterVectors:
-  input: ${ID}.fq
-  output: ${ID}.vector_OK.fq
-  filtered: ${ID}.bowtie_vector_BAD.sam
+  input: preprocess
 
 filterLowComplex:
-  input: ${ID}.vector_OK.fq
-  output: ${ID}.complex_OK.fq
-  filtered: ${ID}.bowtie_complex_BAD.fq
+  input: preprocess
   args: -v
 
 ribosomal_mit:
-  input: ${ID}.complex_OK.fq
-  output: ${ID}.riboMT_OK.fq
-  filtered: ${ID}.bowtie_riboMT_BAD.sam
+  input: preprocess
 
 remove_erccs:
-  input: ${ID}.riboMT_OK.fq
-  output: ${ID}.ercc_OK.fq
-  filtered: ${ID}.bowtie_ercc_BAD.sam
+  input: preprocess
 
 repeats_consensus:
-  input: ${ID}.ercc_OK.fq
-  output: ${ID}.repeat_OK.fq
-  filtered: ${ID}.bowtie_repeat_BAD.sam
+  input: preprocess
 

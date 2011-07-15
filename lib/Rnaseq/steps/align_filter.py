@@ -30,28 +30,28 @@ class align_filter(Step):
         if self.aligner=='bowtie':
             if self.paired_end():
 
-                usage='''
+                script='''
 export BOWTIE_INDEXES=${config['rnaseq']['bowtie_indexes']}
-bowtie ${ewbt} -1 %s -2 %s ${args} | perl -lane 'print unless($$F[1] == 4)' > ${ID}.%s_BAD.${format}
-                ''' % (context.inputs[self.name][0], context.inputs[self.name][1], self.name)
-
+bowtie ${ewbt} -1 ${inputs[0]} -2 ${inputs[1]} ${args} | perl -lane 'print unless($$F[1] == 4)' > ${ID}.${name}_BAD.${format}
+'''
 
             else:
-                usage='''
+                script='''
 export BOWTIE_INDEXES=${config['rnaseq']['bowtie_indexes']}
-bowtie ${ewbt} ${args} %s | perl -lane 'print unless($$F[1] == 4)' > ${ID}.%s_BAD.${format}
-                ''' % (context.inputs[self.name][0], self.name)
+bowtie ${ewbt} ${args} ${inputs[0]} | perl -lane 'print unless($$F[1] == 4)' > ${ID}.${name}_BAD.${format}
+'''
                 restore_indent=True
 
                 
 
         elif self.aligner=='blat':
-            pass
+            # fixme: need to implement this (NYI)
+            raise ProgrammerGoof("step %s doesn't work for aligner==blat yet (NYI)" % self.name)
         else:
             raise ConfigError("Unknown alignment program '%s'" % self.aligner)
 
 
-        return usage
+        return script
 
 
     def outputs(self):
