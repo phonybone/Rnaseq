@@ -1,4 +1,4 @@
-import unittest
+import unittest, os
 from Rnaseq import *
 from RnaseqGlobals import RnaseqGlobals
 from warn import *
@@ -9,8 +9,8 @@ from templated import *
 
 class TestLoad(unittest.TestCase):
     def setUp(self):
-        templated.template_dir=os.path.normpath(os.path.abspath(__file__)+"/../../fixtures/templates")
         RnaseqGlobals.initialize(__file__, testing=True)
+        templated.template_dir=RnaseqGlobals.root_dir()+"/../../fixtures/templates"
         
 
     def test_list(self):
@@ -42,8 +42,8 @@ class TestLoad(unittest.TestCase):
     # test readset.resolve_working_dir
     def test_wd_rel_rel(self):
         rs=Readset(reads_file='subdir/some_data.txt',working_dir='some_dir', label='label')
-        self.assertEqual(rs.working_dir, os.path.join(os.getcwd(),'some_dir'))
-        self.assertEqual(rs.ID, os.path.join(os.getcwd(),'some_dir','some_data.txt'))
+        self.assertEqual(rs.working_dir, os.path.join(os.getcwd(),'subdir/some_dir'))
+        self.assertEqual(rs.ID, os.path.join(os.getcwd(),'subdir','some_dir/some_data.txt'))
         self.assertEqual(rs.id, 'some_data.txt')
 
     def test_wd_rel_abs(self):
@@ -85,6 +85,19 @@ class TestLoad(unittest.TestCase):
 
         for rs in rlist:
             self.assertEqual(rs.label, 'rel_glob') # not really what we want, I think... They should be different
+        
+
+    def test_wd_timestamp(self):
+        reads_file='/some/subdir/some_data.txt'
+        rs=Readset(reads_file=reads_file,working_dir='timestamp', label='label')
+        ts=time.strftime(Readset.wd_time_format)
+        self.assertEqual(rs.working_dir, '/some/subdir/%s' % ts)
+
+        reads_file='subdir/some_data.txt'
+        rs=Readset(reads_file=reads_file, working_dir='timestamp', label='label')
+        ts=time.strftime(Readset.wd_time_format)
+        self.assertEqual(rs.working_dir, os.path.join(os.getcwd(),os.path.dirname(reads_file),ts))
+
         
         
 suite = unittest.TestLoader().loadTestsFromTestCase(TestLoad)

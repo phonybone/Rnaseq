@@ -12,6 +12,7 @@ from hash_helpers import obj2dict
 from path_helpers import exists_on_path
 
 class Step(dict):                     # was Step(templated)
+    defaults={}
     def __init__(self,*args,**kwargs):
         # set defaults:
         self.name=self.__class__.__name__
@@ -19,11 +20,38 @@ class Step(dict):                     # was Step(templated)
         self.force=False
         self.skip_success_check=False
 
+        for k,v in self.defaults.items():
+            setattr(self,k,v)
+            # print "%s: setting default %s=%s" % (self.name, k,v)
+
         for k,v in kwargs.items():
             try: setattr(self,k,v)      # something in alchemy can eff this up
             except Exception as e: print "templated.__init__: caught %s" % e
 
         # print "__init__: %s is %s" % (self.name, yaml.dump(self))
+
+    ########################################################################
+
+    def __setitem__(self,k,v):
+        super(Step,self).__setitem__(k,v) # call dict.__setitem__()
+        setattr(self,k,v)
+
+    def __setattr__(self,attr,value):
+        super(Step,self).__setattr__(attr,value) # call dict.__setattr__()
+        self.__dict__[attr]=value
+
+    # update() and setdefault() taken from http://stackoverflow.com/questions/2060972/subclassing-python-dictionary-to-override-setitem
+    def update(self, *args, **kwargs):
+        if args:
+            if len(args) > 1:
+                raise TypeError("update expected at most 1 arguments, got %d" % len(args))
+            other = dict(args[0])
+            for key in other:
+                self[key] = other[key]
+        for key in kwargs:
+            self[key] = kwargs[key]
+
+    ########################################################################
 
     def usage(self, context):
         raise ProgrammerGoof("step class '%s' does not define usage(self,context)" % self.__class__.__name__)
@@ -75,7 +103,10 @@ class Step(dict):                     # was Step(templated)
 
         vars={}
         vars.update(self.__dict__)
+        #print "%s.__dict__:\n%s" % (self.name, self.__dict__)
+        #print "after update(self.__dict__): %s" % vars
         vars.update(self.readset)
+        vars.update(self.pipeline[self.name])
         
         vars['inputs']=context.inputs[self.name]
         vars['outputs']=context.outputs[self.name]
@@ -93,7 +124,8 @@ class Step(dict):                     # was Step(templated)
         vars['ID']=self.pipeline.readset.ID
         vars['working_dir']=self.pipeline.readset.working_dir
 
-        script=tmp.evoque(vars)
+        script="# step %s:\n" % self.name
+        script+=tmp.evoque(vars)
         script="\n".join([echo_part,script]) # tried using echo_part+sh_script, got weird '>' -> '&gt;' substitutions
 
         return script

@@ -2,7 +2,7 @@
 
 # step_object version
 
-import sys, yaml, re, time, os, re
+import sys, yaml, re, os, re
 
 from Rnaseq import *
 from RnaseqGlobals import RnaseqGlobals
@@ -26,8 +26,6 @@ class Pipeline(templated):
         assert self.readset.__class__.__name__=='Readset'
 
         
-    wd_time_format="%d%b%y.%H%M%S"
-
     def __str__(self):
         return "%s" % self.name
 
@@ -91,7 +89,6 @@ class Pipeline(templated):
             if not stepname in self:
                 errors.append("missing step section for '%s'" % stepname)
                 continue
-            # self.fix_step_hash(step)
             step.update(self[stepname])
             self.steps.append(step)
         
@@ -161,7 +158,7 @@ class Pipeline(templated):
 
         # Do header step:
         header_step=self.step_after(None)
-        script+=header_step.sh_script(context)
+        script+=header_step.sh_script(self.context)
 
         # iterate through steps; 
         errors=[]
@@ -177,8 +174,7 @@ class Pipeline(templated):
             # arrange context.inputs:
 
             # append step.sh_script()
-            script+="# %s\n" % step.name
-            try: step_script=step.sh_script(context, echo_name=True)
+            try: step_script=step.sh_script(self.context, echo_name=True)
             except Exception as e:
                 errors.append("%s: %s" % (step.name,str(e)))
                 print "Exception in pipeline.sh_script(%s): %s (%s)" % (step.name, e, type(e))
@@ -186,9 +182,6 @@ class Pipeline(templated):
 
             script+=step_script
             script+="\n"
-
-            # update context:
-            # context.outputs[step.name]=step.outputs()
 
             # insert check success step:
             if include_provenance:
@@ -214,7 +207,7 @@ class Pipeline(templated):
             script+=pipeline_end.sh_script()
 
         # check for continuity and raise exception on errors:
-        errors.extend(self.verify_continuity(context))
+        errors.extend(self.verify_continuity(self.context))
         if len(errors)>0:
             raise ConfigError("\n".join(errors))
             
@@ -461,17 +454,23 @@ class Pipeline(templated):
     # returns the updated context object.
     def convert_io(self):
         context=Context(self.readset)
-        
+        debug='DEBUG' in os.environ
+
         errors=[]
         for step in self.steps:
-
+            if debug: print "convert_io: step is %s" % step.name
+            
             try: stephash=self[step.name]
             except KeyError: errors.append("In pipeline '%s', step %s has no defining section" % (self.name, step.name))
 
+            # get this out of the way now:
+            context.outputs[step.name]=step.outputs()
+            
             # get the input specifier from the stephash; if not listed, assume no inputs, set outputs according to step, and continue:
             try: inputs=stephash['inputs']
             except KeyError:
                 context.inputs[step.name]=[]
+                if debug: print "no inputs for step '%s', skipping" % step.name
                 continue
 
             names=re.split('[\s,]+', inputs)
@@ -487,10 +486,13 @@ class Pipeline(templated):
                 # get the source of the inputs; can be the readset or the output of another step:
                 if output_step == 'readset':
                     outputs=[self.readset.reads_file]
+                    if debug: print "  %s: getting outputs from readset" % step.name
 
                 else:
                     try: outputs=context.outputs[output_step]
-                    except KeyError: raise ConfigError("pipeline %s: unknown step '%s' for inputs '%s'" % (self.name, output_step, step.name))
+                    except KeyError:
+                        if debug: print "context is %s" % yaml.dump(context)
+                        raise ConfigError("pipeline %s: unknown step '%s' for inputs '%s'" % (self.name, output_step, step.name))
             
                 if index == None:
                     input_list.extend(outputs)
@@ -502,7 +504,6 @@ class Pipeline(templated):
                         raise ConfigError("step %s: outputs '%s': index %d out of range" % (step.name, outputs, index))
 
             context.inputs[step.name]=input_list
-            context.outputs[step.name]=step.outputs()
 
 
         # print "convert_io: context is:\n%s" % yaml.dump(context)

@@ -1,5 +1,5 @@
 name: cufflinks
-stepnames: header, filterQuality, filterLowComplex, filterVectors, ribosomal_mit, remove_erccs, repeats_consensus, equalize, bowtie, samtool_copy, cufflinks, footer
+stepnames: header, filterQuality, filterLowComplex, filterVectors, ribosomal_mit, remove_erccs, repeats_consensus, equalize, bowtie, bowtie2bam, samtool_copy, cufflinks, footer
 
 header:
   name: header
@@ -10,7 +10,7 @@ filterQuality:
 
 filterLowComplex:
   name: filterLowComplex
-  inputs: filterQuality
+  inputs: header
 
 filterVectors:
   name: filterVectors
@@ -37,7 +37,7 @@ bowtie:
   inputs: equalize
 
 bowtie2bam:
-  name bowtie2bam
+  name: bowtie2bam
   inputs: bowtie
 
 samtool_copy:

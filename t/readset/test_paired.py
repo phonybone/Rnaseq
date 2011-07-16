@@ -24,7 +24,7 @@ class TestPaired(unittest.TestCase):
         self.assertEqual(rs.reads_dir ,'/proj/hoodlab/share/vcassen/rna-seq/qiang_data')
         self.assertEqual(rs.working_dir ,'/proj/hoodlab/share/vcassen/rna-seq/qiang_data/rnaseq')
         self.assertEqual(rs.format ,'fq')
-        self.assertEqual(rs.paired_reads ,True)
+        self.assertEqual(rs.paired_end ,True)
         self.assertEqual(rs.reads_file ,'/proj/hoodlab/share/vcassen/rna-seq/qiang_data/s_1_1_sequence.txt')
         self.assertEqual(rs.ID ,'/proj/hoodlab/share/vcassen/rna-seq/qiang_data/rnaseq/s_1')
         self.assertEqual(rs.label ,'s_1_1')

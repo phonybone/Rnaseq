@@ -1,5 +1,12 @@
 from Rnaseq import *
-from Rnaseq.steps.align_filter import align_filter
 
 class samtool_copy(Step):
-    pass
+    def usage(self, context):
+        usage='''
+${programs}/samtools view -h ${ID}.sorted.bam > ${ID}.sorted.sam
+'''
+        return usage
+
+    def outputs(self):
+        return ['${ID}.sorted.sam']
+        

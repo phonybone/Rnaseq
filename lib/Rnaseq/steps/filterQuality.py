@@ -14,11 +14,9 @@ perl $${programs}/filterQuality.pl ${args} -f ${format} -i ${inputs[1]} -o ${ID}
             ''' 
 
         else:
-            i0=context.inputs[self.name][0]
-
             usage='''
 perl $${programs}/filterQuality.pl ${args} -f $${format} -i ${inputs[0]} -o ${ID}.qual_OK.${format} -b ${ID}.qual_BAD.${format}
-            ''' % i0
+            '''
             
 
         return usage

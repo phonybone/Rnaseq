@@ -13,8 +13,15 @@ class TestBase(unittest.TestCase):
         templated.template_dir=template_dir
         
         self.readset=Readset.load(RnaseqGlobals.root_dir()+'/t/fixtures/readsets/'+self.readset_name)[0]
+#        os.environ['DEBUG']='True'
         self.pipeline=Pipeline(name=self.pipeline_name, readset=self.readset).load_steps()
-        self.context=self.pipeline.convert_io()
+        # errors=self.pipeline.convert_io()
+#        del os.environ['DEBUG']
+
+#         if len(errors)>0:
+#             print "errors in setup:"
+#             print "\n  ".join(errors)
+#             self.fail()
 
 
     def test_setup(self):
@@ -22,11 +29,11 @@ class TestBase(unittest.TestCase):
         self.assertEqual(self.pipeline.name, self.pipeline_name)
 
     def test_input_conversion(self):
-        c=self.context
+        c=self.pipeline.context
         # print "test_convert_inputs: context:\n%s" % yaml.dump(c)
 
         self.assertEqual(c.inputs['header'],[])
-        self.assertEqual(c.outputs['header'],['${ID}.${format}'])
+        self.assertEqual(c.outputs['header'],['${ID}'])
 
         self.assertEqual(c.inputs['step1'],c.outputs['header'])
         self.assertEqual(c.outputs['step1'],['${ID}.step1.${format}'])
@@ -50,7 +57,7 @@ class TestBase(unittest.TestCase):
         self.assertEqual(c.outputs['footer'],[])
 
     def test_input_out_of_range(self):
-        c=self.context
+        c=self.pipeline.context
         print >> sys.stderr, "step3: %s" % c.outputs['step3']        
         print >> sys.stderr, "input out of range NYI"
         self.fail()

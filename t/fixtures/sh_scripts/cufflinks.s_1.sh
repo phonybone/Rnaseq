@@ -1,10 +1,27 @@
 #!/bin/sh
 
-# header:
-root_dir=/proj/hoodlab/share/vcassen/rna-seq/rnaseq
+# step header:
 
+echo
+echo '****************************************************************'
+echo starting cufflinks
+date
+echo
+
+echo 1>&2
+echo 1>&2 '****************************************************************'
+echo 1>&2 starting cufflinks
+date 1>&2
+echo 1>&2
+
+
+# exit script if any variable unset:
+set -u
+
+
+root_dir=/proj/hoodlab/share/vcassen/rna-seq/rnaseq
 export PATH=/tools/bin:/hpc/bin:/bin:/usr/bin/:${root_dir}/programs
-export PYTHONPATH=${PYTHONPATH}:/proj/hoodlab/share/vcassen/rna-seq/rnaseq/lib
+export PYTHONPATH=${PYTHONPATH}:${root_dir}/lib
 
 programs=${root_dir}/programs
 reads_file=/proj/hoodlab/share/vcassen/rna-seq/qiang_data/s_1
@@ -31,12 +48,14 @@ exit_on_failure()
   fi
 }
 
+
 ln -s ${reads_file}_1.${format} ${ID}_1.${format}
 ln -s ${reads_file}_2.${format} ${ID}_2.${format}
 
 
 ########################################################################
-# filterQuality (text filter):
+# step filterQuality:
+
 perl ${programs}/filterQuality.pl -v -f ${format} -i ${ID}_1.${format} -o /dev/null -b ${ID}.qual_BAD_1.${format} 
 rc=$?
 if [ "$rc" != "0" ]; then
@@ -54,7 +73,8 @@ echo filterQuality: done
 date; echo
 
 ########################################################################
-# filterLowComplex (text filter):
+# step filterLowComplex:
+
 perl ${programs}/filterLowComplex.pl -v -f ${format} -i ${ID}_1.${format} -o /dev/null -b ${ID}.complex_BAD_1.${format} 
 rc=$?
 if [ "$rc" != "0" ]; then
@@ -72,7 +92,8 @@ date; echo
 
 
 ########################################################################
-# filterVectors (align filter):
+# step filterVectors:
+
 export BOWTIE_INDEXES=/proj/hoodlab/share/programs/bowtie-indexes
 
 rm  -f ${ID}.vector_BAD.${format}
@@ -90,7 +111,8 @@ date; echo
 
 
 ########################################################################
-# ribosomal_mit (align filter):
+# step ribosomal_mit:
+
 rm -f  ${ID}.riboMT_BAD.${format}
 bowtie human.GRCh37.61.rRNA-MT --quiet -p 4 -k 1 -v 2 -q  -1 ${ID}_1.${format} -2 ${ID}_2.${format} | \
   perl -lane 'print unless($F[1] == 4)' > ${ID}.riboMT_BAD.${format}
@@ -105,7 +127,8 @@ date; echo
 
 
 ########################################################################
-# remove_erccs (align filter):
+# step remove_erccs:
+
 echo step remove_erccs 1>&2
 export BOWTIE_INDEXES=/proj/hoodlab/share/programs/bowtie-indexes
 rm -f ${ID}.ercc_BAD.${format}
@@ -122,7 +145,8 @@ date; echo
 
 
 ########################################################################
-# repeats_consensus:
+# step repeats_consensus:
+
 echo step repeats_consensus 1>&2
 export BOWTIE_INDEXES=/proj/hoodlab/share/programs/bowtie-indexes
 rm -f  ${ID}.repeat_BAD.${format}
@@ -138,7 +162,8 @@ date; echo
 
 
 ########################################################################
-# equalize:
+# step equalize:
+
 perl ${programs}/removeBadReads.pl -v -paired ${ID}.qual_BAD_1.${format} ${ID}.qual_BAD_2.${format} ${ID}.complex_BAD_1.${format} ${ID}.complex_BAD_2.${format} ${ID}.vector_BAD.${format} ${ID}.riboMT_BAD.${format} ${ID}.ercc_BAD.${format} ${ID}.repeat_BAD.${format} - ${ID}_GOOD_1.${format} ${ID}_GOOD_2.${format}
 rc=$?
 if [ "$rc" != "0" ]; then
@@ -155,7 +180,8 @@ date; echo
 # 
 
 ########################################################################
-# bowtie:
+# step bowtie:
+
 export BOWTIE_INDEXES=/proj/hoodlab/share/programs/bowtie-indexes
 bowtie --sam --threads 4 --quiet -k 1 -v 2 -q hg19 -1 ${ID}_GOOD_1.${format} -2 ${ID}_GOOD_2.${format} ${ID}.bowtie.sam
 rc=$?
@@ -171,7 +197,8 @@ date; echo
 
 
 ########################################################################
-# sort and convert to sorted.bam format:
+# step sort and convert to sorted.bam format:
+
 ${programs}/samtools view -b -h -S -u ${ID}.bowtie.sam | ${programs}/samtools sort - ${ID}.sorted
 rc=$?
 if [ "$rc" != "0" ]; then
@@ -183,15 +210,14 @@ date; echo
 
 
 ########################################################################
-# samtool copy:
-# make a copy of the .bam file in .sam format so that we can examine it:
+# step samtool copy:
+
 ${programs}/samtools view -h ${ID}.sorted.bam > ${ID}.sorted.sam
 
 
 
 ########################################################################
-# cufflinks:
-# Might have to change the input names here (${ID}.sorted.bam -> ${ID}/tophat/accepted_hits.bam)
+# step cufflinks:
 
 ensembl=/proj/hoodlab/share/programs/Ensembl
 RNAseq_Pi=/proj/hoodlab/share/vcassen/rna-seq/RNAseq-Pi/data/fasta
@@ -212,5 +238,6 @@ date; echo
 
 ########################################################################
 
-# footer:
+# step  footer:
+
 echo done

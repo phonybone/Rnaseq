@@ -11,10 +11,7 @@ class test_step(Step):
         return "echo "+self.name+"(test): "+' '.join(context.inputs)
 
     def outputs(self):
-        try: paired_end=self.readset.paired_end
-        except: paired_end=False
-
-        if paired_end:
+        if self.paired_end():
             return ['${ID}_1.%s.${format}' % self.name, '${ID}_2.%s.${format}' % self.name]
         else:
             return ['${ID}.%s.${format}' % self.name]

@@ -8,8 +8,8 @@ class header(Step):
         self.skip_success_check=True
 
     def usage(self, context):
+        path=RnaseqGlobals.conf_value('rnaseq','path')
         template='''
-# header
 echo
 echo '****************************************************************'
 echo starting ${pipeline.name}
@@ -27,11 +27,11 @@ echo 1>&2
 set -u
 
 
-export PATH=${config['rnaseq']['path']}
-export PYTHONPATH=$${PYTHONPATH}:${config['rnaseq']['root_dir']}/lib
-
 root_dir=${root_dir}
-programs=${programs}
+export PATH=%(path)s:$${root_dir}/programs
+export PYTHONPATH=$${PYTHONPATH}:$${root_dir}/lib
+
+programs=$${root_dir}/programs
 reads_file=${reads_file}
 ID=${ID}
 working_dir=${working_dir}
@@ -56,10 +56,10 @@ exit_on_failure()
   fi
 }
 
-        '''
+''' % {'path':path}
         restore_indent=True
 
-        if self.readset.paired_end:
+        if self.paired_end():
             template+='''
 ln -s ${reads_file}_1.${format} ${ID}_1.${format}
 ln -s ${reads_file}_2.${format} ${ID}_2.${format}
@@ -74,10 +74,7 @@ ln -s ${reads_file}_1.${format} ${ID}
     ########################################################################
 
     def outputs(self):
-        try: paired_end=self.readset.paired_end
-        except: paired_end=False
-
-        if paired_end:
+        if self.paired_end():
             return ['${ID}_1.${format}', '${ID}_2.${format}']
         else:
             return ['${ID}']

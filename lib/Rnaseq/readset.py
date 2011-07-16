@@ -1,6 +1,6 @@
 #-*-python-*-
 
-import yaml, socket, os, glob, re
+import yaml, socket, os, glob, re, time
 from sqlalchemy import *
 from sqlalchemy.orm import mapper, relationship, backref
 from warn import *
@@ -8,6 +8,8 @@ from dict_helpers import scalar_values
 
 class Readset(dict):
     required_attrs=['reads_file', 'label', 'ID']
+    wd_time_format="%d%b%y.%H%M%S"
+
     def __init__(self,*args,**kwargs):
         # if there are any dicts in *args, use them to update self; allows "d={'this':'that'}; r=Readset(d)" construction
         for a in args:
@@ -206,11 +208,18 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
                 working_dir=os.path.dirname(reads_file)
             elif os.path.isabs(working_dir):
                 pass                    # working_dir remains the same
+            elif working_dir=='timestamp':
+                ts=time.strftime(Readset.wd_time_format)
+                working_dir=os.path.join(os.path.dirname(reads_file),ts)
             else:                      
                 working_dir=os.path.join(os.path.dirname(reads_file),working_dir)
+                
         else:                           # reads_file is relative
             if working_dir==None:
                 working_dir=os.path.join(os.getcwd(),os.path.dirname(reads_file))
+            elif working_dir=='timestamp':
+                ts=time.strftime(Readset.wd_time_format)
+                working_dir=os.path.join(os.getcwd(),os.path.dirname(reads_file),ts)
             elif os.path.isabs(working_dir):
                 pass
             else:
