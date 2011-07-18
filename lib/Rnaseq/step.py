@@ -91,7 +91,8 @@ class Step(dict):                     # was Step(templated)
     # entry point to step's sh "presence"; calls appropriate functions, as above.
     def sh_script(self, context, **args):
         if 'echo_name' in args and args['echo_name']:
-            echo_part="echo step %s 1>&2" % self.name
+            echo_part="\n# step %s:\n" % self.name
+            echo_part+="echo step %s 1>&2" % self.name
         else:
             echo_part=''
             
@@ -124,9 +125,8 @@ class Step(dict):                     # was Step(templated)
         vars['ID']=self.pipeline.readset.ID
         vars['working_dir']=self.pipeline.readset.working_dir
 
-        script="# step %s:\n" % self.name
-        script+=tmp.evoque(vars)
-        script="\n".join([echo_part,script]) # tried using echo_part+sh_script, got weird '>' -> '&gt;' substitutions
+        script_part=tmp.evoque(vars)
+        script="\n".join([echo_part,script_part]) # tried using echo_part+sh_script, got weird '>' -> '&gt;' substitutions
 
         return script
 

@@ -56,14 +56,14 @@ ln -s ${reads_file}_2.${format} ${ID}_2.${format}
 ########################################################################
 # step filterQuality:
 
-perl ${programs}/filterQuality.pl -v -f ${format} -i ${ID}_1.${format} -o /dev/null -b ${ID}.qual_BAD_1.${format} 
+perl ${programs}/filterQuality.pl -v -f fq -i ${ID}_1.${format} -o /dev/null -b ${ID}.qual_BAD_1.fq 
 rc=$?
 if [ "$rc" != "0" ]; then
   echo filterQuality exiting on rc=$rc
   exit $rc
 fi
 
-perl ${programs}/filterQuality.pl -v -f ${format} -i ${ID}_2.${format} -o /dev/null -b ${ID}.qual_BAD_2.${format} 
+perl ${programs}/filterQuality.pl -v -f fq -i ${ID}_2.${format} -o /dev/null -b ${ID}.qual_BAD_2.fq 
 rc=$?
 if [ "$rc" != "0" ]; then
   echo filterQuality exiting on rc=$rc

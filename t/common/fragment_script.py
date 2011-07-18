@@ -42,14 +42,28 @@ def first_diff(s1,s2):
     if len(s2)<min_len: min_len=len(s2)
     i=0
     while i<min_len:
-        if s1[i]!=s2[i]: return i
+        if s1[i]!=s2[i]:
+            print "first_diff: %c != %c" % (s1[i], s2[i])
+            return i
         i+=1
+    if len(s1) != len(s2):
+        return min_len
     return -1
 
 
-def diff_strs(s1,s2,l=15):
+def diff_strs(s1,s2,**kwargs):
     fd=first_diff(s1,s2)
     if fd==-1: return ('','')
-    if fd>5: fd-=5
-    return (s1[fd:fd+l], s2[fd:fd+l])
+
+    try: prior=kwargs['prior']
+    except: prior=15
+    
+    try: post=kwargs['post']
+    except: post=15
+
+    start=fd-prior
+    if start<0: start=0
+    end=fd+post
+    
+    return (s1[start:end], s2[start:end])
     

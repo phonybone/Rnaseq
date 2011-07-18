@@ -35,6 +35,7 @@ equalize:
 bowtie:
   name: bowtie
   inputs: equalize
+  ewbt: hg19
 
 bowtie2bam:
   name: bowtie2bam

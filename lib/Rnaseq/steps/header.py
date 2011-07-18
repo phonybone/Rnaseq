@@ -45,7 +45,7 @@ exit_on_failure()
   step_id=$$3
   next_step_id=$$4
 
-  python ${config['rnaseq']['root_dir']}/bin/provenance mid_step $${pipelinerun_id} $${step_id} $${next_step_id} $${retcode}
+  python $${root_dir}/bin/provenance mid_step $${pipelinerun_id} $${step_id} $${next_step_id} $${retcode}
 
 
   if [ $$retcode != 0 ]; then

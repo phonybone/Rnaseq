@@ -31,14 +31,14 @@ class align_filter(Step):
             if self.paired_end():
 
                 script='''
-export BOWTIE_INDEXES=${config['rnaseq']['bowtie_indexes']}
-bowtie ${ewbt} -1 ${inputs[0]} -2 ${inputs[1]} ${args} | perl -lane 'print unless($$F[1] == 4)' > ${ID}.${name}_BAD.${format}
+export BOWTIE_INDEXES=${bowtie_index}
+bowtie ${ewbt} -1 ${inputs[0]} -2 ${inputs[1]} ${args} | perl -lane 'print unless($$F[1] == 4)' > $${ID}.${name}_BAD.${format}
 '''
 
             else:
                 script='''
 export BOWTIE_INDEXES=${config['rnaseq']['bowtie_indexes']}
-bowtie ${ewbt} ${args} ${inputs[0]} | perl -lane 'print unless($$F[1] == 4)' > ${ID}.${name}_BAD.${format}
+bowtie ${ewbt} ${args} ${inputs[0]} | perl -lane 'print unless($$F[1] == 4)' > $${ID}.${name}_BAD.${format}
 '''
                 restore_indent=True
 
