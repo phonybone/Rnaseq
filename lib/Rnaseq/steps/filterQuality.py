@@ -9,13 +9,13 @@ class filterQuality(Step):
     def usage(self, context):
         if self.paired_end():
             usage='''
-perl $${programs}/filterQuality.pl ${args} -f ${format} -i ${inputs[0]} -o /dev/null -b $${ID}.qual_BAD_1.${format}
-perl $${programs}/filterQuality.pl ${args} -f ${format} -i ${inputs[1]} -o /dev/null -b $${ID}.qual_BAD_2.${format}
+perl $${programs}/filterQuality.pl ${args} -f $${format} -i ${inputs[0]} -o /dev/null -b $${ID}.qual_BAD_1.$${format}
+perl $${programs}/filterQuality.pl ${args} -f $${format} -i ${inputs[1]} -o /dev/null -b $${ID}.qual_BAD_2.$${format}
             ''' 
 
         else:
             usage='''
-perl $${programs}/filterQuality.pl ${args} -f $${format} -i ${inputs[0]} -o ${ID}.qual_OK.${format} -b ${ID}.qual_BAD.${format}
+perl $${programs}/filterQuality.pl ${args} -f $${format} -i ${inputs[0]} -o ${ID}.qual_OK.$${format} -b ${ID}.qual_BAD.$${format}
             '''
             
 

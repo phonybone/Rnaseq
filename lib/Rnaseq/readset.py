@@ -24,7 +24,8 @@ class Readset(dict):
             self[k]=v
 
         self.resolve_reads_file().resolve_working_dir().set_ID().verify_complete()
-        
+        self.exports=['org','readlen','working_dir','reads_file','label','format','ID']
+
 
     def __str__(self):
         str=''
@@ -124,19 +125,19 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
         reads_file=yml['reads_file']
 
         try: reads_dir=yml['reads_dir']
-        except KeyError: reads_dir=os.getcwd() # fixme: hope this is right thing to do
+        except KeyError:
+            reads_dir=os.getcwd() # fixme: hope this is right thing to do
             
         # make one readset object for each path described in reads_file (which can contain glob chars):
-        scalars=scalar_values(yml)
+        scalars=scalar_values(yml)      # select scalar values from yml
         scalars['filename']=filename
         try: del scalars['reads_dir']        # otherwise the constructor will barf
         except KeyError: pass
 
         readset_objs=[]
         for reads_file in re.split('[\s,]+',yml['reads_file']):
-            path=os.path.join(reads_dir,reads_file)
-#            print "path is %s" % path
-            rlist=glob.glob(path)
+            path=os.path.join(reads_dir,reads_file) # build the full path
+            rlist=glob.glob(path)       # get all glob matches
             for rf in rlist:
                 rsd=scalars.copy()
                 rsd['reads_file']=rf
@@ -145,10 +146,10 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
                 readset_objs.append(rs)
 
         if len(readset_objs)==0:
-            raise ConfigError("%s: no matches for %s" % (filename, yml['reads_file']))
+            raise ConfigError("%s: no matches for %s" % (filename, os.path.join(reads_dir,yml['reads_file']))) # 
         return readset_objs
 
-    # 
+    # Does this handle paired-end or multiple filenames?
     def resolve_reads_file(self,filename=None):
         try:
             reads_file=self.reads_file

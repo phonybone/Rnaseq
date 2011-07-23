@@ -4,3 +4,4 @@ readlen: 75
 working_dir: working_dir
 reads_file: s_1_export.txt
 label: readset1
+format: txt

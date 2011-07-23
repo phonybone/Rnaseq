@@ -9,15 +9,15 @@ export2fq:
   inputs: header
 
 filterQuality:
-  inputs: header
+  inputs: export2fq
 
 filterLowComplex:
-  inputs: header
+  inputs: export2fq
 
 ribosomal_mit:
-  inputs: header
+  inputs: export2fq
 
 remove_erccs:
-  inputs: header
+  inputs: export2fq
 
 

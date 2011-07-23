@@ -71,7 +71,7 @@ class Pipeline(templated):
         l=[s.name for s in self.steps]
         return l
 
-
+    ########################################################################
     # load all the steps
     # return self
     def load_steps(self):
@@ -104,6 +104,7 @@ class Pipeline(templated):
 
 
     
+    ########################################################################
     def load_template(self):
         vars={}
         vars.update(self.dict)
@@ -135,6 +136,7 @@ class Pipeline(templated):
 
 
 
+    ########################################################################
     # return an entire shell script that runs the pipeline
     def sh_script(self, **kwargs):
 
@@ -171,8 +173,6 @@ class Pipeline(templated):
                 pass
                 
             
-            # arrange context.inputs:
-
             # append step.sh_script()
             try: step_script=step.sh_script(self.context, echo_name=True)
             except Exception as e:
@@ -215,9 +215,11 @@ class Pipeline(templated):
 
         return script
 
+    ########################################################################
+    
     def scriptname(self):
-        reads_file_root=os.path.splitext(os.path.basename(self.readset.reads_file))[0]
-        return path_helpers.sanitize(self.name+'.'+reads_file_root)+".sh"
+        #reads_file_root=os.path.splitext(os.path.basename(self.readset.read_file))[0]
+        return path_helpers.sanitize(os.path.join(self.working_dir(), '.'.join(self.name, self.readset.ID, 'sh'))
 
     def working_dir(self):
         return self.readset.working_dir
@@ -227,6 +229,7 @@ class Pipeline(templated):
         return self.readset.ID
     
 
+    ########################################################################
     #  check to see that all defined steps are listed, and vice verse:
     def verify_steps(self):
         errors=[]
@@ -253,6 +256,7 @@ class Pipeline(templated):
         return errors
 
 
+    ########################################################################
     # check to see that all inputs and outputs connect up correctly and are accounted for
     # outputs also include files defined by "create"
     def verify_continuity(self, context):
@@ -279,6 +283,7 @@ class Pipeline(templated):
             
             
 
+    ########################################################################
     def verify_exes(self):
         dirs=RnaseqGlobals.conf_value('rnaseq', 'path').split(":")
         dirs.extend([os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'),'programs')])
@@ -305,6 +310,7 @@ class Pipeline(templated):
         return path_helpers.sanitize(os.path.join(self.readset.working_dir, "%s.err" % self.name))
         
 
+    ########################################################################
     # create the qsub script using a template:
     def qsub_script(self, script_filename, out_filename=None, err_filename=None):
         if out_filename==None: out_filename=self.out_filename()
@@ -327,7 +333,6 @@ class Pipeline(templated):
 
     
     ########################################################################
-
     # lookup self in db; if not found, store.  Same for all steps.
     def store_db(self):
         session=RnaseqGlobals.get_session()
@@ -341,7 +346,7 @@ class Pipeline(templated):
         return self
         
 
-########################################################################
+    ########################################################################
 
     def new_step(self, stepname, **kwargs):
         try:
@@ -376,6 +381,7 @@ class Pipeline(templated):
         return step
 
 
+    ########################################################################
     # return a tuple containing a pipeline_run object and a dict of step_run objects (keyed by step name):
     def make_run_objects(self, session):
         self.store_db()
@@ -386,9 +392,6 @@ class Pipeline(templated):
         except AttributeError as ae:
             raise UserError("No label defined.  Please specify a label for the pipeline run, either in the readset or using the '--label' command line option")
 
-        # check uniqueness of label (not):
-        #self.check_label_unique(session, label)
-        
         pipeline_run=PipelineRun(pipeline_id=self.id,
                                  status='standby',
                                  input_file=self.readset.reads_file,
@@ -418,6 +421,7 @@ class Pipeline(templated):
         return (pipeline_run, step_runs)
 
 
+    ########################################################################
     # check uniqueness of label:
     def check_label_unique(self, session, label):
         other_pr=session.query(PipelineRun).filterBy(label=label).first()
@@ -430,23 +434,22 @@ class Pipeline(templated):
 
         
 
+    ########################################################################
     # for each step, set an attribute 'skip' indicating whether or not to skip the step when creating the sh script:
     # fixme: convoluted logic, needs testing!
     def set_steps_current(self, global_force=False):
         force_rest=False
         
         for step in self.steps:
-#            print "%s.is_current=%s" % (step.name, step.is_current())
             skip=not (global_force or step.force or force_rest) and step.is_current()
             setattr(step, 'skip', skip)
-#            print "%s.skip is %s" % (step.name, step.skip)
 
             # once one step is out of date, all following steps will be, too:
             if not step.skip and not step.force:
                 force_rest=True
-                #print "step %s setting force_rest to True" % step.name
 
 
+    ########################################################################
     # convert the pipeline's depiction of a step's inputs into an array of input names:
     # Note: the inputs to a step (noted here as 'inputs') are supposed to be the outputs of a previous step.
     # for this function, everything is in the context of the step denoted by 'stepname'
@@ -506,9 +509,7 @@ class Pipeline(templated):
             context.inputs[step.name]=input_list
 
 
-        # print "convert_io: context is:\n%s" % yaml.dump(context)
         self.context=context
-        
         return errors
 
 

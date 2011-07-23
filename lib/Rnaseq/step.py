@@ -120,10 +120,18 @@ class Step(dict):                     # was Step(templated)
         # but really, the pipeline should specify these?
         # or only things that are truly universal
         vars['root_dir']=RnaseqGlobals.root_dir()
-        vars['programs']=RnaseqGlobals.root_dir()+'/programs'
-        vars['reads_file']=self.pipeline.readset.reads_file
-        vars['ID']=self.pipeline.readset.ID
-        vars['working_dir']=self.pipeline.readset.working_dir
+
+        readset=self.pipeline.readset
+        for attr in readset.exports:
+            try:
+                vars[attr]=getattr(readset, attr)
+            except AttributeError:
+                print "%s.sh_script: no %s!" % (self.name, attr)
+
+        try: export_list=self.exports
+        except: export_list=[]
+        for attr in export_list:
+            vars[attr]=getattr(self,attr)
 
         script_part=tmp.evoque(vars)
         script="\n".join([echo_part,script_part]) # tried using echo_part+sh_script, got weird '>' -> '&gt;' substitutions
@@ -132,10 +140,10 @@ class Step(dict):                     # was Step(templated)
 
 ########################################################################
 
-    def inputs(self):
+    def input_list(self):
         return self.pipeline.context.inputs[self.name]
 
-    def outputs(self):
+    def output_list(self):
         raise ProgrammerGoof("step '%s' does not define it's outputs" % self.name)
 
 
@@ -146,7 +154,7 @@ class Step(dict):                     # was Step(templated)
         latest_input=0
         earliest_output=time.time()
 
-        for input in self.inputs():
+        for input in self.input_list():
             try:
                 mtime=os.stat(input).st_mtime
             except OSError as ose:
@@ -163,7 +171,7 @@ class Step(dict):                     # was Step(templated)
             except OSError as oe:
                 raise ConfigError("%s: %s" %(exe_file, oe))
 
-        for output in self.outputs():
+        for output in self.output_list():
             try:
                 stat_info=os.stat(output)
                 if (stat_info.st_mtime < earliest_output):

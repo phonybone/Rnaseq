@@ -1,6 +1,7 @@
 org: human
 readlen: 101
-reads_dir: /proj/hoodlab/share/vcassen/rna-seq/qiang_data
+#reads_dir: /proj/hoodlab/share/vcassen/rna-seq/qiang_data
+reads_dir: /some/path/to/data
 working_dir: rnaseq
 format: fq
 paired_end: True

@@ -57,10 +57,11 @@ class TestBase(unittest.TestCase):
         self.assertEqual(c.outputs['footer'],[])
 
     def test_input_out_of_range(self):
-        c=self.pipeline.context
-        print >> sys.stderr, "step3: %s" % c.outputs['step3']        
-        print >> sys.stderr, "input out of range NYI"
-        self.fail()
+        try:
+            self.pipeline=Pipeline(name='input_index_out_of_range', readset=self.readset).load_steps()
+            self.fail()
+        except ConfigError as ce:
+            self.assertRegexpMatches(str(ce), 'step step3: outputs .* out of range')
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TestBase)
 unittest.TextTestRunner(verbosity=2).run(suite)

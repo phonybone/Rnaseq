@@ -11,14 +11,14 @@ class filterLowComplex(Step):
         if self.paired_end():
 
             usage='''
-perl $${programs}/filterLowComplex.pl ${args} -f ${format} -i ${inputs[0]} -o $${ID}.complex_OK_1.${format} -b $${ID}.complex_BAD_1.${format}
-perl $${programs}/filterLowComplex.pl ${args} -f ${format} -i ${inputs[1]} -o $${ID}.complex_OK_2.${format} -b $${ID}.complex_BAD_2.${format}
+perl $${programs}/filterLowComplex.pl ${args} -f $${format} -i ${inputs[0]} -o $${ID}.complex_OK_1.$${format} -b $${ID}.complex_BAD_1.$${format}
+perl $${programs}/filterLowComplex.pl ${args} -f $${format} -i ${inputs[1]} -o $${ID}.complex_OK_2.$${format} -b $${ID}.complex_BAD_2.$${format}
             '''
             
         else:
 
             usage='''
-perl $${programs}/filterLowComplex.pl ${args} -f $${format} -i ${inputs[0]} -o $${ID}.complex_OK.${format} -b $${ID}.complex_BAD.${format}
+perl $${programs}/filterLowComplex.pl ${args} -f $${format} -i ${inputs[0]} -o $${ID}.complex_OK.$${format} -b $${ID}.complex_BAD.$${format}
             '''
 
         return usage

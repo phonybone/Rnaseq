@@ -31,17 +31,18 @@ class RunPipeline(Command):
         session=RnaseqGlobals.get_session()
 
         # Create the pipeline and readset objects:
-        readsets=Readset.load(readset_file) 
+        self.readsets=Readset.load(readset_file) # store to self so that testers can get at them
 
         # Iterate through reads files defined in readset:
-        for readset in readsets:
+        for readset in self.readsets:
 
             user_runs=RnaseqGlobals.user_runs()
-            #print "user_runs(%s, len=%d) is %s" %(type(user_runs), len(user_runs), user_runs)
             for user_run in user_runs:
                 
                 # set up the pipeline:
                 pipeline=Pipeline(name=pipeline_name, readset=readset).load_steps()
+                self.pipelines[id(readset)]=pipeline
+                
                 pipeline.update(RnaseqGlobals.config)
                 RnaseqGlobals.user_config.merge_args(pipeline, user_run)
                 pipeline.set_steps_current(global_force=RnaseqGlobals.conf_value('force'))
@@ -52,9 +53,6 @@ class RunPipeline(Command):
                     script_filename=pipeline.write_sh_script(pipeline_run=pipeline_run, step_runs=step_runs)
                 else:
                     script_filename=pipeline.write_sh_script()
-
-
-                # create and store the pipeline's shell script:
 
                 # if running on the cluster, generate a calling (qsub) script and invoke that;
                 # if not a cluster job, just assemble cmd[].

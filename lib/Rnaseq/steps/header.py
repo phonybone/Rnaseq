@@ -9,6 +9,13 @@ class header(Step):
 
     def usage(self, context):
         path=RnaseqGlobals.conf_value('rnaseq','path')
+
+        readset=self.pipeline.readset
+        export_block=''
+        for attr in readset.exports:
+            try: export_block+="export %s=%s\n" % (attr, getattr(readset, attr))
+            except AttributeError: pass
+        
         template='''
 echo
 echo '****************************************************************'
@@ -28,13 +35,13 @@ set -u
 
 
 root_dir=${root_dir}
+programs=$${root_dir}/programs
 export PATH=%(path)s:$${root_dir}/programs
 export PYTHONPATH=$${PYTHONPATH}:$${root_dir}/lib
 
-programs=$${root_dir}/programs
-reads_file=${reads_file}
-ID=${ID}
-working_dir=${working_dir}
+
+# readset exports:
+%(readset_exports)s
 
 cd $${working_dir}
 
@@ -56,7 +63,7 @@ exit_on_failure()
   fi
 }
 
-''' % {'path':path}
+''' % {'path':path, 'readset_exports':export_block}
         restore_indent=True
 
         if self.paired_end():

@@ -11,14 +11,16 @@ class fq_all2std(Step):
 
 
     def usage(self, context):
+        usage="\nformat=%s\n" % self.format
         if (self.paired_end()):
-            usage='''
-perl ${programs}/fq_all2std.py solexa2fq ${inputs[0]} ${inputs[1]} ${ID}_1.${format}
+            usage+='''
+perl $${programs}/fq_all2std.py solexa2fq ${inputs[0]} ${inputs[1]} $${ID}_1.$${format}
             ''' 
         else:
-            usage='''
-perl ${programs}/fq_all2std.py ${cmd} ${inputs[0]} ${ID}.${format}
+            usage+='''
+perl $${programs}/fq_all2std.py ${cmd} ${inputs[0]} $${ID}.$${format}
             ''' 
+
 
         return usage
 
