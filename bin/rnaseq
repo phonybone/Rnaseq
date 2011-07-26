@@ -50,8 +50,8 @@ except ProgrammerGoof as pg:
     sys.exit(1)
 
 except ConfigError as ce:
-    warn("A configuration error (or errors) occured:\n")
-    die(ce)
+   warn("A configuration error (or errors) occured:\n")
+   die(ce)
 
 except RnaseqException as re:
     warn("An unexpected rnaseq exception has occured: %s\n" % re)

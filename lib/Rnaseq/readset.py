@@ -230,6 +230,8 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
         return self
 
     # set self.ID and self.id
+    # must be called *after* self.resolve_working_dir()
+    # returs self
     def set_ID(self, *ID):
         # try to assign self.ID from ID[0], which might not be there:
         try: self.ID=ID[0]
@@ -244,8 +246,11 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
         except AttributeError: 
             self.ID=os.path.join(self.working_dir,os.path.basename(self.reads_file)) # self.ID didn't exist
 
+        self['ID']=self.ID              # god dammit
+
         # set self.id as 
         self.id=os.path.basename(self.ID)
+        self['id']=self.id
         return self
                 
 

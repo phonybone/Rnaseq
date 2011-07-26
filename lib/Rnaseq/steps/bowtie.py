@@ -32,6 +32,6 @@ bowtie %(format)s %(threads)s ${args} ${ewbt} %(input)s %(output_file)s
 
         return usage
 
-    def outputs(self):
+    def output_list(self):
         output='${ID}.%s.%s' % (self.name, self.output_format)
         return [output]

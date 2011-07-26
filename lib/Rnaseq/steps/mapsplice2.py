@@ -5,4 +5,3 @@ class mapsplice2(Step):
         Step.__init__(self,**kwargs)
         self.name='mapsplice2'
         self.sh_template='mapsplice2.tmpl'
-        self.usage=''

@@ -7,6 +7,6 @@ $${programs}/samtools view -b -h -S -u $${ID}.bowtie.sam | $${programs}/samtools
 '''
         return usage
 
-    def outputs(self):
+    def output_list(self):
         return ['${ID}.sorted.bam']
         

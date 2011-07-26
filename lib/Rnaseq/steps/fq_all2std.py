@@ -25,7 +25,7 @@ perl $${programs}/fq_all2std.py ${cmd} ${inputs[0]} $${ID}.$${format}
         return usage
 
 
-    def outputs(self):
+    def output_list(self):
         if self.paired_end():
             return ['${ID}_1.${format}','${ID}_2.${format}']
         else:

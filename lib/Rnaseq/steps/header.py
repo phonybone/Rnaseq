@@ -80,7 +80,7 @@ ln -s ${reads_file}_1.${format} ${ID}
         
     ########################################################################
 
-    def outputs(self):
+    def output_list(self):
         if self.paired_end():
             return ['${ID}_1.${format}', '${ID}_2.${format}']
         else:

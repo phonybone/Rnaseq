@@ -10,6 +10,7 @@ from sqlalchemy import *
 from sqlalchemy.orm import mapper, relationship, backref
 from hash_helpers import obj2dict
 from path_helpers import exists_on_path
+from evoque_helpers import evoque_template
 
 class Step(dict):                     # was Step(templated)
     defaults={}
@@ -34,11 +35,11 @@ class Step(dict):                     # was Step(templated)
 
     def __setitem__(self,k,v):
         super(Step,self).__setitem__(k,v) # call dict.__setitem__()
-        setattr(self,k,v)
+        super(Step,self).__setattr__(k,v)
 
     def __setattr__(self,attr,value):
         super(Step,self).__setattr__(attr,value) # call dict.__setattr__()
-        self.__dict__[attr]=value
+        super(Step,self).__setitem__(attr,value)
 
     # update() and setdefault() taken from http://stackoverflow.com/questions/2060972/subclassing-python-dictionary-to-override-setitem
     def update(self, *args, **kwargs):
@@ -96,16 +97,9 @@ class Step(dict):                     # was Step(templated)
         else:
             echo_part=''
             
-        sh_script=self.usage(context)
-
-        domain=Domain(os.getcwd(), errors=4) # we actually don't care about the first arg
-        domain.set_template(self.name, src=sh_script)
-        tmp=domain.get_template(self.name)
 
         vars={}
         vars.update(self.__dict__)
-        #print "%s.__dict__:\n%s" % (self.name, self.__dict__)
-        #print "after update(self.__dict__): %s" % vars
         vars.update(self.readset)
         vars.update(self.pipeline[self.name])
         
@@ -121,19 +115,20 @@ class Step(dict):                     # was Step(templated)
         # or only things that are truly universal
         vars['root_dir']=RnaseqGlobals.root_dir()
 
+        # add readset exports:
         readset=self.pipeline.readset
         for attr in readset.exports:
-            try:
-                vars[attr]=getattr(readset, attr)
-            except AttributeError:
-                print "%s.sh_script: no %s!" % (self.name, attr)
+            try: vars[attr]=getattr(readset, attr)
+            except AttributeError: print "%s.sh_script: no %s!" % (self.name, attr)
 
+        # add self.exports:
         try: export_list=self.exports
         except: export_list=[]
         for attr in export_list:
             vars[attr]=getattr(self,attr)
 
-        script_part=tmp.evoque(vars)
+        script_part=evoque_template(self.usage(context), vars)
+
         script="\n".join([echo_part,script_part]) # tried using echo_part+sh_script, got weird '>' -> '&gt;' substitutions
 
         return script
@@ -155,6 +150,8 @@ class Step(dict):                     # was Step(templated)
         earliest_output=time.time()
 
         for input in self.input_list():
+            input=evoque_template(input, self, self.pipeline.readset) # expand ${} constructs in input
+
             try:
                 mtime=os.stat(input).st_mtime
             except OSError as ose:
@@ -163,13 +160,13 @@ class Step(dict):                     # was Step(templated)
             if mtime > latest_input:
                 latest_input=mtime
 
-            try:
-                exe_file=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'), 'programs', self.exe)
-                exe_mtime=os.stat(exe_file).st_mtime
-                if exe_mtime > latest_input:
-                    latest_input=exe_mtime
-            except OSError as oe:
-                raise ConfigError("%s: %s" %(exe_file, oe))
+#             try:
+#                 exe_file=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'), 'programs', self.exe)
+#                 exe_mtime=os.stat(exe_file).st_mtime
+#                 if exe_mtime > latest_input:
+#                     latest_input=exe_mtime
+#             except OSError as oe:
+#                 raise ConfigError("%s: %s" %(exe_file, oe))
 
         for output in self.output_list():
             try:

@@ -11,7 +11,7 @@ class filterVectors(align_filter):
         self
 
 
-    def outputs(self):
+    def output_list(self):
         return ['${ID}.vector_BAD.${format}']
 
     

@@ -54,7 +54,7 @@ bowtie ${ewbt} ${args} ${inputs[0]} | perl -lane 'print unless($$F[1] == 4)' > $
         return script
 
 
-    def outputs(self):
+    def output_list(self):
         output='${ID}.%s_BAD.${format}' % self.name
         return [output]
     

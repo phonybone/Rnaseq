@@ -21,7 +21,7 @@ perl $${programs}/filterQuality.pl ${args} -f $${format} -i ${inputs[0]} -o ${ID
 
         return usage
 
-    def outputs(self):
+    def output_list(self):
         if self.paired_end():
             return ['${ID}.qual_BAD_1.${format}','${ID}.qual_BAD_1.${format}']
         else:

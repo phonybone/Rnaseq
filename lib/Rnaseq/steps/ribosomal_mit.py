@@ -9,7 +9,7 @@ class ribosomal_mit(align_filter):
         self.ewbt='human.GRCh37.61.rRNA-MT'
         self.blat_index='human.GRCh37.61.rRNA-MT.2bit'
 
-    def outputs(self):
+    def output_list(self):
         return ['${ID}.riboMT_BAD.${format}']
 
         

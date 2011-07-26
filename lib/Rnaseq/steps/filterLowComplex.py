@@ -24,7 +24,7 @@ perl $${programs}/filterLowComplex.pl ${args} -f $${format} -i ${inputs[0]} -o $
         return usage
 
 
-    def outputs(self):
+    def output_list(self):
         if self.paired_end():
             return ['${ID}.complex_BAD_1.${format}','${ID}.complex_BAD_1.${format}']
         else:

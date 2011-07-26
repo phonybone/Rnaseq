@@ -7,6 +7,6 @@ $${programs}/samtools view -h $${ID}.sorted.bam > $${ID}.sorted.sam
 '''
         return usage
 
-    def outputs(self):
+    def output_list(self):
         return ['${ID}.sorted.sam']
         

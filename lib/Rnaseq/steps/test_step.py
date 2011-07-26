@@ -10,7 +10,7 @@ class test_step(Step):
     def usage(self, context):
         return "echo "+self.name+"(test): "+' '.join(context.inputs)
 
-    def outputs(self):
+    def output_list(self):
         if self.paired_end():
             return ['${ID}_1.%s.${format}' % self.name, '${ID}_2.%s.${format}' % self.name]
         else:

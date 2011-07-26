@@ -10,6 +10,6 @@ class footer(Step):
     def usage(self, context):
         return "echo %s done" % self.pipeline.name
 
-    def outputs(self):
+    def output_list(self):
         return []
     

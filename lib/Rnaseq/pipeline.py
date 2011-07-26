@@ -20,7 +20,6 @@ class Pipeline(templated):
         self.type='pipeline'
         self.suffix='syml'
         self.steps=[]
-        self._ID=None
         self.step_exports={}
         assert self.readset
         assert self.readset.__class__.__name__=='Readset'
@@ -219,7 +218,7 @@ class Pipeline(templated):
     
     def scriptname(self):
         #reads_file_root=os.path.splitext(os.path.basename(self.readset.read_file))[0]
-        return path_helpers.sanitize(os.path.join(self.working_dir(), '.'.join(self.name, self.readset.ID, 'sh'))
+        return path_helpers.sanitize(os.path.join(self.working_dir(), '.'.join([self.name, self.readset.label, 'sh'])))
 
     def working_dir(self):
         return self.readset.working_dir
@@ -406,7 +405,7 @@ class Pipeline(templated):
         step_runs={}
         for step in self.steps:
             step_run=StepRun(step_name=step.name, pipeline_run_id=pipeline_run.id, status='standby')
-            for output in step.outputs():
+            for output in step.output_list():
                 step_run.file_outputs.append(FileOutput(path=output))
 
             if step.skip:               # as set by self.set_steps_current()
@@ -467,7 +466,7 @@ class Pipeline(templated):
             except KeyError: errors.append("In pipeline '%s', step %s has no defining section" % (self.name, step.name))
 
             # get this out of the way now:
-            context.outputs[step.name]=step.outputs()
+            context.outputs[step.name]=step.output_list()
             
             # get the input specifier from the stephash; if not listed, assume no inputs, set outputs according to step, and continue:
             try: inputs=stephash['inputs']
@@ -507,7 +506,6 @@ class Pipeline(templated):
                         raise ConfigError("step %s: outputs '%s': index %d out of range" % (step.name, outputs, index))
 
             context.inputs[step.name]=input_list
-
 
         self.context=context
         return errors
