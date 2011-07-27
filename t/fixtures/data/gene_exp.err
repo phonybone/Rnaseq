@@ -2,25 +2,14 @@ step header
 
 ****************************************************************
 starting gene_exp
-Wed Jul 27 14:20:32 PDT 2011
+Wed Jul 27 15:30:34 PDT 2011
 
-step 232 passed
+step 302 passed
 step extract_significant
-step 233 passed
+step 303 passed
 step sort_by_name
-step 234 passed
+step 304 passed
 step sort_by_sample
-step 235 passed
+step 305 passed
 step footer
-step 236 passed
-Traceback (most recent call last):
-  File "/proj/hoodlab/share/vcassen/rna-seq/rnaseq/bin/provenance", line 44, in <module>
-    main()
-  File "/proj/hoodlab/share/vcassen/rna-seq/rnaseq/bin/provenance", line 35, in main
-    cmd=cf.new_cmd(cmd)
-  File "/proj/hoodlab/share/vcassen/rna-seq/rnaseq/lib/Rnaseq/cmd_factory.py", line 32, in new_cmd
-    mod=__import__(cmd_dotpath)
-  File "/proj/hoodlab/share/vcassen/rna-seq/rnaseq/lib/Rnaseq/cmds/provenance/pipeline_end.py", line 26
-    now=(int)time.time()
-                ^
-SyntaxError: invalid syntax
+step 306 passed

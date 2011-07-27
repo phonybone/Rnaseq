@@ -40,7 +40,7 @@ class PipelineRun(object):
             if self.start_time==None: raise Exception
             if self.finish_time==None: raise Exception
             dur=duration(self.start_time, self.finish_time, 2)
-        except: dur=''
+        except: dur='dur=n/a'
         return "\t".join(str(x) for x in [self.pipeline.name, self.id, self.status, self.successful, self.starttime(), self.finishtime(),
                                           dur])
                                           

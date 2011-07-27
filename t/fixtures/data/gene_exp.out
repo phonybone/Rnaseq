@@ -1,39 +1,32 @@
-pipeline_start: first step: 	header               started              None                 start=1311801632, finish=None
+pipeline_start: first step: 	header               started              None                 start=1311805834, finish=None
 pipeline 'gene_exp' started
-
-done
 
 ****************************************************************
 starting gene_exp
-Wed Jul 27 14:20:32 PDT 2011
+Wed Jul 27 15:30:34 PDT 2011
 
 mid_step: step is header
-step_run(232) updated: 	header               finished             True                 0 secs              
-pipeline_run(55) updated
-next_step_run(233) updated: 	extract_significant  started              None                 start=1311801632, finish=None
-
-done
+step_run(302) updated: 	header               finished             True                 0 secs              
+pipeline_run(69) updated
+next_step_run(303) updated: 	extract_significant  started              None                 start=1311805834, finish=None
+pipeline_run(69) updated: gene_exp	69	extract_significant started	None	27Jul11 15:30:34	27Jul11 15:30:34	dur=n/a
 mid_step: step is extract_significant
-step_run(233) updated: 	extract_significant  finished             True                 1 sec               
-pipeline_run(55) updated
-next_step_run(234) updated: 	sort_by_name         started              None                 start=1311801633, finish=None
-
-done
+step_run(303) updated: 	extract_significant  finished             True                 1 sec               
+pipeline_run(69) updated
+next_step_run(304) updated: 	sort_by_name         started              None                 start=1311805835, finish=None
+pipeline_run(69) updated: gene_exp	69	sort_by_name started	None	27Jul11 15:30:34	27Jul11 15:30:35	dur=n/a
 mid_step: step is sort_by_name
-step_run(234) updated: 	sort_by_name         finished             True                 1 sec               
-pipeline_run(55) updated
-next_step_run(235) updated: 	sort_by_sample       started              None                 start=1311801634, finish=None
-
-done
+step_run(304) updated: 	sort_by_name         finished             True                 1 sec               
+pipeline_run(69) updated
+next_step_run(305) updated: 	sort_by_sample       started              None                 start=1311805836, finish=None
+pipeline_run(69) updated: gene_exp	69	sort_by_sample started	None	27Jul11 15:30:34	27Jul11 15:30:36	dur=n/a
 mid_step: step is sort_by_sample
-step_run(235) updated: 	sort_by_sample       finished             True                 0 secs              
-pipeline_run(55) updated
-next_step_run(236) updated: 	footer               started              None                 start=1311801634, finish=None
-
-done
+step_run(305) updated: 	sort_by_sample       finished             True                 1 sec               
+pipeline_run(69) updated
+next_step_run(306) updated: 	footer               started              None                 start=1311805837, finish=None
+pipeline_run(69) updated: gene_exp	69	footer started	None	27Jul11 15:30:34	27Jul11 15:30:37	dur=n/a
 gene_exp done
 mid_step: step is footer
-step_run(236) updated: 	footer               finished             True                 1 sec               
-pipeline_run(55) updated
-
-done
+step_run(306) updated: 	footer               finished             True                 0 secs              
+pipeline_run(69) updated
+pipeline_run(69) updated: gene_exp	69	footer finished	None	27Jul11 15:30:34	27Jul11 15:30:37	dur=n/a

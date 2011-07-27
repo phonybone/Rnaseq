@@ -140,7 +140,8 @@ class Pipeline(templated):
     def sh_script(self, **kwargs):
 
         script="#!/bin/sh\n\n"
-
+        session=RnaseqGlobals.get_session()
+        
         # determine if provenance is desired:
         try:
             pipeline_run=kwargs['pipeline_run']
@@ -215,7 +216,8 @@ class Pipeline(templated):
         if len(errors)>0:
             raise ConfigError("\n".join(errors))
             
-            
+
+        session.commit()
 
         return script
 
@@ -406,7 +408,7 @@ class Pipeline(templated):
         session.add(pipeline_run)
         session.commit()                # we need the pipelinerun_id below
         self.context.pipeline_run_id=pipeline_run.id
-        print "set context[pipeline_run_id] to %s" % self.context.pipeline_run_id
+        RnaseqGlobals.set_conf_value('pipeline_run_id',pipeline_run.id)
         
         # create step_run objects:
         step_runs={}

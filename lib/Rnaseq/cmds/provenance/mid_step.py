@@ -69,6 +69,6 @@ class MidStep(Command):
             pipeline_run.status="%s failed" % step_name
             pipeline_run.successful=False
             pipeline_run.finish_time=now
-            print "pipeline_run(%d) updated" % pipeline_run.id
 
+        print "pipeline_run(%d) updated: %s" % (pipeline_run.id, pipeline_run)
         session.commit()

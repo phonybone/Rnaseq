@@ -35,7 +35,6 @@ def main():
     cmd=cf.new_cmd(cmd)
 
     cmd.run(argv, config=RnaseqGlobals.config)
-    print "\ndone"
 
 ########################################################################
 
