@@ -1,23 +1,27 @@
-import unittest, os, sys
-
-sys.path.append(os.path.normpath(os.path.abspath(__file__)+"/../../../lib"))
+import unittest, os
 from Rnaseq import *
 from RnaseqGlobals import *
 from warn import *
 
-class TestReport(unittest.TestCase):
+class TestPipelineRunReport(unittest.TestCase):
+    
     def setUp(self):
-        argv=RnaseqGlobals.initialize(__file__, testing=True)       # not to be confused with sys.argv
+        RnaseqGlobals.initialize(__file__, testing=True)
+        template_dir=RnaseqGlobals.abs_dir('testing', 'template_dir')
+        templated.template_dir=template_dir
 
-    def runTest(self):
-        # all this is really testing is that there is a pipeline_run object in the test database
         session=RnaseqGlobals.get_session()
-        pipeline_run=session.query(PipelineRun).first()
-        self.assertEqual(pipeline_run.__class__, PipelineRun)
-        #print pipeline_run.report()
-        
+        for sr in session.query(StepRun).all():
+            session.delete(sr)
+        for pr in session.query(PipelineRun).all():
+            session.delete(pr)
+        session.commit()
 
+    def test_setup(self):
+        session=RnaseqGlobals.get_session()
+        prs=session.query(PipelineRun).all()
+        self.assertTrue(len(prs)==0)
 
-if __name__=='__main__':
-    unittest.main()
+suite = unittest.TestLoader().loadTestsFromTestCase(TestPipelineRunReport)
+unittest.TextTestRunner(verbosity=2).run(suite)
 

@@ -1,0 +1,39 @@
+pipeline_start: first step: 	header               started              None                 start=1311801632, finish=None
+pipeline 'gene_exp' started
+
+done
+
+****************************************************************
+starting gene_exp
+Wed Jul 27 14:20:32 PDT 2011
+
+mid_step: step is header
+step_run(232) updated: 	header               finished             True                 0 secs              
+pipeline_run(55) updated
+next_step_run(233) updated: 	extract_significant  started              None                 start=1311801632, finish=None
+
+done
+mid_step: step is extract_significant
+step_run(233) updated: 	extract_significant  finished             True                 1 sec               
+pipeline_run(55) updated
+next_step_run(234) updated: 	sort_by_name         started              None                 start=1311801633, finish=None
+
+done
+mid_step: step is sort_by_name
+step_run(234) updated: 	sort_by_name         finished             True                 1 sec               
+pipeline_run(55) updated
+next_step_run(235) updated: 	sort_by_sample       started              None                 start=1311801634, finish=None
+
+done
+mid_step: step is sort_by_sample
+step_run(235) updated: 	sort_by_sample       finished             True                 0 secs              
+pipeline_run(55) updated
+next_step_run(236) updated: 	footer               started              None                 start=1311801634, finish=None
+
+done
+gene_exp done
+mid_step: step is footer
+step_run(236) updated: 	footer               finished             True                 1 sec               
+pipeline_run(55) updated
+
+done

@@ -2,7 +2,7 @@
 from warn import *
 from Rnaseq import *
 from Rnaseq.command import *
-import time
+import time, yaml
 
 class MidStep(Command):
     def usage(self):
@@ -40,7 +40,7 @@ class MidStep(Command):
             step_run.successful=True
             step_run.finish_time=now
             step_run.status='finished' # or something...
-            print "step_run(%d) updated" % step_run.id
+            print "step_run(%d) updated: %s" % (step_run.id, step_run)
 
             # set pipeline_run status:
             print "pipeline_run(%d) updated" % pipeline_run.id
@@ -50,7 +50,7 @@ class MidStep(Command):
                 next_steprun=session.query(StepRun).filter_by(id=next_steprun_id).first()
                 next_steprun.start_time=now
                 next_steprun.status='started'
-                print "next_step_run(%d) updated" % next_steprun.id
+                print "next_step_run(%d) updated: %s" % (next_steprun.id, next_steprun)
 
                 pipeline_run.status="%s started" % next_steprun.step_name
                 pipeline_run.current_step_run_id=next_steprun_id

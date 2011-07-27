@@ -5,7 +5,7 @@ class header(Step):
         Step.__init__(self,**kwargs)
         self.name='header'
         self.force=True
-        self.skip_success_check=True
+        self.skip_success_check=False
 
     def usage(self, context):
         path=RnaseqGlobals.conf_value('rnaseq','path')
@@ -15,6 +15,9 @@ class header(Step):
         for attr in readset.exports:
             try: export_block+="export %s=%s\n" % (attr, getattr(readset, attr))
             except AttributeError: pass
+
+        if RnaseqGlobals.conf_value('debug'): self.debug='-d'
+        else: self.debug=''
         
         template='''
 echo
@@ -52,29 +55,34 @@ exit_on_failure()
   step_id=$$3
   next_step_id=$$4
 
-  python $${root_dir}/bin/provenance mid_step $${pipelinerun_id} $${step_id} $${next_step_id} $${retcode}
+  python $${root_dir}/bin/provenance mid_step $${pipelinerun_id} $${step_id} $${next_step_id} $${retcode} ${debug}
 
 
   if [ $$retcode != 0 ]; then
-    echo $${last_step} failed 1>&2
+    echo step $${step_id} failed 1>&2
     exit $$retcode
   else
-    echo $${last_step} passed 1>&2
+    echo step $${step_id} passed 1>&2
   fi
 }
 
 ''' % {'path':path, 'readset_exports':export_block}
         restore_indent=True
 
-        if self.paired_end():
-            template+='''
+        # add link part if necessary:
+        if readset.reads_file==readset.ID:
+            link_part=''
+        else:
+            if self.paired_end():
+                link_part='''
 ln -s ${reads_file}_1.${format} ${ID}_1.${format}
 ln -s ${reads_file}_2.${format} ${ID}_2.${format}
 '''
-        else:
-            template+='''
+            else:
+                link_part='''
 ln -s ${reads_file}_1.${format} ${ID}
 '''
+        template+=link_part
             
         return template
         

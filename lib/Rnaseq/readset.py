@@ -5,6 +5,8 @@ from sqlalchemy import *
 from sqlalchemy.orm import mapper, relationship, backref
 from warn import *
 from dict_helpers import scalar_values
+from evoque_helpers import evoque_template
+from RnaseqGlobals import RnaseqGlobals
 
 class Readset(dict):
     required_attrs=['reads_file', 'label', 'ID']
@@ -27,19 +29,43 @@ class Readset(dict):
         self.exports=['org','readlen','working_dir','reads_file','label','format','ID']
 
 
+########################################################################
+
     def __str__(self):
         str=''
         for k,v in self.items():
             str+="%s: %s\n" % (k,v)
         return str
-        
+
     def __setitem__(self,k,v):
         super(Readset,self).__setitem__(k,v) # call dict.__setitem__()
-        setattr(self,k,v)
+        super(Readset,self).__setattr__(k,v)
 
     def __setattr__(self,attr,value):
         super(Readset,self).__setattr__(attr,value) # call dict.__setattr__()
-        self.__dict__[attr]=value
+        super(Readset,self).__setitem__(attr,value)
+
+    # update() and setdefault() taken from http://stackoverflow.com/questions/2060972/subclassing-python-dictionary-to-override-setitem
+    def update(self, *args, **kwargs):
+        if args:
+            if len(args) > 1:
+                raise TypeError("update expected at most 1 arguments, got %d" % len(args))
+            other = dict(args[0])
+            for key in other:
+                self[key] = other[key]
+        for key in kwargs:
+            self[key] = kwargs[key]
+
+# ########################################################################
+
+        
+#     def __setitem__(self,k,v):
+#         super(Readset,self).__setitem__(k,v) # call dict.__setitem__()
+#         setattr(self,k,v)
+
+#     def __setattr__(self,attr,value):
+#         super(Readset,self).__setattr__(attr,value) # call dict.__setattr__()
+#         self.__dict__[attr]=value
         
         
 
@@ -137,6 +163,7 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
         readset_objs=[]
         for reads_file in re.split('[\s,]+',yml['reads_file']):
             path=os.path.join(reads_dir,reads_file) # build the full path
+            path=evoque_template(path, self.__dict__, root_dir=RnaseqGlobals.root_dir())
             rlist=glob.glob(path)       # get all glob matches
             for rf in rlist:
                 rsd=scalars.copy()

@@ -5,6 +5,7 @@
 import sys, yaml, re, os, re
 
 from Rnaseq import *
+from step_run import *                  # why isn't this already included in above line???
 from RnaseqGlobals import RnaseqGlobals
 import path_helpers
 from sqlalchemy import *
@@ -107,7 +108,6 @@ class Pipeline(templated):
     def load_template(self):
         vars={}
         vars.update(self.dict)
-        #vars.update(self.readset)       # why not?
         vars.update(RnaseqGlobals.config)
         vars['ID']=self.ID()
 
@@ -151,19 +151,22 @@ class Pipeline(templated):
             
         # create auxillary steps:
         if include_provenance:
-            pipeline_start=self.new_step('pipeline_start',pipelinerun_id=pipeline_run.id)
-            pipeline_start.next_steprun_id=step_runs[self.steps[0].name].id
+            pipeline_start=self.new_step('pipeline_start', pipeline_run_id=pipeline_run.id,
+                                         step_run_id=None,
+                                         next_step_run_id=self.context.step_runs[self.steps[0].name].id)
+            #pipeline_start.next_step_run_id=step_runs[self.steps[0].name].id
             mid_step=self.new_step('mid_step', pipeline_run_id=pipeline_run.id)
-            pipeline_end=self.new_step('pipeline_end', pipelinerun_id=pipeline_run.id)
-            script+=pipeline_start.sh_script()
+            pipeline_end=self.new_step('pipeline_end', pipelinerun_id=pipeline_run.id,
+                                       step_run_id=None, next_step_run_id=None)
+            script+=pipeline_start.sh_script(self.context)
 
         # Do header step:
-        header_step=self.step_after(None)
-        script+=header_step.sh_script(self.context)
+        #header_step=self.step_after(None)
+        #script+=header_step.sh_script(self.context)
 
         # iterate through steps; 
         errors=[]
-        for step in self.steps[1:]:
+        for step in self.steps:
             try:
                 if step.skip:
                     print "skipping step %s" % step.name
@@ -172,7 +175,7 @@ class Pipeline(templated):
                 pass
                 
             
-            # append step.sh_script()
+            # append step.sh_script(self.context)
             try: step_script=step.sh_script(self.context, echo_name=True)
             except Exception as e:
                 errors.append("%s: %s" % (step.name,str(e)))
@@ -190,20 +193,22 @@ class Pipeline(templated):
                     step_run=step_runs[step.name]
                     step_run.cmd=step_script
                     mid_step.stepname=step.name
-                    mid_step.steprun_id=step_run.id
-                    next_step=self.stepAfter(step.name)
-                    try:
-                        mid_step.next_steprun_id=step_runs[self.stepAfter(step.name).name].id # sheesh
-                    except:
-                        mid_step.next_steprun_id=0
-                    script+=mid_step.sh_script()
+                    mid_step.step_run_id=step_run.id
+                    next_step=self.step_after(step.name)
+                    if next_step:
+                        mid_step.next_step_run_id=self.context.step_runs[next_step.name].id
+                    else:
+                        mid_step.next_step_run_id=0
+                        
+                    script+=mid_step.sh_script(self.context)
 
             if RnaseqGlobals.conf_value('verbose'):
                 print "step %s added" % step.name
 
         # record finish:
         if include_provenance:
-            script+=pipeline_end.sh_script()
+            pipeline_end.last_step_id=step_runs[self.steps[-1].name].id
+            script+=pipeline_end.sh_script(self.context)
 
         # check for continuity and raise exception on errors:
         errors.extend(self.verify_continuity(self.context))
@@ -216,8 +221,8 @@ class Pipeline(templated):
 
     ########################################################################
     
+    # combine working_dir, self.name, and readset.label to form the script filename:
     def scriptname(self):
-        #reads_file_root=os.path.splitext(os.path.basename(self.readset.read_file))[0]
         return path_helpers.sanitize(os.path.join(self.working_dir(), '.'.join([self.name, self.readset.label, 'sh'])))
 
     def working_dir(self):
@@ -400,12 +405,16 @@ class Pipeline(templated):
 
         session.add(pipeline_run)
         session.commit()                # we need the pipelinerun_id below
-
+        self.context.pipeline_run_id=pipeline_run.id
+        print "set context[pipeline_run_id] to %s" % self.context.pipeline_run_id
+        
         # create step_run objects:
         step_runs={}
         for step in self.steps:
+            if step.is_prov_step: continue
             step_run=StepRun(step_name=step.name, pipeline_run_id=pipeline_run.id, status='standby')
             for output in step.output_list():
+                output=evoque_template(output, step, self.readset)
                 step_run.file_outputs.append(FileOutput(path=output))
 
             if step.skip:               # as set by self.set_steps_current()
@@ -413,9 +422,10 @@ class Pipeline(templated):
                 step_run.status='skipped'
 
             session.add(step_run)
-            pipeline_run.step_runs.append(step_run)
+            session.commit()
+            pipeline_run.step_runs.append(step_run) # maintains list in db as well
             step_runs[step.name]=step_run
-        session.commit()                # we need the pipelinerun_id below
+            self.context.step_runs[step.name]=step_run
 
         return (pipeline_run, step_runs)
 

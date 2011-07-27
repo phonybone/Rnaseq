@@ -11,7 +11,7 @@ class StepRun(object):
 
     def __str__(self):
         try: d=duration(self.start_time, self.finish_time, 2)
-        except: d=''
+        except: d='start=%s, finish=%s' % (self.start_time, self.finish_time)
         return "\t"+" ".join("%-20s"%x for x in [self.step_name, self.status, self.successful, d])
 
     ########################################################################
@@ -22,7 +22,6 @@ class StepRun(object):
     def create_table(self, metadata, engine):
         step_run_table=Table(self.__tablename__, metadata,
                              Column('id',              Integer, primary_key=True),
-#                             Column('step_id',         Integer, ForeignKey('step.id'),         nullable=False),
                              Column('step_name',       String,  nullable=False),
                              Column('pipeline_run_id', Integer, ForeignKey('pipeline_run.id'), nullable=False),
                              Column('cmd',             String),

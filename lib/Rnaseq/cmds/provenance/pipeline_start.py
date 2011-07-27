@@ -27,6 +27,8 @@ class PipelineStart(Command):
         now=int(time.time())
         
         pipeline_run=session.query(PipelineRun).filter_by(id=pipelinerun_id).first()
+        if pipeline_run==None:
+            die("No pipeline run object w/id=%d" % pipelinerun_id)
         pipeline_run.status='started'
         pipeline_run.start_time=now
         pipeline_run.current_step_run_id=first_steprun_id
@@ -34,6 +36,7 @@ class PipelineStart(Command):
         step_run=session.query(StepRun).filter_by(id=first_steprun_id).first()
         step_run.start_time=now
         step_run.status='started'
+        print "pipeline_start: first step: %s" % step_run
 
         session.commit()
         pipeline=session.query(Pipeline).filter_by(id=pipeline_run.pipeline_id).first()

@@ -1,0 +1,4 @@
+reads_dir: ${root_dir}/t/fixtures/data
+reads_file: gene_exp.diff.1K
+label: gene_exp
+

@@ -3,5 +3,17 @@ class pipeline_start(Step):
 
     def __init__(self, **kwargs):
         Step.__init__(self,**kwargs)
-        self.sh_template='pipeline_start.tmpl'
-        self.usage=''
+        self.is_prov_step=True
+
+    def usage(self, context):
+        if RnaseqGlobals.conf_value('debug'): self.debug='-d'
+        else: self.debug=''
+
+        usage='''
+python ${root_dir}/bin/provenance pipeline_start ${pipeline_run_id} ${next_step_run_id} ${debug}
+'''
+        return usage
+
+    def outputs(self):
+        return []
+    

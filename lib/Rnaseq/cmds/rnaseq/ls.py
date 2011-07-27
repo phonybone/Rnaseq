@@ -40,7 +40,7 @@ class Ls(Command):
             pipeline=session.query(Pipeline).filter_by(name=pipeline_name).first()
             if pipeline==None:
                 raise UserError("%s: no such pipeline" % pipeline_name)
-            pipeline.__init__(readset=Readset(reads_file='dummy'))         # sqlalchemy doesn't call that for us???
+            pipeline.__init__(readset=Readset(reads_file='dummy', label='dummy'))         # sqlalchemy doesn't call that for us???
             # but we need a dummy readset anyway
             pipeline.load_steps()
             self.ls_pipeline(pipeline)

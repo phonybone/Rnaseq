@@ -1,71 +1,56 @@
 name: pipeline de Juan
-stepnames: header export2fq filterQuality filterVectors filterLowComplex ribosomal_mit remove_erccs repeats_consensus collect_filtered mapsplice mapsplice2 cufflinks cuffcompare footer
+stepnames: header export2fq filterQuality filterVectors filterLowComplex ribosomal_mit remove_erccs repeats_consensus equalize mapsplice mapsplice2 cufflinks cuffcompare footer
 blat_index: /proj/hoodlab/share/programs/RNAseq-Pi/data/blat-indexes
+
+
 
 header:
   name: header
 
 export2fq:
-  input: ${readset['reads_file']}
-  output: ${ID}.${rnaseq['align_suffix']}
-  args: ${rnaseq['fq_cmd']} 
+  input: header
 
 filterQuality:
-  input: ${ID}.${rnaseq['align_suffix']}
-  output: ${ID}.qual_OK.${rnaseq['align_suffix']}
-  filtered: ${ID}.bowtie_qual_BAD.${rnaseq['align_suffix']}
-  args: -v -f ${rnaseq['align_suffix']}
-
-filterVectors:
-  input: ${ID}.qual_OK.${rnaseq['align_suffix']}
-  output: ${ID}.vector_OK.${rnaseq['align_suffix']}
-  filtered: ${ID}.bowtie_vector_BAD.sam
-  psl: ${ID}.blat_vector_BAD.psl
+  name: filterQuality
+  inputs: export2fq
 
 filterLowComplex:
-  input: ${ID}.vector_OK.${rnaseq['align_suffix']}
-  output: ${ID}.complex_OK.${rnaseq['align_suffix']}
-  filtered: ${ID}.bowtie_complex_BAD.${rnaseq['align_suffix']}
-  args: -v -f ${rnaseq['align_suffix']}
+  name: filterLowComplex
+  inputs: export2fq
+
+filterVectors:
+  name: filterVectors
+  inputs: export2fq
 
 ribosomal_mit:
-  input: ${ID}.complex_OK.${rnaseq['align_suffix']}
-  output: ${ID}.riboMT_OK.${rnaseq['align_suffix']}
-  filtered: ${ID}.bowtie_riboMT_BAD.sam
-  psl: ${ID}.blat_riboMT_BAD.psl
+  name: ribosomal_mit
+  inputs: export2fq
 
 remove_erccs:
-  input: ${ID}.riboMT_OK.${rnaseq['align_suffix']}
-  output: ${ID}.ercc_OK.${rnaseq['align_suffix']}
-  filtered: ${ID}.bowtie_ercc_BAD.sam
-  psl: ${ID}.blat_ercc_BAD.psl
+  name: remove_erccs
+  inputs: export2fq
 
 repeats_consensus:
-  input: ${ID}.ercc_OK.${rnaseq['align_suffix']}
-  output: ${ID}.repeat_OK.${rnaseq['align_suffix']}
-  filtered: ${ID}.bowtie_repeat_BAD.sam
-  psl: ${ID}.blat_repeat_BAD.psl
+  name: repeats_consensus
+  inputs: export2fq
 
-collect_filtered:
-  input: ${ID}.ercc_OK.${rnaseq['align_suffix']}
-  output: ${ID}.bowtie_FILTERED.${rnaseq['align_suffix']}
+equalize:
+  name: equalize
+  inputs: filterQuality, filterLowComplex, filterVectors, ribosomal_mit, remove_erccs, repeats_consensus
 
 mapsplice:
-  input: ${ID}.bowtie_FILTERED.${rnaseq['align_suffix']}
-  output: ${ID}.mapsplice
-  create: ${ID}.mapsplice.sam
+  inputs: equalize
 
 mapsplice2:
-  name: mapsplice2
+  inputs: mapsplice
 
 cufflinks:
-  input: ${ID}.mapsplice.sam
-  output: ${ID}.cufflinks
-  create: ${ID}.cufflinks/transcripts.gtf
+  name: cufflinks
+  inputs: mapsplice2
 
 cuffcompare:
-  input: ${ID}.cufflinks/transcripts.gtf
-  output: ${ID}.cuff
+  inputs: cufflinks
 
 footer:
   name: footer
+

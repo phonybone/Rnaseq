@@ -20,7 +20,8 @@ class Step(dict):                     # was Step(templated)
         self.description=self.name
         self.force=False
         self.skip_success_check=False
-
+        self.is_prov_step=False
+        
         for k,v in self.defaults.items():
             setattr(self,k,v)
             # print "%s: setting default %s=%s" % (self.name, k,v)
@@ -97,15 +98,19 @@ class Step(dict):                     # was Step(templated)
         else:
             echo_part=''
             
-
+        usage=self.usage(context)
         vars={}
         vars.update(self.__dict__)
         vars.update(self.readset)
-        vars.update(self.pipeline[self.name])
-        
-        vars['inputs']=context.inputs[self.name]
-        vars['outputs']=context.outputs[self.name]
+        if not self.is_prov_step:
+            vars.update(self.pipeline[self.name])
+            vars['inputs']=context.inputs[self.name]
+            vars['outputs']=context.outputs[self.name]
+
         vars['pipeline']=self.pipeline
+        vars['pipeline_run_id']=context.pipeline_run_id
+        #vars['step_run_id']=context.step_runs[self.name].id
+        #vars['next_step_run_id']=context.step_runs[self.pipeline.step_after(step.name)].id
         vars['config']=RnaseqGlobals.config
         vars['readset']=self.pipeline.readset
 
@@ -119,7 +124,9 @@ class Step(dict):                     # was Step(templated)
         readset=self.pipeline.readset
         for attr in readset.exports:
             try: vars[attr]=getattr(readset, attr)
-            except AttributeError: print "%s.sh_script: no %s!" % (self.name, attr)
+            except AttributeError:
+                vars[attr]=''
+                #warn("%s.sh_script: no '%s' readset attribute!" % (self.name, attr))
 
         # add self.exports:
         try: export_list=self.exports
@@ -127,7 +134,7 @@ class Step(dict):                     # was Step(templated)
         for attr in export_list:
             vars[attr]=getattr(self,attr)
 
-        script_part=evoque_template(self.usage(context), vars)
+        script_part=evoque_template(usage, vars)
 
         script="\n".join([echo_part,script_part]) # tried using echo_part+sh_script, got weird '>' -> '&gt;' substitutions
 
@@ -139,7 +146,7 @@ class Step(dict):                     # was Step(templated)
         return self.pipeline.context.inputs[self.name]
 
     def output_list(self):
-        raise ProgrammerGoof("step '%s' does not define it's outputs" % self.name)
+        raise ProgrammerGoof("pipeline %s - step '%s' does not define it's outputs" % (self.pipeline.name, self.name))
 
 
     # current: return true if all of the step's outputs are older than all

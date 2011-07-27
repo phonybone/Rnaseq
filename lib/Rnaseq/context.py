@@ -6,6 +6,8 @@ class Context(object):
         self.readset=readset
         self.inputs={}
         self.outputs={}
+        self.pipeline_run_id=None
+        self.step_runs={}
 
     # this is only called for testing purposes; probably should get rid of it then...
     def load_io(self,pipeline):
