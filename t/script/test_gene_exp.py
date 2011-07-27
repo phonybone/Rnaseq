@@ -1,4 +1,4 @@
-import unittest, os
+import unittest, os, yaml
 from Rnaseq import *
 from RnaseqGlobals import *
 from warn import *
@@ -29,12 +29,45 @@ class TestGeneExp(unittest.TestCase):
         cf.add_cmds(RnaseqGlobals.conf_value('rnaseq','cmds'))
         cmd=cf.new_cmd('run')
         cmd.run(self.argv, config=RnaseqGlobals.config)
-        print "yay"
 
         # put in checks to see that the provenance db got updated correctly
         session=RnaseqGlobals.get_session()
-        for pr in session.query(PipelineRun).all():
-            pass
+        pipeline_run_id=RnaseqGlobals.conf_value('pipeline_run_id')
+        #print "pipeline_run_id=%d" % pipeline_run_id
+        self.assertTrue(pipeline_run_id>0)
+
+        # verify that pipeline ran successfully:
+        pipeline_run=session.query(PipelineRun).filter_by(id=pipeline_run_id).first()
+        #print "pipeline_run: %s" % pipeline_run
+        self.assertEqual(pipeline_run.__class__.__name__, 'PipelineRun')
+        self.assertEqual(pipeline_run.label, 'gene_exp')
+        self.assertEqual(pipeline_run.status, 'finished')
+        self.assertTrue(pipeline_run.successful)
+
+        # verify check run objects:
+        step_runs=session.query(StepRun).filter_by(pipeline_run_id=pipeline_run_id).all()
+        self.assertEqual(len(step_runs),5)
+
+        self.assertEqual(step_runs[0].step_name, 'header')
+        self.assertEqual(step_runs[0].status, 'finished')
+        self.assertTrue(step_runs[0].successful)
+
+        self.assertEqual(step_runs[1].step_name, 'extract_significant')
+        self.assertTrue(step_runs[1].successful)
+        self.assertEqual(step_runs[1].status, 'finished')
+
+        self.assertEqual(step_runs[2].step_name, 'sort_by_name')
+        self.assertTrue(step_runs[2].successful)
+        self.assertEqual(step_runs[2].status, 'finished')
+
+        self.assertEqual(step_runs[3].step_name, 'sort_by_sample')
+        self.assertTrue(step_runs[3].successful)
+        self.assertEqual(step_runs[3].status, 'finished')
+
+        self.assertEqual(step_runs[4].step_name, 'footer')
+        self.assertTrue(step_runs[4].successful)
+        self.assertEqual(step_runs[4].status, 'finished')
+        
         
         # put in checks to see that the correct files got created
         for f in self.created_files:
