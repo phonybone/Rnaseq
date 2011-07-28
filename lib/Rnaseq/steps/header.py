@@ -40,7 +40,7 @@ set -u
 root_dir=${root_dir}
 programs=$${root_dir}/programs
 export PATH=%(path)s:$${root_dir}/programs
-export PYTHONPATH=$${PYTHONPATH}:$${root_dir}/lib
+export PYTHONPATH=$${PYTHONPATH:-}:$${root_dir}/lib
 
 
 # readset exports:

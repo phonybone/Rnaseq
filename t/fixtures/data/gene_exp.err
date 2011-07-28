@@ -2,14 +2,14 @@ step header
 
 ****************************************************************
 starting gene_exp
-Wed Jul 27 15:30:34 PDT 2011
+Thu Jul 28 13:19:45 PDT 2011
 
-step 302 passed
+step 1 passed
 step extract_significant
-step 303 passed
+step 2 passed
 step sort_by_name
-step 304 passed
+step 3 passed
 step sort_by_sample
-step 305 passed
+step 4 passed
 step footer
-step 306 passed
+step 5 passed

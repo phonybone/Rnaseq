@@ -22,8 +22,26 @@ class TestGeneExp(unittest.TestCase):
                 if re.search('No such file',str(ioe)): pass
                 else: raise ioe
         print >> sys.stderr, "output files removed in setup"
+
+        # clear out the database:
+        session=RnaseqGlobals.get_session()
+        prs=session.query(PipelineRun).all()
+        for pr in prs:
+            session.delete(pr)
+        session.commit()
+
+    def o_test_setup(self):
+        session=RnaseqGlobals.get_session()
+        prs=session.query(PipelineRun).all()
+        self.assertEqual(len(prs), 0)
+
+        srs=session.query(StepRun).all()
+        self.assertEqual(len(srs), 0)
+
         
     def test_input_conversion(self):
+        session=RnaseqGlobals.get_session()
+
         # create the Command object and run it:
         cf=CmdFactory(program='rnaseq')
         cf.add_cmds(RnaseqGlobals.conf_value('rnaseq','cmds'))
@@ -31,14 +49,11 @@ class TestGeneExp(unittest.TestCase):
         cmd.run(self.argv, config=RnaseqGlobals.config)
 
         # put in checks to see that the provenance db got updated correctly
-        session=RnaseqGlobals.get_session()
         pipeline_run_id=RnaseqGlobals.conf_value('pipeline_run_id')
-        #print "pipeline_run_id=%d" % pipeline_run_id
         self.assertTrue(pipeline_run_id>0)
 
         # verify that pipeline ran successfully:
         pipeline_run=session.query(PipelineRun).filter_by(id=pipeline_run_id).first()
-        #print "pipeline_run: %s" % pipeline_run
         self.assertEqual(pipeline_run.__class__.__name__, 'PipelineRun')
         self.assertEqual(pipeline_run.label, 'gene_exp')
         self.assertEqual(pipeline_run.status, 'finished')

@@ -423,7 +423,8 @@ class Pipeline(templated):
                 print "step %s is current, skipping" % step.name
                 step_run.status='skipped'
 
-            session.add(step_run)
+            pipeline_run.step_runs.append(step_run)
+            #session.add(step_run)
             session.commit()
             pipeline_run.step_runs.append(step_run) # maintains list in db as well
             step_runs[step.name]=step_run
