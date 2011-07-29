@@ -1,32 +1,10 @@
-pipeline_start: first step: 	header               started              None                 start=1311884385, finish=None
-pipeline 'gene_exp' started
 
 ****************************************************************
 starting gene_exp
-Thu Jul 28 13:19:45 PDT 2011
+Thu Jul 28 17:27:15 PDT 2011
 
-mid_step: step is header
-step_run(1) updated: 	header               finished             True                 1 sec               
-pipeline_run(1) updated
-next_step_run(2) updated: 	extract_significant  started              None                 start=1311884386, finish=None
-pipeline_run(1) updated: gene_exp	1	extract_significant started	None	28Jul11 13:19:45	28Jul11 13:19:46	dur=n/a
-mid_step: step is extract_significant
-step_run(2) updated: 	extract_significant  finished             True                 1 sec               
-pipeline_run(1) updated
-next_step_run(3) updated: 	sort_by_name         started              None                 start=1311884387, finish=None
-pipeline_run(1) updated: gene_exp	1	sort_by_name started	None	28Jul11 13:19:45	28Jul11 13:19:47	dur=n/a
-mid_step: step is sort_by_name
-step_run(3) updated: 	sort_by_name         finished             True                 1 sec               
-pipeline_run(1) updated
-next_step_run(4) updated: 	sort_by_sample       started              None                 start=1311884388, finish=None
-pipeline_run(1) updated: gene_exp	1	sort_by_sample started	None	28Jul11 13:19:45	28Jul11 13:19:48	dur=n/a
-mid_step: step is sort_by_sample
-step_run(4) updated: 	sort_by_sample       finished             True                 1 sec               
-pipeline_run(1) updated
-next_step_run(5) updated: 	footer               started              None                 start=1311884389, finish=None
-pipeline_run(1) updated: gene_exp	1	footer started	None	28Jul11 13:19:45	28Jul11 13:19:49	dur=n/a
+header: /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/fixtures/data/gene_exp.diff.1K created
+extract_significant: /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/fixtures/data/gene_exp.diff.1K.significant created
+sort_by_name: /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/fixtures/data/gene_exp.diff.1K.sorted.name created
+sort_by_sample: /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/fixtures/data/gene_exp.diff.1K.sorted.sample created
 gene_exp done
-mid_step: step is footer
-step_run(5) updated: 	footer               finished             True                 0 secs              
-pipeline_run(1) updated
-pipeline_run(1) updated: gene_exp	1	footer finished	None	28Jul11 13:19:45	28Jul11 13:19:49	dur=n/a

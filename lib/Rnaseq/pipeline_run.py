@@ -54,7 +54,7 @@ class PipelineRun(object):
     def summary(self):
         try:
             session=RnaseqGlobals.get_session()
-            last_step=session.query(StepRun).filter_by(id=self.current_step_run_id).first()
+            last_step=session.query(StepRun).get(self.current_step_run_id)
             last_step_name=last_step.step_name
         except Exception as e:
             last_step_name='n/a'
@@ -65,12 +65,14 @@ class PipelineRun(object):
         try: dur=duration(self.start_time, self.finish_time, 2)
         except: dur='n/a'
             
-        return "(%d) start time: %s\tduration: %s\tstatus: %s\tsuccessful: %s\tlast step: %s" % (self.id, start_time, dur, self.status, self.successful, last_step_name)
+        return "(%d) start time: %s\tduration: %s\tstatus: %s\tsuccessful: %s\tlast step: %s" % \
+               (self.id, start_time, dur, self.status, ('yes' if self.successful else 'no'), last_step_name)
 
     def report(self):
         try: dur=duration(self.start_time, self.finish_time, 2)
         except: dur='n/a'
-        report="pipeline: '%s' (%d)\tstatus: %s\tsuccess: %s\ttotal duration: %s\n" % (self.pipeline.name, self.id, self.status, self.successful, dur)
+        report="pipeline: '%s' (pr_id=%d)\tstatus: %s\tsuccess: %s\ttotal duration: %s\n" % \
+                (self.pipeline.name, self.id, self.status, ('yes' if self.successful else 'no'), dur)
         report+="        input file: %s\n" % self.input_file
         report+="        Steps:\n"
         for step_run in self.step_runs:

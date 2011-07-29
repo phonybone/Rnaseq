@@ -36,8 +36,7 @@ class PipelineStart(Command):
         step_run=session.query(StepRun).filter_by(id=first_steprun_id).first()
         step_run.start_time=now
         step_run.status='started'
-        print "pipeline_start: first step: %s" % step_run
 
         session.commit()
         pipeline=session.query(Pipeline).filter_by(id=pipeline_run.pipeline_id).first()
-        print "pipeline '%s' started" % pipeline.name
+

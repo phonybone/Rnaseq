@@ -63,10 +63,11 @@ class Ls(Command):
         print "pipeline: %s" % pipeline.name
         print "steps: %s" % ", ".join(pipeline.stepnames)
         
+        s='' if len(pipeline.pipeline_runs)==1 else 's'
+        print "%d run%s of %s" % (len(pipeline.pipeline_runs), s, pipeline.name)
         for pr in pipeline.pipeline_runs:
             print "\trun: %s" % pr.summary()
-        else:
-            print "no pipeline runs yet"
+
 
     def ls_pipeline_run(self,pipeline_run):
         print pipeline_run.report()

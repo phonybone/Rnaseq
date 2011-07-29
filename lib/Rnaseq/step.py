@@ -148,6 +148,9 @@ class Step(dict):                     # was Step(templated)
     def output_list(self):
         raise ProgrammerGoof("pipeline %s - step '%s' does not define it's outputs" % (self.pipeline.name, self.name))
 
+    def output_list_expanded(self):
+        l=[evoque_template(x, self) for x in self.output_list()]
+        return l
 
     # current: return true if all of the step's outputs are older than all
     # of the steps inputs AND the step's exe:

@@ -80,7 +80,7 @@ ln -s ${reads_file}_2.${format} ${ID}_2.${format}
 '''
             else:
                 link_part='''
-ln -s ${reads_file}_1.${format} ${ID}
+ln -s ${reads_file} ${ID}
 '''
         template+=link_part
             

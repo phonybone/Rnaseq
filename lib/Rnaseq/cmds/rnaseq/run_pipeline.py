@@ -63,6 +63,11 @@ class RunPipeline(Command):
                 if not RnaseqGlobals.conf_value('no_run'):
                     self.launch(cmd, output, err)
 
+                # report on success if asked:
+                if not RnaseqGlobals.conf_value('no_run') and \
+                       not RnaseqGlobals.conf_value('silent'):
+                    pipeline_run=session.query(PipelineRun).get(RnaseqGlobals.conf_value('pipeline_run_id'))
+                    print pipeline_run.report()
 
     ########################################################################
 
@@ -108,10 +113,9 @@ class RunPipeline(Command):
         if cmd[0]=="sh":
             output.close()
             err.close()
-            retcode=0   # why???
             if retcode != 0:
-                raise UserError("pipeline failed with return code %d\nsee %s.out and %s.err for diagnostics (in %s)" % \
-                                (retcode, pipeline.name, pipeline.name, pipeline.working_dir()))
+                print "pipeline failed with return code %d\nsee %s.out and %s.err for diagnostics (in %s)" % \
+                                (retcode, pipeline.name, pipeline.name, pipeline.working_dir())
             
 
 

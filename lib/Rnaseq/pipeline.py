@@ -409,6 +409,7 @@ class Pipeline(templated):
         session.commit()                # we need the pipelinerun_id below
         self.context.pipeline_run_id=pipeline_run.id
         RnaseqGlobals.set_conf_value('pipeline_run_id',pipeline_run.id)
+        print "new pipeline_run.id: %d" % pipeline_run.id
         
         # create step_run objects:
         step_runs={}
