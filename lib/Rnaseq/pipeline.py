@@ -6,6 +6,7 @@ import sys, yaml, re, os, re
 
 from Rnaseq import *
 from step_run import *                  # why isn't this already included in above line???
+from step_factory import *
 from RnaseqGlobals import RnaseqGlobals
 import path_helpers
 from sqlalchemy import *
@@ -83,9 +84,10 @@ class Pipeline(templated):
             raise ConfigError("pipeline %s does not define stepnames" % self.name)
 
         # 
+        step_factory=StepFactory(self)
         errors=[]
         for stepname in self.stepnames:
-            step=self.new_step(stepname)
+            step=step_factory.new_step(stepname)
             if not stepname in self:
                 errors.append("missing step section for '%s'" % stepname)
                 continue
@@ -152,36 +154,33 @@ class Pipeline(templated):
             
         # create auxillary steps:
         if include_provenance:
-            pipeline_start=self.new_step('pipeline_start', pipeline_run_id=pipeline_run.id,
-                                         step_run_id=None,
-                                         next_step_run_id=self.context.step_runs[self.steps[0].name].id)
-            #pipeline_start.next_step_run_id=step_runs[self.steps[0].name].id
-            mid_step=self.new_step('mid_step', pipeline_run_id=pipeline_run.id)
-            pipeline_end=self.new_step('pipeline_end', pipelinerun_id=pipeline_run.id,
-                                       step_run_id=None, next_step_run_id=None)
+            step_factory=StepFactory(self)
+            pipeline_start=step_factory.new_step('pipeline_start',
+                                                 pipeline_run_id=pipeline_run.id,
+                                                 step_run_id=None,
+                                                 next_step_run_id=self.context.step_runs[self.steps[0].name].id)
+            mid_step=step_factory.new_step('mid_step', pipeline_run_id=pipeline_run.id)
+            pipeline_end=step_factory.new_step('pipeline_end', pipelinerun_id=pipeline_run.id,
+                                               step_run_id=None, next_step_run_id=None)
             script+=pipeline_start.sh_script(self.context)
-
-        # Do header step:
-        #header_step=self.step_after(None)
-        #script+=header_step.sh_script(self.context)
 
         # iterate through steps; 
         errors=[]
         for step in self.steps:
             try:
                 if step.skip:
-                    print "skipping step %s" % step.name
+                    print "skipping step %s (already current)" % step.name
                     continue  # in a try block in case step.skip doesn't even exist
             except:                     # really? step.skip doesn't exist, so assume it's True???
                 pass
                 
             
             # append step.sh_script(self.context)
-            try: step_script=step.sh_script(self.context, echo_name=True)
-            except Exception as e:
-                errors.append("%s: %s" % (step.name,str(e)))
-                errors.append("Exception in pipeline.sh_script(step %s): %s (%s)" % (step.name, e, type(e)))
-                continue
+            step_script=step.sh_script(self.context, echo_name=True)
+#             except Exception as e:
+#                 errors.append("%s: %s" % (step.name,str(e)))
+#                 errors.append("Exception in pipeline.sh_script(step %s): %s (%s)" % (step.name, e, type(e)))
+#                 continue
 
             script+=step_script
             script+="\n"
@@ -352,40 +351,6 @@ class Pipeline(templated):
         return self
         
 
-    ########################################################################
-
-    def new_step(self, stepname, **kwargs):
-        try:
-            mod=__import__('Rnaseq.steps.%s' % stepname)
-        except ImportError as ie:
-            raise ConfigError("error loading step '%s': %s" % (stepname, str(ie)))
-        
-        mod=getattr(mod,"steps")
-
-        try:
-            mod=getattr(mod,stepname)
-            kls=getattr(mod,stepname)            
-        except AttributeError as ae:
-            raise ConfigError("step %s not defined: "+str(ae))
-
-        # add items to kwargs:
-        kwargs['pipeline']=self
-        kwargs['readset']=self.readset
-        step=kls(**kwargs)
-        
-        # If the step defines an attribute named export (fixme: and it's a list),
-        # copy the step's exorted attributes to the pipeline:
-        if hasattr(step,'export'):
-            try:
-                for attr in step.export:
-                    attr_val=getattr(step,attr)
-                    setattr(self,attr,attr_val)
-                    self.step_exports[attr]=attr_val
-            except AttributeError as ae:
-                raise ConfigError("step %s tries to export missing attr '%s'" % (step.name, attr))
-        
-        return step
-
 
     ########################################################################
     # return a tuple containing a pipeline_run object and a dict of step_run objects (keyed by step name):
@@ -409,7 +374,7 @@ class Pipeline(templated):
         session.commit()                # we need the pipelinerun_id below
         self.context.pipeline_run_id=pipeline_run.id
         RnaseqGlobals.set_conf_value('pipeline_run_id',pipeline_run.id)
-        print "new pipeline_run.id: %d" % pipeline_run.id
+        #print "new pipeline_run.id: %d" % pipeline_run.id
         
         # create step_run objects:
         step_runs={}
@@ -423,6 +388,7 @@ class Pipeline(templated):
             if step.skip:               # as set by self.set_steps_current()
                 print "step %s is current, skipping" % step.name
                 step_run.status='skipped'
+                step_run.success=True
 
             pipeline_run.step_runs.append(step_run)
             #session.add(step_run)
@@ -452,6 +418,8 @@ class Pipeline(templated):
     # fixme: convoluted logic, needs testing!
     def set_steps_current(self, global_force=False):
         force_rest=False
+        try: debug=os.environ['DEBUG']
+        except: debug=False
         
         for step in self.steps:
             skip=not (global_force or step.force or force_rest) and step.is_current()
@@ -460,6 +428,8 @@ class Pipeline(templated):
             # once one step is out of date, all following steps will be, too:
             if not step.skip and not step.force:
                 force_rest=True
+                if debug:
+                    print "pipeline: step %s not current, adding all following steps" % step.name
 
 
     ########################################################################
@@ -523,7 +493,6 @@ class Pipeline(templated):
 
         self.context=context
         return errors
-
 
 
 

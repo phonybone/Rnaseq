@@ -232,3 +232,37 @@
         
 
     
+    ########################################################################
+
+    def new_step(self, stepname, **kwargs):
+        try:
+            mod=__import__('Rnaseq.steps.%s' % stepname)
+        except ImportError as ie:
+            raise ConfigError("error loading step '%s': %s" % (stepname, str(ie)))
+        
+        mod=getattr(mod,"steps")
+
+        try:
+            mod=getattr(mod,stepname)
+            kls=getattr(mod,stepname)            
+        except AttributeError as ae:
+            raise ConfigError("step %s not defined: "+str(ae))
+
+        # add items to kwargs:
+        kwargs['pipeline']=self
+        kwargs['readset']=self.readset
+        step=kls(**kwargs)
+        
+        # If the step defines an attribute named export (fixme: and it's a list),
+        # copy the step's exorted attributes to the pipeline:
+        if hasattr(step,'export'):
+            try:
+                for attr in step.export:
+                    attr_val=getattr(step,attr)
+                    setattr(self,attr,attr_val)
+                    self.step_exports[attr]=attr_val
+            except AttributeError as ae:
+                raise ConfigError("step %s tries to export missing attr '%s'" % (step.name, attr))
+        
+        return step
+

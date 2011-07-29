@@ -62,7 +62,7 @@ class Step(dict):                     # was Step(templated)
         raise ProgrammerGoof("step class '%s' does not define outputs(self)" % self.__class__.__name__)
 
     def paired_end(self):
-        try: return self.readset.paired_end
+        try: return self.pipeline.readset.paired_end
         except AttributeError: return False
 
     ########################################################################
@@ -101,7 +101,7 @@ class Step(dict):                     # was Step(templated)
         usage=self.usage(context)
         vars={}
         vars.update(self.__dict__)
-        vars.update(self.readset)
+        vars.update(self.pipeline.readset)
         if not self.is_prov_step:
             vars.update(self.pipeline[self.name])
             vars['inputs']=context.inputs[self.name]
@@ -140,53 +140,62 @@ class Step(dict):                     # was Step(templated)
 
         return script
 
-########################################################################
+    ########################################################################
 
     def input_list(self):
         return self.pipeline.context.inputs[self.name]
+
+    def input_list_expanded(self):
+        l=[evoque_template(x, self, self.pipeline.readset) for x in self.input_list()]
+        return l
 
     def output_list(self):
         raise ProgrammerGoof("pipeline %s - step '%s' does not define it's outputs" % (self.pipeline.name, self.name))
 
     def output_list_expanded(self):
-        l=[evoque_template(x, self) for x in self.output_list()]
+        l=[evoque_template(x, self, self.pipeline.readset) for x in self.output_list()]
         return l
 
+
+    ########################################################################
     # current: return true if all of the step's outputs are older than all
     # of the steps inputs AND the step's exe:
     def is_current(self):
         if self.force: return False
         latest_input=0
         earliest_output=time.time()
-
-        for input in self.input_list():
-            input=evoque_template(input, self, self.pipeline.readset) # expand ${} constructs in input
-
+        try: debug=os.environ['DEBUG']
+        except: debug=False
+        
+        for input in self.input_list_expanded():
+            if debug:
+                print "%s: input checking %s" % (self.name, input)
+            
             try:
                 mtime=os.stat(input).st_mtime
             except OSError as ose:
+                if debug:
+                    print "%s: returning false due to failed stat: %s" % (self.name, ose)
                 return False            # missing/unaccessible inputs constitute not being current
             
             if mtime > latest_input:
                 latest_input=mtime
 
-#             try:
-#                 exe_file=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'), 'programs', self.exe)
-#                 exe_mtime=os.stat(exe_file).st_mtime
-#                 if exe_mtime > latest_input:
-#                     latest_input=exe_mtime
-#             except OSError as oe:
-#                 raise ConfigError("%s: %s" %(exe_file, oe))
 
-        for output in self.output_list():
+        for output in self.output_list_expanded():
+            if debug:
+                print "%s: checking output %s" % (self.name, output)
             try:
                 stat_info=os.stat(output)
                 if (stat_info.st_mtime < earliest_output):
                     earliest_output=stat_info.st_mtime
             except OSError as ose:
+                if debug:
+                    print "%s: returning false on %s" % (self.name, ose)
                 return False            # missing/unaccessible outputs definitely constitute not being current
 
-        #print "final: latest_input is %s, earliest_output is %s" % (latest_input, earliest_output)
+        if debug:
+            print "final: latest_input is %s, earliest_output is %s" % (latest_input, earliest_output)
         return latest_input<earliest_output
     
 ########################################################################
