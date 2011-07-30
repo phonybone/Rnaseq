@@ -13,12 +13,12 @@ class TestShScript(unittest.TestCase):
         templated.template_dir=template_dir
         readset_file=RnaseqGlobals.root_dir()+'/t/fixtures/readsets/paired1.syml'
         self.readset=Readset.load(filename=readset_file)[0]
-        self.pipeline=Pipeline(name='cufflinks', readset=self.readset)
+        self.pipeline=Pipeline(name='cufflinks', readset=self.readset).load_steps()
 
 
 
     def test_setup(self):
-        self.assertEqual(self.pipeline.__class__.__name__,'Pipeline')
+        self.assertIsInstance(self.pipeline, Pipeline)
 
 
     # test to see if there is exactly one instance of 'exit_on_failure' in the script
@@ -30,7 +30,6 @@ class TestShScript(unittest.TestCase):
         pipeline=Pipeline(name='filter', readset=self.readset)            
         pipeline.load_steps()
         script=pipeline.sh_script(force=True)
-        #print script
 
         mg=re.search('exit_on_failure',script)
         self.assertEqual(mg.group(0),'exit_on_failure') # this is from the header, should be only one

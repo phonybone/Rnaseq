@@ -4,9 +4,13 @@ class equalize(Step):
 
     def usage(self, context):
         inputs=' '.join(context.inputs[self.name])
-        inputs=re.sub('\$\{','$${',inputs)
+        inputs=re.sub('\$\{', '$${', inputs)
 
         outputs=' '.join(self.output_list())
+        outputs=re.sub('\$\{', '$${', outputs)
+        
+
+
         usage='''
 perl $${programs}/removeBadReads.pl -v -paired %(inputs)s - %(outputs)s
 ''' % {'inputs':inputs, 'outputs':outputs}

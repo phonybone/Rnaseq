@@ -21,17 +21,17 @@ class TestPaired(unittest.TestCase):
         rs=rlist[0]
         self.assertEqual(rs.org, 'human')
         self.assertEqual(rs.readlen,101)
-        self.assertEqual(rs.reads_dir ,'/proj/hoodlab/share/vcassen/rna-seq/qiang_data')
-        self.assertEqual(rs.working_dir ,'/proj/hoodlab/share/vcassen/rna-seq/qiang_data/rnaseq')
+        self.assertEqual(rs.reads_dir ,'${root_dir}/t/fixtures/readsets')
+        self.assertEqual(rs.working_dir ,'/proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/fixtures/readsets/rnaseq')
         self.assertEqual(rs.format ,'fq')
         self.assertEqual(rs.paired_end ,True)
-        self.assertEqual(rs.reads_file ,'/proj/hoodlab/share/vcassen/rna-seq/qiang_data/s_1_1_sequence.txt')
-        self.assertEqual(rs.ID ,'/proj/hoodlab/share/vcassen/rna-seq/qiang_data/rnaseq/s_1')
+        self.assertEqual(rs.reads_file ,'/proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/fixtures/readsets/s_1_1_sequence.txt')
+        self.assertEqual(rs.ID ,'/proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/fixtures/readsets/rnaseq/s_1')
         self.assertEqual(rs.label ,'s_1_1')
         self.assertEqual(rs.description ,'s_1_1')
 
         rs=rlist[1]
-        self.assertEqual(rs.reads_file ,'/proj/hoodlab/share/vcassen/rna-seq/qiang_data/s_1_2_sequence.txt')
+        self.assertEqual(rs.reads_file ,'/proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/fixtures/readsets/s_1_2_sequence.txt')
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TestPaired)

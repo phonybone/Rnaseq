@@ -35,7 +35,6 @@ equalize:
 bowtie:
   name: bowtie
   inputs: equalize
-  bowtie_index: /proj/hoodlab/share/programs/bowtie-indexes
   ewbt: hg19
 
 bowtie2bam:
@@ -49,7 +48,6 @@ samtool_copy:
 cufflinks:
   name: cufflinks
   inputs: bowtie2bam
-  ensembl: /proj/hoodlab/share/programs/Ensembl
 
 footer:
   name: footer

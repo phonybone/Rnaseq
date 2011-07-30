@@ -15,7 +15,7 @@ class TestNewStep(unittest.TestCase):
         self.readset=rlist[0]
         self.context=Context(readset)
         
-        self.pipeline=Pipeline(name='filter', readset=self.readset)
+        self.pipeline=Pipeline(name='filter', readset=self.readset).load_steps()
         self.factory=StepFactory(self.pipeline)
 
     def test_header(self):
@@ -25,14 +25,16 @@ class TestNewStep(unittest.TestCase):
 
         self.assertEqual(header_step.name, 'header')
         self.assertEqual(header_step.force, True)
-        self.assertEqual(header_step.skip_success_check, True)
+        self.assertEqual(header_step.skip_success_check, False)
 
         readset=self.readset
         
-        context={}
+        context=Context(self.readset)
+        context.inputs['header']=[]
+        context.outputs['header']=[]
         script=header_step.sh_script(context)
         self.assertTrue(re.search('root_dir=%s' % RnaseqGlobals.root_dir(), script))
-        self.assertTrue(re.search('programs=%s' % RnaseqGlobals.root_dir()+'/programs', script))
+        self.assertTrue(re.search('programs=%s' % '\${root_dir}/programs', script))
         self.assertTrue(re.search('reads_file=%s' % readset.reads_file, script))
         self.assertTrue(re.search('ID=%s' % readset.ID, script))
         self.assertTrue(re.search('working_dir=%s' % readset.working_dir, script))
@@ -43,11 +45,12 @@ class TestNewStep(unittest.TestCase):
     def test_export2fq(self):
         e2f_step=self.factory.new_step('export2fq')
         self.assertEqual(e2f_step.name, 'export2fq')
-        print "class is",e2f_step.__class__
         self.assertEqual(e2f_step.__class__.__name__, 'export2fq')
 
-        script=e2f_step.sh_script({'inputs':['/some/input/data.txt']})
-        print "e2f script:\n%s" % script
+        c=Context(self.readset)
+        c.inputs['export2fq']=['/some/input/data.txt']
+        c.outputs['export2fq']=e2f_step.output_list()
+        script=e2f_step.sh_script(c)
 
     def test_align_filter(self):
         af_step=self.factory.new_step('align_filter', aligner='bowtie')

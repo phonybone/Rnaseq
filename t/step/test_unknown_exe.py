@@ -16,7 +16,8 @@ class TestBase(unittest.TestCase):
             self.fail()
 
         try:
-            unknown_step=pipeline.new_step('unknown')
+            step_factory=StepFactory(pipeline)
+            unknown_step=step_factory.new_step('unknown')
             self.fail()
         except ConfigError as ce:
             # print "ce is %s" % ce

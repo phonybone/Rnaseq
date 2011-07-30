@@ -9,29 +9,28 @@ class TestCreate(unittest.TestCase):
         templated.template_dir=os.path.normpath(os.path.abspath(__file__)+"/../../fixtures/templates")
         RnaseqGlobals.initialize(__file__, testing=True)
 
-        readset=Readset(name='readset').load(vars=RnaseqGlobals.config)
-        self.readset=readset
-        self.pipeline=Pipeline(name='juan', readset=readset).load()
-        
-        self.session=RnaseqGlobals.get_session()
-        RnaseqGlobals.engine.execute("DROP TABLE IF EXISTS %s" % Pipeline.__tablename__)
-        
-        Pipeline.create_table(RnaseqGlobals.metadata, RnaseqGlobals.engine)
-        print "Pipeline table created"
-        self.session.flush()
+        readset_file=os.path.join(RnaseqGlobals.root_dir(),'t','fixtures','readsets','readset1.syml')
+        self.readset=Readset.load(readset_file)[0]
+        self.pipeline=Pipeline(name='juan', readset=self.readset).load_steps()
 
-class TestInsert(TestCreate):
-    def runTest(self):
-        self.session.add(self.pipeline)
-        self.session.commit()
+        session=RnaseqGlobals.get_session()
+        ps=session.query(Pipeline).all()
+        for p in ps:
+            session.delete(p)
+        session.commit()
 
-class TestQuery(TestCreate):
-    def runTest(self):
-        session=self.session
+    def test_insert(self):
+        session=RnaseqGlobals.get_session()
+        session.add(self.pipeline)
+        session.commit()
+
+    def test_query(self):
+        session=RnaseqGlobals.get_session()
         readset=self.readset
         session.add(self.pipeline)
         session.commit()
 
+        pipeline=self.pipeline
         l=session.query(Pipeline).filter_by(name=pipeline.name).all()
         self.assertEqual(len(l), 1)
 
@@ -42,6 +41,5 @@ class TestQuery(TestCreate):
         
 
 
-if __name__=='__main__':
-    unittest.main()
-
+suite = unittest.TestLoader().loadTestsFromTestCase(TestCreate)
+unittest.TextTestRunner(verbosity=2).run(suite)

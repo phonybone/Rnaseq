@@ -4,7 +4,7 @@ from RnaseqGlobals import *
 from warn import *
 
 class TestGeneExp(unittest.TestCase):
-    readset_file=os.path.abspath(os.path.dirname(__file__)+'../fixtures/readsets/gene_exp.syml')
+    readset_file=os.path.normpath(os.path.dirname(os.path.abspath(__file__))+'/../fixtures/readsets/gene_exp.syml')
     pipeline_name='gene_exp'
     
     

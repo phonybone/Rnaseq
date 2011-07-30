@@ -20,7 +20,7 @@ class TestBowtieStep(unittest.TestCase):
         bowtie_step=self.pipeline.step_with_name('bowtie')
         script=bowtie_step.sh_script(self.pipeline.context)
         #print "script:\n>>>%s<<<" % script
-        output=bowtie_step.outputs()[0]
+        output=bowtie_step.output_list()[0]
 
         expected='''
 export BOWTIE_INDEXES=/proj/hoodlab/share/programs/bowtie-indexes
@@ -35,7 +35,7 @@ bowtie --sam --threads 4 --quiet -k 1 -v 2 -q hg19 -1 ${ID}.${format} %s
 
         bowtie_step=self.pipeline.step_with_name('bowtie')
         script=bowtie_step.sh_script(self.pipeline.context)
-        output=bowtie_step.outputs()[0]
+        output=bowtie_step.output_list()[0]
         
         expected='''
 export BOWTIE_INDEXES=/proj/hoodlab/share/programs/bowtie-indexes

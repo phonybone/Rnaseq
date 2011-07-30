@@ -176,11 +176,11 @@ class Pipeline(templated):
                 
             
             # append step.sh_script(self.context)
-            step_script=step.sh_script(self.context, echo_name=True)
-#             except Exception as e:
-#                 errors.append("%s: %s" % (step.name,str(e)))
-#                 errors.append("Exception in pipeline.sh_script(step %s): %s (%s)" % (step.name, e, type(e)))
-#                 continue
+            try: step_script=step.sh_script(self.context, echo_name=True)
+            except Exception as e:
+                errors.append("%s: %s" % (step.name,str(e)))
+                errors.append("Exception in pipeline.sh_script(step %s): %s (%s)" % (step.name, e, type(e)))
+                continue
 
             script+=step_script
             script+="\n"

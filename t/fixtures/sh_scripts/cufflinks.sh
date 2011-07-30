@@ -55,56 +55,56 @@ ln -s /proj/hoodlab/share/vcassen/rna-seq/qiang_data/s_1_1_sequence.txt_2.fq /pr
 # step filterQuality:
 echo step filterQuality 1>&2
 
-perl ${programs}/filterQuality.pl -v -f fq -i ${ID}_1.${format} -o /dev/null -b ${ID}.qual_BAD_1.fq
-perl ${programs}/filterQuality.pl -v -f fq -i ${ID}_2.${format} -o /dev/null -b ${ID}.qual_BAD_2.fq
+perl ${programs}/filterQuality.pl -v -f ${format} -i ${ID}_1.${format} -o /dev/null -b ${ID}.qual_BAD_1.${format}
+perl ${programs}/filterQuality.pl -v -f ${format} -i ${ID}_2.${format} -o /dev/null -b ${ID}.qual_BAD_2.${format}
             
 
 # step filterLowComplex:
 echo step filterLowComplex 1>&2
 
-perl ${programs}/filterLowComplex.pl -v -f fq -i ${ID}_1.${format} -o ${ID}.complex_OK_1.fq -b ${ID}.complex_BAD_1.fq
-perl ${programs}/filterLowComplex.pl -v -f fq -i ${ID}_2.${format} -o ${ID}.complex_OK_2.fq -b ${ID}.complex_BAD_2.fq
+perl ${programs}/filterLowComplex.pl -v -f ${format} -i ${ID}_1.${format} -o ${ID}.complex_OK_1.${format} -b ${ID}.complex_BAD_1.${format}
+perl ${programs}/filterLowComplex.pl -v -f ${format} -i ${ID}_2.${format} -o ${ID}.complex_OK_2.${format} -b ${ID}.complex_BAD_2.${format}
             
 
 # step filterVectors:
 echo step filterVectors 1>&2
 
 export BOWTIE_INDEXES=/proj/hoodlab/share/programs/bowtie-indexes
-bowtie UniVec_Core -1 ${ID}_1.${format} -2 ${ID}_2.${format} --quiet -p 4 -S --sam-nohead -k 1 -v 2 -q | perl -lane 'print unless($F[1] == 4)' > ${ID}.filterVectors_BAD.fq
+bowtie UniVec_Core -1 ${ID}_1.${format} -2 ${ID}_2.${format} --quiet -p 4 -S --sam-nohead -k 1 -v 2 -q | perl -lane 'print unless($F[1] == 4)' > ${ID}.filterVectors_BAD.${format}
 
 
 # step ribosomal_mit:
 echo step ribosomal_mit 1>&2
 
 export BOWTIE_INDEXES=/proj/hoodlab/share/programs/bowtie-indexes
-bowtie human.GRCh37.61.rRNA-MT -1 ${ID}_1.${format} -2 ${ID}_2.${format} --quiet -p 4 -S --sam-nohead -k 1 -v 2 -q | perl -lane 'print unless($F[1] == 4)' > ${ID}.ribosomal_mit_BAD.fq
+bowtie human.GRCh37.61.rRNA-MT -1 ${ID}_1.${format} -2 ${ID}_2.${format} --quiet -p 4 -S --sam-nohead -k 1 -v 2 -q | perl -lane 'print unless($F[1] == 4)' > ${ID}.ribosomal_mit_BAD.${format}
 
 
 # step remove_erccs:
 echo step remove_erccs 1>&2
 
 export BOWTIE_INDEXES=/proj/hoodlab/share/programs/bowtie-indexes
-bowtie ERCC_reference_081215 -1 ${ID}_1.${format} -2 ${ID}_2.${format} --quiet -p 4 -S --sam-nohead -k 1 -v 2 -q | perl -lane 'print unless($F[1] == 4)' > ${ID}.remove_erccs_BAD.fq
+bowtie ERCC_reference_081215 -1 ${ID}_1.${format} -2 ${ID}_2.${format} --quiet -p 4 -S --sam-nohead -k 1 -v 2 -q | perl -lane 'print unless($F[1] == 4)' > ${ID}.remove_erccs_BAD.${format}
 
 
 # step repeats_consensus:
 echo step repeats_consensus 1>&2
 
 export BOWTIE_INDEXES=/proj/hoodlab/share/programs/bowtie-indexes
-bowtie human_RepBase15.10 -1 ${ID}_1.${format} -2 ${ID}_2.${format} --quiet -p 4 -S --sam-nohead -k 1 -v 2 -q | perl -lane 'print unless($F[1] == 4)' > ${ID}.repeats_consensus_BAD.fq
+bowtie human_RepBase15.10 -1 ${ID}_1.${format} -2 ${ID}_2.${format} --quiet -p 4 -S --sam-nohead -k 1 -v 2 -q | perl -lane 'print unless($F[1] == 4)' > ${ID}.repeats_consensus_BAD.${format}
 
 
 # step equalize:
 echo step equalize 1>&2
 
-perl ${programs}/removeBadReads.pl -v -paired ${ID}.qual_BAD_1.${format} ${ID}.qual_BAD_1.${format} ${ID}.complex_BAD_1.${format} ${ID}.complex_BAD_1.${format} ${ID}.vector_BAD.${format} ${ID}.riboMT_BAD.${format} ${ID}.remove_erccs_BAD.${format} ${ID}.repeats_BAD.${format} - ${ID}_GOOD_1.fq ${ID}_GOOD_2.fq
+perl ${programs}/removeBadReads.pl -v -paired ${ID}.qual_BAD_1.${format} ${ID}.qual_BAD_1.${format} ${ID}.complex_BAD_1.${format} ${ID}.complex_BAD_1.${format} ${ID}.vector_BAD.${format} ${ID}.riboMT_BAD.${format} ${ID}.remove_erccs_BAD.${format} ${ID}.repeats_BAD.${format} - ${ID}_GOOD_1.${format} ${ID}_GOOD_2.${format}
 
 
 # step bowtie:
 echo step bowtie 1>&2
 
 export BOWTIE_INDEXES=/proj/hoodlab/share/programs/bowtie-indexes
-bowtie   --quiet -k 1 -v 2 -q hg19 -1 $${ID}_GOOD_1.${format} -2 $${ID}_GOOD_2.${format} 
+bowtie   --quiet -k 1 -v 2 -q hg19 -1 ${ID}_GOOD_1.${format} -2 ${ID}_GOOD_2.${format} 
 
 
 # step bowtie2bam:

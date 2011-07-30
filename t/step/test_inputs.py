@@ -22,10 +22,10 @@ class TestInputs(unittest.TestCase):
             step=pipeline.step_with_name('export2fq')
 
             self.assertTrue(isinstance(step, Step))
-            inputs=[self.evoque_something(rs, x) for x in step.inputs()]
+            inputs=[self.evoque_something(rs, x) for x in step.input_list()]
             self.assertIn(rs.reads_file,inputs)
 
-            outputs=[self.evoque_something(rs, x) for x in step.outputs()]
+            outputs=[self.evoque_something(rs, x) for x in step.output_list()]
             self.assertIn("%s.fq" % rs.reads_file, outputs)
 
     def evoque_something(self, readset, template):

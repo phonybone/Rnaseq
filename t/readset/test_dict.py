@@ -23,7 +23,7 @@ class TestDict(TestCreate):
         self.assertEqual(readset['description'],'this is a sample readset (fixture)')
         self.assertEqual(readset['org'],'mouse')
         self.assertEqual(readset['readlen'],75)
-        self.assertEqual(readset['working_dir'],'rnaseq_wf')
+        self.assertEqual(readset['working_dir'],os.path.join(dir,'rnaseq_wf'))
         
 
         vars={'this': 'that'}

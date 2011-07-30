@@ -20,9 +20,9 @@ class TestShScript(unittest.TestCase):
         reads_file=reads_file=RnaseqGlobals.root_dir()+'/t/fixtures/readsets/readset1.syml'
         self.readset=Readset.load(reads_file)[0]
         self.pipeline=Pipeline(name='filter', readset=self.readset)
-        #RnaseqGlobals.set_conf_value(['rnaseq','aligner'],'blat')
 
-        self.script_fragments=fragment_script('cufflinks.s_1.sh')
+        script_file=os.path.join(RnaseqGlobals.root_dir(),'t','fixtures','sh_scripts','cufflinks.s_1.sh')
+        self.script_fragments=fragment_script(script_file)
 
     def test_setup(self):
         self.assertEqual(len(self.script_fragments.keys()),12)

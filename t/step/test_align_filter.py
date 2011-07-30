@@ -4,6 +4,9 @@ sys.path.append(os.path.normpath(os.path.abspath(__file__)+"/../../../lib"))
 from Rnaseq import *
 from RnaseqGlobals import *
 from warn import *
+dir=os.path.normpath(os.path.dirname(os.path.abspath(__file__))+"/../common")
+sys.path.append(dir)
+from fragment_script import fragment_script, first_diff, diff_strs
 
 class TestShScript(unittest.TestCase):
     def setUp(self):
@@ -30,8 +33,14 @@ class TestShScript(unittest.TestCase):
         expected='''
 
 export BOWTIE_INDEXES=/proj/hoodlab/share/programs/bowtie-indexes
-bowtie ERCC_reference_081215 --quiet -p 4 -S --sam-nohead -k 1 -v 2 -q ${ID} | perl -lane 'print unless($F[1] == 4)' > /proj/hoodlab/share/vcassen/rna-seq/qiang_data/rnaseq/s_1.remove_erccs_BAD.fq
+bowtie ERCC_reference_081215 -1 ${ID}_1.${format} -2 ${ID}_2.${format} --quiet -p 4 -S --sam-nohead -k 1 -v 2 -q | perl -lane 'print unless($F[1] == 4)' > ${ID}.remove_erccs_BAD.${format}
 '''
+        fd=first_diff(script, expected)
+        if fd >= 0:
+            print "%s: first diff at %d" % (step.name, fd)
+            (d1,d2)=diff_strs(script, expected)
+            print "%s diff:\ngenerated: %s\nexpected:  %s" % (step.name, d1, d2)
+
         self.assertEqual(script,expected)
 
 

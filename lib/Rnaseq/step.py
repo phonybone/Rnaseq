@@ -24,13 +24,11 @@ class Step(dict):                     # was Step(templated)
         
         for k,v in self.defaults.items():
             setattr(self,k,v)
-            # print "%s: setting default %s=%s" % (self.name, k,v)
 
         for k,v in kwargs.items():
             try: setattr(self,k,v)      # something in alchemy can eff this up
             except Exception as e: print "templated.__init__: caught %s" % e
 
-        # print "__init__: %s is %s" % (self.name, yaml.dump(self))
 
     ########################################################################
 

@@ -17,7 +17,8 @@ class TestBase(unittest.TestCase):
 
     def test_new_step(self):
         pipeline=self.pipeline
-        step=pipeline.new_step('Header',name='some name',arbitrary='giraffe')
+        step_factory=StepFactory(pipeline)
+        step=step_factory.new_step('Header',name='some name',arbitrary='giraffe')
         self.assertEqual(step.__class__, Header)
         self.assertEqual(step.name,'some name')
         self.assertEqual(step.arbitrary, 'giraffe')

@@ -11,10 +11,10 @@ class TestUnknownStep(unittest.TestCase):
         pipeline=Pipeline(name='juan', readset=self.readset).load_steps() # dying on badly configured i/o
 
         try:
-            unknown_step=pipeline.new_step('unknown')
+            step_factory=StepFactory(pipeline)
+            unknown_step=step_factory.new_step('unknown')
             self.fail()
         except ConfigError as ce:
-            print "ce is %s" % ce
             self.assertTrue(re.search("error loading step 'unknown'", str(ce)))
 
         
