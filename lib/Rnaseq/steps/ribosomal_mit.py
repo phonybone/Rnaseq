@@ -8,3 +8,8 @@ class ribosomal_mit(align_filter):
         self.description='remove rRNA/MT matches'
         self.ewbt='human.GRCh37.61.rRNA-MT'
         self.blat_index='human.GRCh37.61.rRNA-MT.2bit'
+
+    def output_list(self):
+        return ['${ID}.riboMT_BAD.${format}']
+
+        

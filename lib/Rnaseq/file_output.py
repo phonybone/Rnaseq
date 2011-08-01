@@ -1,11 +1,14 @@
 from sqlalchemy import *
 from sqlalchemy.orm import mapper
 import time
+from evoque_helpers import evoque_template
+
 
 class FileOutput(object):
     def __init__(self,**args):
         for k,v in args.items():
             setattr(self,k,v)
+
 
     __tablename__='file_output'
     time_format="%d%b%y %H:%M:%S"

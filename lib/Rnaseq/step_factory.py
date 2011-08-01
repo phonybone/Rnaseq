@@ -24,7 +24,6 @@ class StepFactory(object):
         # add items to kwargs:
         pipeline=self.pipeline
         kwargs['pipeline']=pipeline
-#        kwargs['readset']=pipeline.readset
         step=kls(**kwargs)
         
         # If the step defines an attribute named export (fixme: and it's a list),

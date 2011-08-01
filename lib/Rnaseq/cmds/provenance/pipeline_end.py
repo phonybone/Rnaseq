@@ -9,7 +9,7 @@ import time
 
 class PipelineEnd(Command):
     def usage(self):
-        return "usage: mid_step <pipelinerun_id>"
+        return "usage: provenance pipeline_end <pipelinerun_id> <last_step_run_id>"
 
     def description(self):
         return "set the final status for a pipeline run"
@@ -23,9 +23,11 @@ class PipelineEnd(Command):
             raise UserError(self.usage())
 
         session=RnaseqGlobals.get_session()
-
+        now=int(time.time())
+        
+        # record pipeline finish:
         pipeline_run=session.query(PipelineRun).filter_by(id=pipelinerun_id).first()
-        pipeline_run.finish_time=int(time.time())
+        pipeline_run.finish_time=now
         pipeline_run.status='finished'
         pipeline_run.successful=True    # we can assume this because if any of the steps failed, we don't even call this command
 

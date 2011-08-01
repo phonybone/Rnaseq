@@ -5,21 +5,20 @@ from Rnaseq import *
 from RnaseqGlobals import *
 from warn import *
 
-class TestInputs(unittest.TestCase):
+class TestMissingPsl(unittest.TestCase):
     def setUp(self):
-        argv=RnaseqGlobals.initialize(__file__, opt_list=['--aligner','blat'])       # not to be confused with sys.argv
+        argv=RnaseqGlobals.initialize(__file__, testing=True)       # not to be confused with sys.argv
+        # argv=RnaseqGlobals.initialize(__file__, testing=True, opt_list=['--aligner','blat'])       # not to be confused with sys.argv
         template_dir=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'),RnaseqGlobals.conf_value('testing','template_dir'))
         templated.template_dir=template_dir
 
-        self.readset=Readset(reads_files=os.path.abspath(__file__+'/../../readset/s_?_export.txt'),
-                             readlen=75,
-                             working_dir='rnaseq_wf')
+        readset_file=RnaseqGlobals.root_dir()+"/t/fixtures/readsets/readset1.syml"
+        self.readset=Readset.load(readset_file)[0]
         
         self.pipeline=Pipeline(name='missing psl', readset=self.readset)
         
 
-class TestMissingStep(TestInputs):
-    def runTest(self):
+    def test_missing_step(self):
         try:
             self.pipeline.load_steps()
             self.fail()
@@ -28,13 +27,12 @@ class TestMissingStep(TestInputs):
         except Exception as e:
             self.fail("Didn't raise config error for missing step as expected (raised %s instead)" % e)
 
-class TestListExpansion(TestInputs):
-    def runTest(self):
-        step=self.pipeline.stepWithName('missing_psl')
+    def test_list_expansion(self):
+        step=self.pipeline.step_with_name('missing_psl')
         self.assertEqual(step,None)
 
 
 
-suite = unittest.TestLoader().loadTestsFromTestCase(TestInputs)
+suite = unittest.TestLoader().loadTestsFromTestCase(TestMissingPsl)
 unittest.TextTestRunner(verbosity=2).run(suite)
 

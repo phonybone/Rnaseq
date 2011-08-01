@@ -10,21 +10,58 @@ from sqlalchemy import *
 from sqlalchemy.orm import mapper, relationship, backref
 from hash_helpers import obj2dict
 from path_helpers import exists_on_path
+from evoque_helpers import evoque_template
 
 class Step(dict):                     # was Step(templated)
+    defaults={}
     def __init__(self,*args,**kwargs):
         # set defaults:
         self.name=self.__class__.__name__
         self.description=self.name
         self.force=False
         self.skip_success_check=False
+        self.is_prov_step=False
+        
+        for k,v in self.defaults.items():
+            setattr(self,k,v)
 
         for k,v in kwargs.items():
             try: setattr(self,k,v)      # something in alchemy can eff this up
             except Exception as e: print "templated.__init__: caught %s" % e
 
-#        print "__init__: %s is %s" % (self.name, yaml.dump(self))
 
+    ########################################################################
+
+    def __setitem__(self,k,v):
+        super(Step,self).__setitem__(k,v) # call dict.__setitem__()
+        super(Step,self).__setattr__(k,v)
+
+    def __setattr__(self,attr,value):
+        super(Step,self).__setattr__(attr,value) # call dict.__setattr__()
+        super(Step,self).__setitem__(attr,value)
+
+    # update() and setdefault() taken from http://stackoverflow.com/questions/2060972/subclassing-python-dictionary-to-override-setitem
+    def update(self, *args, **kwargs):
+        if args:
+            if len(args) > 1:
+                raise TypeError("update expected at most 1 arguments, got %d" % len(args))
+            other = dict(args[0])
+            for key in other:
+                self[key] = other[key]
+        for key in kwargs:
+            self[key] = kwargs[key]
+
+    ########################################################################
+
+    def usage(self, context):
+        raise ProgrammerGoof("step class '%s' does not define usage(self,context)" % self.__class__.__name__)
+
+    def outputs(self):
+        raise ProgrammerGoof("step class '%s' does not define outputs(self)" % self.__class__.__name__)
+
+    def paired_end(self):
+        try: return self.pipeline.readset.paired_end
+        except AttributeError: return False
 
     ########################################################################
     __tablename__='step'
@@ -53,22 +90,25 @@ class Step(dict):                     # was Step(templated)
 
     # entry point to step's sh "presence"; calls appropriate functions, as above.
     def sh_script(self, context, **args):
-
         if 'echo_name' in args and args['echo_name']:
-            echo_part="echo step %s 1>&2" % self.name
+            echo_part="\n# step %s:\n" % self.name
+            echo_part+="echo step %s 1>&2" % self.name
         else:
             echo_part=''
             
-        sh_script=self.usage()
-
-        domain=Domain(os.getcwd(), errors=4) # we actually don't care about the first arg
-        domain.set_template(self.name, src=sh_script)
-        tmp=domain.get_template(self.name)
-
+        usage=self.usage(context)
         vars={}
-        # vars.update(self)               # fixme: this does nothing, apparently
-        vars.update(context)
+        vars.update(self.__dict__)
+        vars.update(self.pipeline.readset)
+        if not self.is_prov_step:
+            vars.update(self.pipeline[self.name])
+            vars['inputs']=context.inputs[self.name]
+            vars['outputs']=context.outputs[self.name]
+
         vars['pipeline']=self.pipeline
+        vars['pipeline_run_id']=context.pipeline_run_id
+        #vars['step_run_id']=context.step_runs[self.name].id
+        #vars['next_step_run_id']=context.step_runs[self.pipeline.step_after(step.name)].id
         vars['config']=RnaseqGlobals.config
         vars['readset']=self.pipeline.readset
 
@@ -77,63 +117,83 @@ class Step(dict):                     # was Step(templated)
         # but really, the pipeline should specify these?
         # or only things that are truly universal
         vars['root_dir']=RnaseqGlobals.root_dir()
-        vars['programs']=RnaseqGlobals.root_dir()+'/programs'
-        vars['reads_file']=self.pipeline.readset.reads_file
-        vars['ID']=self.pipeline.readset.ID
-        vars['working_dir']=self.pipeline.readset.working_dir
 
-        script=tmp.evoque(vars)
-        script="\n".join([echo_part,script]) # tried using echo_part+sh_script, got weird '>' -> '&gt;' substitutions
+        # add readset exports:
+        readset=self.pipeline.readset
+        for attr in readset.exports:
+            try: vars[attr]=getattr(readset, attr)
+            except AttributeError:
+                vars[attr]=''
+                #warn("%s.sh_script: no '%s' readset attribute!" % (self.name, attr))
+
+        # add self.exports:
+        try: export_list=self.exports
+        except: export_list=[]
+        for attr in export_list:
+            vars[attr]=getattr(self,attr)
+
+        script_part=evoque_template(usage, vars)
+
+        script="\n".join([echo_part,script_part]) # tried using echo_part+sh_script, got weird '>' -> '&gt;' substitutions
 
         return script
 
-########################################################################
+    ########################################################################
 
-    def inputs(self):
-        try: return re.split("[,\s]+",self.input)
-        except: return []
+    def input_list(self):
+        return self.pipeline.context.inputs[self.name]
 
-    def outputs(self):
-        try: return re.split("[,\s]+",self.output)
-        except: return []
-    
-    def creates(self):
-        try: return re.split("[,\s]+",self.create)
-        except: return []
-    
+    def input_list_expanded(self):
+        l=[evoque_template(x, self, self.pipeline.readset) for x in self.input_list()]
+        return l
+
+    def output_list(self):
+        raise ProgrammerGoof("pipeline %s - step '%s' does not define it's outputs" % (self.pipeline.name, self.name))
+
+    def output_list_expanded(self):
+        l=[evoque_template(x, self, self.pipeline.readset) for x in self.output_list()]
+        return l
+
+
+    ########################################################################
     # current: return true if all of the step's outputs are older than all
     # of the steps inputs AND the step's exe:
     def is_current(self):
         if self.force: return False
         latest_input=0
         earliest_output=time.time()
-
-        for input in self.inputs():
+        try: debug=os.environ['DEBUG']
+        except: debug=False
+        
+        for input in self.input_list_expanded():
+            if debug:
+                print "%s: input checking %s" % (self.name, input)
+            
             try:
                 mtime=os.stat(input).st_mtime
             except OSError as ose:
+                if debug:
+                    print "%s: returning false due to failed stat: %s" % (self.name, ose)
                 return False            # missing/unaccessible inputs constitute not being current
             
             if mtime > latest_input:
                 latest_input=mtime
 
-            try:
-                exe_file=os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'), 'programs', self.exe)
-                exe_mtime=os.stat(exe_file).st_mtime
-                if exe_mtime > latest_input:
-                    latest_input=exe_mtime
-            except OSError as oe:
-                raise ConfigError("%s: %s" %(exe_file, oe))
 
-        for output in self.outputs():
+        for output in self.output_list_expanded():
+            if debug:
+                print "%s: checking output %s" % (self.name, output)
             try:
                 stat_info=os.stat(output)
                 if (stat_info.st_mtime < earliest_output):
                     earliest_output=stat_info.st_mtime
             except OSError as ose:
+                if debug:
+                    print "%s: returning false on %s" % (self.name, ose)
                 return False            # missing/unaccessible outputs definitely constitute not being current
 
-        #print "final: latest_input is %s, earliest_output is %s" % (latest_input, earliest_output)
+        if debug:
+            print "final: latest_input is %s, earliest_output is %s" % (latest_input, earliest_output)
         return latest_input<earliest_output
     
 ########################################################################
@@ -158,111 +218,6 @@ class Step(dict):                     # was Step(templated)
         # couldn't find self.exe, no self.interpreter:
         return False
         
-
-    ########################################################################
-    ########################################################################
-    # Dead code
-    dead_code='''
-
-    # If a step needs more than one line to invoke (eg bowtie: needs to set an environment variable),
-    # define the set of commands in a template and set the 'sh_template' attribute to point to the template
-    # within the templates/sh_templates subdir).  This routine fetches the template and calls evoque on it, and
-    # returns the resulting string.
-    # If no sh_template is required, return None.
-    def sh_script_old(self, **kwargs):
-        try: sh_template=self.sh_template
-        except: return None
-        
-        template_dir=os.path.join(RnaseqGlobals.root_dir(),"templates","sh_template")
-        domain=Domain(template_dir, errors=4)
-        template=domain.get_template(sh_template)
-        
-        vars={}
-        vars.update(self.__dict__)
-        vars.update(self)
-        try: vars.update(self.pipeline[self.name])
-        except: pass
-
-        #vars['readset']=self.pipeline.readset # fixme: really? used by some steps, eg mapsplice
-        vars['sh_cmd']=self.sh_cmdline()
-        vars['config']=RnaseqGlobals.config
-        vars['ID']=self.pipeline.ID()
-
-        try:
-            vars.update(self.pipeline.step_exports)
-        except AttributeError as ae:
-            pass
-
-        vars.update(kwargs)
-
-        try:
-            script=template.evoque(vars)
-        except NameError as ne: 
-            #print "%s.sh_script() not ok (ne=%s)" % (self.name, ne)
-            raise ConfigError("%s while processing step '%s'" %(ne,self.name))
-
-        return script
-
-    # use the self.usage formatting string to create the command line that executes the script/program for
-    # this step.  Return as a string.  Throws exceptions as die()'s.
-    def sh_cmdline_old(self):
-        usage=self.usage()
-
-
-        # evoque the cmd str:
-        domain=Domain(os.getcwd(), errors=4) # we actually don't care about the first arg
-        domain.set_template(self.name, src=usage)
-        tmp=domain.get_template(self.name)
-        vars={}
-        vars.update(self.__dict__)
-#        vars.update(self.pipeline)
-        vars.update(RnaseqGlobals.config)
-
-        try: vars.update(self.pipeline[self.name])
-        except: pass
-
-        try: vars.update(self.pipeline.step_exports) # fixme: still need this?
-        except: pass
-
-        try: cmd=tmp.evoque(vars)
-        except AttributeError as ae:
-            raise ConfigError(ae)
-        return cmd
-
-
-    # 
-#     def __setitem__(self,k,v):
-#         super(Step,self).__setitem__(k,v) # call dict.__setitem__()
-#         if hasattr(self,k):
-#             if callable(getattr(self,k)):
-#                 m=getattr(self,k)
-#                 m(v)
-#         else:
-#             setattr(self,k,v)
-
-#     # update() and setdefault() taken from http://stackoverflow.com/questions/2060972/subclassing-python-dictionary-to-override-setitem
-#     def update(self, *args, **kwargs):
-#         if args:
-#             if len(args) > 1:
-#                 raise TypeError("update expected at most 1 arguments, got %d" % len(args))
-#             other = dict(args[0])
-#             for key in other:
-#                 self[key] = other[key]
-#         for key in kwargs:
-#             self[key] = kwargs[key]
-
-#     def setdefault(self, key, value=None):
-#         if key not in self:
-#             self[key] = value
-#         return self[key]
-
-
-#     def __setattr__(self,attr,value):
-#         super(Step,self).__setattr__(attr,value) # call dict.__setattr__()
-#         self.__dict__[attr]=value
-
-
-    '''
 
 
 #print __file__,"checking in"

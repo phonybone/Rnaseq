@@ -41,6 +41,7 @@ class RnaseqGlobals(object):
         self.add_options_to_conf(values) # converts "__" entries, et al
         self.get_session()
         self.read_user_config()
+        self.set_templated_dir()
         
         return argv
 
@@ -65,6 +66,7 @@ class RnaseqGlobals(object):
         parser.add_option('--fq_cmd',        dest='rnaseq__fq_cmd',  help="internal use")
         parser.add_option('--cluster',       dest='use_cluster',     help="execute operations on a cluster (requires additional config settings)", action='store_true', default=False)
         parser.add_option("-c","--config",   dest="config_file",     help="specify alternative config file", default=os.path.normpath(os.path.abspath(__file__)+"/../../config/rnaseq.conf.yml"))
+        parser.add_option('-d',              dest='debug',           help='toggle debugging', action='store_true', default=False)
         parser.add_option("-f","--force",    dest="force",           help="force execution of pipelines and steps even if targets are up to date", action='store_true', default=False)
         parser.add_option('-l','--label',    dest='label',           help='specify a label for a pipeline run')
         parser.add_option("-n","--no_run",   dest="no_run",          help="supress actuall running", default=False, action='store_true')
@@ -132,6 +134,7 @@ class RnaseqGlobals(object):
             self.set_conf_value('rnaseq','root_dir',root_dir)
             return root_dir
     
+    # concat the root_dir with another dir listed in the config:
     @classmethod
     def abs_dir(self,*args):
         if len(args)==0:
@@ -248,5 +251,17 @@ class RnaseqGlobals(object):
         return self.user_config.user_runs()
 
 
+    ########################################################################
+
+    @classmethod
+    def set_templated_dir(self):
+        from templated import templated # has to be here because it's a class method
+        if self.conf_value('testing'):
+            template_dir=self.abs_dir('testing', 'template_dir')
+        else:
+            template_dir=os.path.join(self.root_dir(),'templates')
+        
+        templated.template_dir=template_dir
+        
 
 #print __file__,"checking in"

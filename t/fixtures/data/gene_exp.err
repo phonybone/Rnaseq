@@ -1,0 +1,15 @@
+step header
+
+****************************************************************
+starting gene_exp
+Fri Jul 29 16:03:17 PDT 2011
+
+step 1 passed
+step extract_significant
+step 2 passed
+step sort_by_name
+step 3 passed
+step sort_by_sample
+step 4 passed
+step footer
+step 5 passed

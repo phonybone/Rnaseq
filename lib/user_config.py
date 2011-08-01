@@ -39,7 +39,7 @@ class UserConfig(dict):
         if args['pipeline']!=pipeline.name:
             raise UserError("pipeline name mismatch in %s: attempt to match user_config for '%s' with pipeline '%s'" % (self.filename, args['pipeline'], pipeline.name))
         for k,v in args.items():
-            step=pipeline.stepWithName(k)
+            step=pipeline.step_with_name(k)
             if step != None:
                 if type(v) != type({}):
                     raise ConfigError("%s: not a dict" % v)

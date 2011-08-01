@@ -1,8 +1,9 @@
 #-*-python-*-
+import time, yaml
+
 from warn import *
 from Rnaseq import *
 from Rnaseq.command import *
-import time
 
 class MidStep(Command):
     def usage(self):
@@ -32,7 +33,12 @@ class MidStep(Command):
             print "steprun_id=%s: no last step_run???" % steprun_id
             return
         step_name=step_run.step_name
-        print "mid_step: step is %s" % step_name
+
+        # get pipeline and step:
+#         pipeline=session.query(Pipeline).get(pipeline_run.pipeline_id)
+#         step_factory=StepFactory(pipeline)
+#         step=step_factory.new_step(step_name)
+        
         
         now=int(time.time())
         if retcode==0:                   # last step was a success!
@@ -40,17 +46,16 @@ class MidStep(Command):
             step_run.successful=True
             step_run.finish_time=now
             step_run.status='finished' # or something...
-            print "step_run(%d) updated" % step_run.id
 
-            # set pipeline_run status:
-            print "pipeline_run(%d) updated" % pipeline_run.id
+            # report on created files:
+            for o in step_run.file_outputs:
+                print "%s: %s created" % (step_run.step_name, o.path)
 
             # set the start time for the next step_run:
             if next_steprun_id > 0:
                 next_steprun=session.query(StepRun).filter_by(id=next_steprun_id).first()
                 next_steprun.start_time=now
                 next_steprun.status='started'
-                print "next_step_run(%d) updated" % next_steprun.id
 
                 pipeline_run.status="%s started" % next_steprun.step_name
                 pipeline_run.current_step_run_id=next_steprun_id
@@ -63,12 +68,10 @@ class MidStep(Command):
             step_run.successful=False
             step_run.finish_time=now
             step_run.status='failed'
-            print "step_run(%d) updated" % step_run.id
 
             # pipeline_run status:
             pipeline_run.status="%s failed" % step_name
             pipeline_run.successful=False
             pipeline_run.finish_time=now
-            print "pipeline_run(%d) updated" % pipeline_run.id
 
         session.commit()

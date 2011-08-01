@@ -28,28 +28,33 @@ class align_filter(Step):
     # fixme: usage in progress, ill-formed
     def usage(self, context):
         if self.aligner=='bowtie':
-            if self.paired_reads:
+            if self.paired_end():
 
-                usage='''
-export BOWTIE_INDEXES=${config['rnaseq']['bowtie_indexes']}
-bowtie ${ewbt} -1 ${ID}_1.${format} -2 ${ID}_2.${format} ${args} --un ${output}  | perl -lane 'print unless($$F[1] == 4)' > ${filtered}
-                ''' % ()
-
-                context.outputs=["%s.qual_OK.%s" % (context.ID, context.format)]
-                context.creates=["%s.qual_BAD.%s" % (context.ID, context.format)]
+                script='''
+export BOWTIE_INDEXES=${bowtie_index}
+bowtie ${ewbt} -1 ${inputs[0]} -2 ${inputs[1]} ${args} | perl -lane 'print unless($$F[1] == 4)' > $${ID}.${name}_BAD.$${format}
+'''
 
             else:
-                usage='''
+                script='''
 export BOWTIE_INDEXES=${config['rnaseq']['bowtie_indexes']}
-bowtie ${ewbt} ${args} --un ${output} ${input} | perl -lane 'print unless($$F[1] == 4)' > ${filtered}
-                '''
+bowtie ${ewbt} ${args} ${inputs[0]} | perl -lane 'print unless($$F[1] == 4)' > $${ID}.${name}_BAD.$${format}
+'''
                 restore_indent=True
 
                 
 
         elif self.aligner=='blat':
-            pass
+            # fixme: need to implement this (NYI)
+            raise ProgrammerGoof("step %s doesn't work for aligner==blat yet (NYI)" % self.name)
         else:
             raise ConfigError("Unknown alignment program '%s'" % self.aligner)
 
 
+        return script
+
+
+    def output_list(self):
+        output='${ID}.%s_BAD.${format}' % self.name
+        return [output]
+    

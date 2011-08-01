@@ -5,13 +5,29 @@ class fq_all2std(Step):
     def __init__(self, **kwargs):
         Step.__init__(self,**kwargs)
         # fixme: catch AttributeErrors for these:
-        assert self.cmd in cmds
+        assert self.cmd in self.cmds
         assert self.format != None
 
 
-    def usage(self):
-        usage='''
-perl ${programs}/fq_all2std.py ${cmd} ${inputs[0]} ${ID}.${format}
-        '''
+
+    def usage(self, context):
+        usage="\nformat=%s\n" % self.format
+        if (self.paired_end()):
+            usage+='''
+perl $${programs}/fq_all2std.py solexa2fq ${inputs[0]} ${inputs[1]} $${ID}_1.$${format}
+            ''' 
+        else:
+            usage+='''
+perl $${programs}/fq_all2std.py ${cmd} ${inputs[0]} $${ID}.$${format}
+            ''' 
+
+
         return usage
+
+
+    def output_list(self):
+        if self.paired_end():
+            return ['${ID}_1.${format}','${ID}_2.${format}']
+        else:
+            return ['${ID}.${format}']
     

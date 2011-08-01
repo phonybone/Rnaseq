@@ -117,7 +117,7 @@ class templated(dict):
 
 
         # call yaml.load on the string produced above, then call self.update() on the resulting dict object
-        #print "yaml_str:\n%s" % yaml_str
+        # print "yaml_str:\n%s" % yaml_str
         d=yaml.load(yaml_str)           # fixme: what if template isn't yaml???
         try:
             self.update(d)

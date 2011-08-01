@@ -7,27 +7,23 @@ class filterQuality(Step):
         self.args='-v'
 
     def usage(self, context):
-        if self.readset.paired_reads:
-
+        if self.paired_end():
             usage='''
-perl $${programs}/filterQuality.pl ${args} -f ${format} -i %s -o ${ID}.qual_OK_1.${format} -b ${ID}.qual_BAD_1.${format}
-perl $${programs}/filterQuality.pl ${args} -f ${format} -i %s -o ${ID}.qual_OK_2.${format} -b ${ID}.qual_BAD_2.${format}
-            ''' % (context.inputs[0], context.inputs[1])
+perl $${programs}/filterQuality.pl ${args} -f $${format} -i ${inputs[0]} -o /dev/null -b $${ID}.qual_BAD_1.$${format}
+perl $${programs}/filterQuality.pl ${args} -f $${format} -i ${inputs[1]} -o /dev/null -b $${ID}.qual_BAD_2.$${format}
+            ''' 
 
-            context.outputs=["%s.qual_OK_1.%s" % (context.ID, context.format),
-                            "%s.qual_OK_2.%s" % (context.ID, context.format)]
-            context.creates=["%s.qual_BAD_1.%s" % (context.ID, context.format)]
         else:
-
             usage='''
-perl $${programs}/filterQuality.pl ${args} -f $${format} -i %s -o ${ID}.qual_OK.${format} -b ${ID}.qual_BAD.${format}
-            ''' % context.inputs[0]
+perl $${programs}/filterQuality.pl ${args} -f $${format} -i ${inputs[0]} -o ${ID}.qual_OK.$${format} -b ${ID}.qual_BAD.$${format}
+            '''
             
-            context.outputs=["%s.qual_OK.%s" % (context.ID, context.format)]
-            context.creates=["%s.qual_BAD.%s" % (context.ID, context.format)]
 
-        return (usage, context)
+        return usage
 
-    def creates(self):
-        pass
+    def output_list(self):
+        if self.paired_end():
+            return ['${ID}.qual_BAD_1.${format}','${ID}.qual_BAD_1.${format}']
+        else:
+            return ['${ID}.qual_BAD.${format}']
     

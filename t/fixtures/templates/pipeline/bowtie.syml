@@ -1,0 +1,16 @@
+name: bowtie pipeline
+description: pipeline to test the bowtie step
+stepnames: header bowtie footer
+
+header:
+  inputs: readset
+
+bowtie:
+  inputs: header
+  bowtie_index: /proj/hoodlab/share/programs/bowtie-indexes
+  ewbt: hg19
+  output_format: sam
+  threads: 4
+
+footer:
+  name: footer

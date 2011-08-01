@@ -31,17 +31,18 @@ class RunPipeline(Command):
         session=RnaseqGlobals.get_session()
 
         # Create the pipeline and readset objects:
-        readsets=Readset.load(readset_file) 
+        self.readsets=Readset.load(readset_file) # store to self so that testers can get at them
 
         # Iterate through reads files defined in readset:
-        for readset in readsets:
+        for readset in self.readsets:
 
             user_runs=RnaseqGlobals.user_runs()
-            #print "user_runs(%s, len=%d) is %s" %(type(user_runs), len(user_runs), user_runs)
             for user_run in user_runs:
                 
                 # set up the pipeline:
                 pipeline=Pipeline(name=pipeline_name, readset=readset).load_steps()
+                self.pipelines[id(readset)]=pipeline
+                
                 pipeline.update(RnaseqGlobals.config)
                 RnaseqGlobals.user_config.merge_args(pipeline, user_run)
                 pipeline.set_steps_current(global_force=RnaseqGlobals.conf_value('force'))
@@ -53,18 +54,20 @@ class RunPipeline(Command):
                 else:
                     script_filename=pipeline.write_sh_script()
 
-
-                # create and store the pipeline's shell script:
-
                 # if running on the cluster, generate a calling (qsub) script and invoke that;
                 # if not a cluster job, just assemble cmd[].
                 (cmd,output,err)=self.write_qsub_script(pipeline, script_filename)
-                print "launch cmd%s is '%s'" % (('(skipped)' if RnaseqGlobals.conf_value('no_run') else ''), " ".join(cmd))
+                #print "launch cmd%s is '%s'" % (('(skipped)' if RnaseqGlobals.conf_value('no_run') else ''), " ".join(cmd))
                 
                 # launch the subprocess and check for success:
                 if not RnaseqGlobals.conf_value('no_run'):
                     self.launch(cmd, output, err)
 
+                # report on success if asked:
+                if not RnaseqGlobals.conf_value('no_run') and \
+                       not RnaseqGlobals.conf_value('silent'):
+                    pipeline_run=session.query(PipelineRun).get(RnaseqGlobals.conf_value('pipeline_run_id'))
+                    print pipeline_run.report()
 
     ########################################################################
 
@@ -110,10 +113,9 @@ class RunPipeline(Command):
         if cmd[0]=="sh":
             output.close()
             err.close()
-            retcode=0   # why???
             if retcode != 0:
-                raise UserError("pipeline failed with return code %d\nsee %s.out and %s.err for diagnostics (in %s)" % \
-                                (retcode, pipeline.name, pipeline.name, pipeline.working_dir()))
+                print "pipeline failed with return code %d\nsee %s.out and %s.err for diagnostics (in %s)" % \
+                                (retcode, pipeline.name, pipeline.name, pipeline.working_dir())
             
 
 

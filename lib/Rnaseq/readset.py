@@ -1,13 +1,17 @@
 #-*-python-*-
 
-import yaml, socket, os, glob, re
+import yaml, socket, os, glob, re, time
 from sqlalchemy import *
 from sqlalchemy.orm import mapper, relationship, backref
 from warn import *
 from dict_helpers import scalar_values
+from evoque_helpers import evoque_template
+from RnaseqGlobals import RnaseqGlobals
 
 class Readset(dict):
     required_attrs=['reads_file', 'label', 'ID']
+    wd_time_format="%d%b%y.%H%M%S"
+
     def __init__(self,*args,**kwargs):
         # if there are any dicts in *args, use them to update self; allows "d={'this':'that'}; r=Readset(d)" construction
         for a in args:
@@ -22,21 +26,46 @@ class Readset(dict):
             self[k]=v
 
         self.resolve_reads_file().resolve_working_dir().set_ID().verify_complete()
-        
+        self.exports=['org','readlen','working_dir','reads_file','label','format','ID']
+
+
+########################################################################
 
     def __str__(self):
         str=''
         for k,v in self.items():
             str+="%s: %s\n" % (k,v)
         return str
-        
+
     def __setitem__(self,k,v):
         super(Readset,self).__setitem__(k,v) # call dict.__setitem__()
-        setattr(self,k,v)
+        super(Readset,self).__setattr__(k,v)
 
     def __setattr__(self,attr,value):
         super(Readset,self).__setattr__(attr,value) # call dict.__setattr__()
-        self.__dict__[attr]=value
+        super(Readset,self).__setitem__(attr,value)
+
+    # update() and setdefault() taken from http://stackoverflow.com/questions/2060972/subclassing-python-dictionary-to-override-setitem
+    def update(self, *args, **kwargs):
+        if args:
+            if len(args) > 1:
+                raise TypeError("update expected at most 1 arguments, got %d" % len(args))
+            other = dict(args[0])
+            for key in other:
+                self[key] = other[key]
+        for key in kwargs:
+            self[key] = kwargs[key]
+
+# ########################################################################
+
+        
+#     def __setitem__(self,k,v):
+#         super(Readset,self).__setitem__(k,v) # call dict.__setitem__()
+#         setattr(self,k,v)
+
+#     def __setattr__(self,attr,value):
+#         super(Readset,self).__setattr__(attr,value) # call dict.__setattr__()
+#         self.__dict__[attr]=value
         
         
 
@@ -122,19 +151,20 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
         reads_file=yml['reads_file']
 
         try: reads_dir=yml['reads_dir']
-        except KeyError: reads_dir=os.getcwd() # fixme: hope this is right thing to do
+        except KeyError:
+            reads_dir=os.getcwd() # fixme: hope this is right thing to do
             
         # make one readset object for each path described in reads_file (which can contain glob chars):
-        scalars=scalar_values(yml)
+        scalars=scalar_values(yml)      # select scalar values from yml
         scalars['filename']=filename
         try: del scalars['reads_dir']        # otherwise the constructor will barf
         except KeyError: pass
 
         readset_objs=[]
         for reads_file in re.split('[\s,]+',yml['reads_file']):
-            path=os.path.join(reads_dir,reads_file)
-#            print "path is %s" % path
-            rlist=glob.glob(path)
+            path=os.path.join(reads_dir,reads_file) # build the full path
+            path=evoque_template(path, self.__dict__, root_dir=RnaseqGlobals.root_dir())
+            rlist=glob.glob(path)       # get all glob matches
             for rf in rlist:
                 rsd=scalars.copy()
                 rsd['reads_file']=rf
@@ -143,31 +173,38 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
                 readset_objs.append(rs)
 
         if len(readset_objs)==0:
-            raise ConfigError("%s: no matches for %s" % (filename, yml['reads_file']))
+            raise ConfigError("%s: no matches for %s" % (filename, os.path.join(reads_dir,yml['reads_file']))) # 
         return readset_objs
 
+    # Does this handle paired-end or multiple filenames?
     def resolve_reads_file(self,filename=None):
-#        print "resolve_reads_file: self is %s" % yaml.dump(self)
+        try:
+            reads_file=self.reads_file
+            if reads_file == None:
+                raise ConfigError("no reads_file")
+        except: 
+            raise ConfigError("no reads_file")
+
+        
         try:
             reads_dir=self.reads_dir
-            reads_file=self.reads_file
             if (os.path.isabs(reads_file)):
                 raise ConfigError("%s: reads_file (%s) cannot be absolute in presence of reads_dir (%s)" % (filename, reads_file, reads_dir))
             self.reads_file=os.path.join(reads_dir, reads_file)
-#            self['reads_file']=self.reads_file
-            return self
+
         except AttributeError as e:
-#            print "attribute error: %s" % e
             self.reads_dir=os.getcwd()
-#            print "reads_dir(cwd) is %s" % self.reads_dir
-#            self['reads_dir']=self.reads_dir
-            return self
+            self.reads_file=os.path.join(self.reads_dir, reads_file)
+
+        return self
 
 
     def verify_paired_end_filenames(self):
         '''for paired end reads, verify self.reads_file defines exactly two files'''
         # Return if self.paired_end not defined or if set to false
-        try: return self if not self.paired_end
+        try:
+            if not self.paired_end:
+                return self
         except AttributeError: return self 
 
         # reads_file can be comma separated list or file glob
@@ -199,11 +236,18 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
                 working_dir=os.path.dirname(reads_file)
             elif os.path.isabs(working_dir):
                 pass                    # working_dir remains the same
+            elif working_dir=='timestamp':
+                ts=time.strftime(Readset.wd_time_format)
+                working_dir=os.path.join(os.path.dirname(reads_file),ts)
             else:                      
                 working_dir=os.path.join(os.path.dirname(reads_file),working_dir)
+                
         else:                           # reads_file is relative
             if working_dir==None:
                 working_dir=os.path.join(os.getcwd(),os.path.dirname(reads_file))
+            elif working_dir=='timestamp':
+                ts=time.strftime(Readset.wd_time_format)
+                working_dir=os.path.join(os.getcwd(),os.path.dirname(reads_file),ts)
             elif os.path.isabs(working_dir):
                 pass
             else:
@@ -213,6 +257,8 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
         return self
 
     # set self.ID and self.id
+    # must be called *after* self.resolve_working_dir()
+    # returs self
     def set_ID(self, *ID):
         # try to assign self.ID from ID[0], which might not be there:
         try: self.ID=ID[0]
@@ -227,8 +273,11 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
         except AttributeError: 
             self.ID=os.path.join(self.working_dir,os.path.basename(self.reads_file)) # self.ID didn't exist
 
+        self['ID']=self.ID              # god dammit
+
         # set self.id as 
         self.id=os.path.basename(self.ID)
+        self['id']=self.id
         return self
                 
 

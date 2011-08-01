@@ -1,9 +1,11 @@
 org: human
 readlen: 101
-reads_dir: /proj/hoodlab/share/vcassen/rna-seq/qiang_data
+reads_dir: ${root_dir}/t/fixtures/readsets
 working_dir: rnaseq
 format: fq
-paired_reads: True
+paired_end: True
+bowtie_index: /proj/hoodlab/share/programs/bowtie-indexes
+ensembl: /proj/hoodlab/share/programs/Ensembl
 
 reads_file: s_1_1_sequence.txt, s_1_2_sequence.txt
 ID: s_1

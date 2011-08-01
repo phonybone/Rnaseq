@@ -9,3 +9,12 @@ class preprocess(Step):
         self.interpreter='perl'
         self.exe='preprocessReads.pl'
 
+    def usage(self, context):
+        script='''
+perl ${programs}/preprocessReads.pl ${args} -i ${inputs[0]} -o ${ID}.pre
+'''
+        return script
+
+    def output_list(self):
+        return '${ID}.pre'
+        

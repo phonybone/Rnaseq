@@ -3,33 +3,21 @@ description: Juan's pipeline (text filters only)
 stepnames: header export2fq filterQuality filterLowComplex ribosomal_mit remove_erccs
 
 header: 
-  pass:
+  inputs: readset
 
 export2fq:
-  input: ${readset.reads_file}
-  output: ${ID}.${align_suffix}
+  inputs: header
 
 filterQuality:
-  input: ${ID}.${align_suffix}
-  output: ${ID}.qual_OK.${align_suffix}
-  filtered: ${ID}.bowtie_qual_BAD.${align_suffix}
-  args: -v
+  inputs: export2fq
 
 filterLowComplex:
-  input: ${ID}.qual_OK.${align_suffix}
-  output: ${ID}.complex_OK.${align_suffix}
-  filtered: ${ID}.bowtie_complex_BAD.${align_suffix}
-  args: -v
+  inputs: export2fq
 
 ribosomal_mit:
-  input: ${ID}.complex_OK.${align_suffix}
-  output: ${ID}.riboMT_OK.${align_suffix}
-  filtered: ${ID}.bowtie_riboMT_BAD.sam
-  psl: ${ID}.blat_riboMT_BAD.psl
+  inputs: export2fq
 
 remove_erccs:
-  input: ${ID}.riboMT_OK.${align_suffix}
-  output: ${ID}.ercc_OK.${align_suffix}
-  filtered: ${ID}.bowtie_ercc_BAD.sam
-  psl: ${ID}.blat_ercc_BAD.psl
+  inputs: export2fq
+
 

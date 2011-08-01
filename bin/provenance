@@ -23,7 +23,8 @@ from RnaseqGlobals import RnaseqGlobals
 
 def main():
     usage="usage: %s <cmd> <args> [opts]"
-    argv=RnaseqGlobals.initialize(usage)       # not to be confused with sys.argv
+    testing='-d' in sys.argv
+    argv=RnaseqGlobals.initialize(usage, testing=testing)       # not to be confused with sys.argv
 
     try:
         cmd=argv[1]
@@ -34,7 +35,6 @@ def main():
     cmd=cf.new_cmd(cmd)
 
     cmd.run(argv, config=RnaseqGlobals.config)
-    print "\ndone"
 
 ########################################################################
 

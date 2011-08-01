@@ -8,3 +8,8 @@ class repeats_consensus(align_filter):
         self.description='remove repeats'
         self.ewbt='human_RepBase15.10'
         self.blat_index='human_RepBase15.10.2bit'
+
+    def output_list(self):
+        return ['${ID}.repeats_BAD.${format}']
+
+    

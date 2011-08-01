@@ -1,7 +1,11 @@
 #-*-python-*-
 from warn import *
 
-class Command:
+class Command(object):
+    def __init__(self):
+        self.readsets=[]
+        self.pipelines={}               # k=readset, as above; v=pipeline for that readset
+        
     def run(self):
         raise ProgrammerGoof(str(self.__class__)+".run not implemented (abstract method)")
 

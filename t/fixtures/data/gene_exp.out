@@ -1,0 +1,10 @@
+
+****************************************************************
+starting gene_exp
+Fri Jul 29 16:03:17 PDT 2011
+
+header: /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/fixtures/data/gene_exp.diff.1K created
+extract_significant: /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/fixtures/data/gene_exp.diff.1K.significant created
+sort_by_name: /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/fixtures/data/gene_exp.diff.1K.sorted.name created
+sort_by_sample: /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/fixtures/data/gene_exp.diff.1K.sorted.sample created
+gene_exp done

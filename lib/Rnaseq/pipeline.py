@@ -2,19 +2,19 @@
 
 # step_object version
 
-import sys, yaml, re, time, os, re
+import sys, yaml, re, os, re
 
-from step import *
-from warn import *
-from dict_like import *
-from templated import *
+from Rnaseq import *
+from step_run import *                  # why isn't this already included in above line???
+from step_factory import *
 from RnaseqGlobals import RnaseqGlobals
-from pipeline_run import *
-from step_run import *
 import path_helpers
 from sqlalchemy import *
-from sqlalchemy.orm import mapper
+from sqlalchemy.orm import mapper, relationship, backref
 from hash_helpers import obj2dict
+
+from pipeline_run import PipelineRun
+from context import Context
 
 class Pipeline(templated):
     def __init__(self,*args,**kwargs):
@@ -22,11 +22,11 @@ class Pipeline(templated):
         self.type='pipeline'
         self.suffix='syml'
         self.steps=[]
-        self._ID=None
         self.step_exports={}
-        
-    wd_time_format="%d%b%y.%H%M%S"
+        assert self.readset
+        assert self.readset.__class__.__name__=='Readset'
 
+        
     def __str__(self):
         return "%s" % self.name
 
@@ -60,6 +60,8 @@ class Pipeline(templated):
 
     # return the step after the given step (by name), or None if not found:
     def step_after(self,stepname):
+        if stepname==None:
+            return self.steps[0]
         prev_step=self.steps[0]
         for step in self.steps[1:]:
             if prev_step.name==stepname: return step
@@ -70,29 +72,32 @@ class Pipeline(templated):
         l=[s.name for s in self.steps]
         return l
 
-
+    ########################################################################
+    # load all the steps
+    # return self
     def load_steps(self):
         self.load_template()            # this barfs (in ID()) if no self.readset
 
         try:
             self.stepnames=re.split('[,\s]+',self['stepnames'])
-        except AttributeError as ae:
+        except AttributeError:
             raise ConfigError("pipeline %s does not define stepnames" % self.name)
 
-        # start here
+        # 
+        step_factory=StepFactory(self)
         errors=[]
         for stepname in self.stepnames:
-            step=self.new_step(stepname)
+            step=step_factory.new_step(stepname)
             if not stepname in self:
                 errors.append("missing step section for '%s'" % stepname)
                 continue
-            self.fix_step_hash(step)
             step.update(self[stepname])
             self.steps.append(step)
         
+        errors.extend(self.convert_io())
+
         # Check to see that the list of step names and the steps themselves match; dies on errors
         errors.extend(self.verify_steps()) 
-        errors.extend(self.verify_continuity())
         errors.extend(self.verify_exes())
         if len(errors)>0:
             raise ConfigError("\n".join(errors))
@@ -101,36 +106,10 @@ class Pipeline(templated):
 
 
     
-    # run all step hashes through evoque if they still have ${} constrcuts:
-    def fix_step_hash(self,step):
-        try: step_hash=self[step.name]
-        except: return
-        
-        domain=Domain(os.getcwd())
-        print_flag=False
-        for attr,value in step_hash.items():
-            if type(value) != type(''): continue
-            if not re.search('\$\{', value): continue
-            #print_flag=True
-            vars=evoque_dict()
-            vars.update(self.readset)
-            vars.update(step)
-            vars.update(self.step_exports)
-
-            domain.set_template(attr, src=value)
-            tmpl=domain.get_template(attr)
-            value=tmpl.evoque(vars)
-            step_hash[attr]=value
-
-        if print_flag:
-            print "%s: fixed step_hash is %s" % (step.name, step_hash)
-            
-        self[step.name]=step_hash
-
+    ########################################################################
     def load_template(self):
         vars={}
         vars.update(self.dict)
-        #vars.update(self.readset)       # why not?
         vars.update(RnaseqGlobals.config)
         vars['ID']=self.ID()
 
@@ -158,11 +137,14 @@ class Pipeline(templated):
 
 
 
+    ########################################################################
     # return an entire shell script that runs the pipeline
     def sh_script(self, **kwargs):
 
         script="#!/bin/sh\n\n"
-
+        session=RnaseqGlobals.get_session()
+        
+        # determine if provenance is desired:
         try:
             pipeline_run=kwargs['pipeline_run']
             step_runs=kwargs['step_runs']
@@ -172,28 +154,32 @@ class Pipeline(templated):
             
         # create auxillary steps:
         if include_provenance:
-            pipeline_start=self.new_step('pipeline_start',pipelinerun_id=pipeline_run.id)
-            pipeline_start.next_steprun_id=step_runs[self.steps[0].name].id
-            mid_step=self.new_step('mid_step', pipeline_run_id=pipeline_run.id)
-            pipeline_end=self.new_step('pipeline_end', pipelinerun_id=pipeline_run.id)
-            script+=pipeline_start.sh_script()
+            step_factory=StepFactory(self)
+            pipeline_start=step_factory.new_step('pipeline_start',
+                                                 pipeline_run_id=pipeline_run.id,
+                                                 step_run_id=None,
+                                                 next_step_run_id=self.context.step_runs[self.steps[0].name].id)
+            mid_step=step_factory.new_step('mid_step', pipeline_run_id=pipeline_run.id)
+            pipeline_end=step_factory.new_step('pipeline_end', pipelinerun_id=pipeline_run.id,
+                                               step_run_id=None, next_step_run_id=None)
+            script+=pipeline_start.sh_script(self.context)
 
+        # iterate through steps; 
         errors=[]
         for step in self.steps:
             try:
                 if step.skip:
-                    print "skipping step %s" % step.name
+                    print "skipping step %s (already current)" % step.name
                     continue  # in a try block in case step.skip doesn't even exist
             except:                     # really? step.skip doesn't exist, so assume it's True???
                 pass
                 
             
-            # actual step
-            script+="# %s\n" % step.name
-            try: step_script=step.sh_script(echo_name=True)
+            # append step.sh_script(self.context)
+            try: step_script=step.sh_script(self.context, echo_name=True)
             except Exception as e:
                 errors.append("%s: %s" % (step.name,str(e)))
-                print "Exception in pipeline.sh_script(%s): %s (%s)" % (step.name, e, type(e))
+                errors.append("Exception in pipeline.sh_script(step %s): %s (%s)" % (step.name, e, type(e)))
                 continue
 
             script+=step_script
@@ -207,138 +193,54 @@ class Pipeline(templated):
                     step_run=step_runs[step.name]
                     step_run.cmd=step_script
                     mid_step.stepname=step.name
-                    mid_step.steprun_id=step_run.id
-                    next_step=self.stepAfter(step.name)
-                    try:
-                        mid_step.next_steprun_id=step_runs[self.stepAfter(step.name).name].id # sheesh
-                    except:
-                        mid_step.next_steprun_id=0
-                    script+=mid_step.sh_script()
+                    mid_step.step_run_id=step_run.id
+                    next_step=self.step_after(step.name)
+                    if next_step:
+                        mid_step.next_step_run_id=self.context.step_runs[next_step.name].id
+                    else:
+                        mid_step.next_step_run_id=0
+                        
+                    script+=mid_step.sh_script(self.context)
 
             if RnaseqGlobals.conf_value('verbose'):
                 print "step %s added" % step.name
 
+        # record finish:
+        if include_provenance:
+            pipeline_end.last_step_id=step_runs[self.steps[-1].name].id
+            script+=pipeline_end.sh_script(self.context)
+
+        # check for continuity and raise exception on errors:
+        errors.extend(self.verify_continuity(self.context))
         if len(errors)>0:
             raise ConfigError("\n".join(errors))
             
-        # record finish:
-        if include_provenance:
-            script+=pipeline_end.sh_script()
+
+        session.commit()
 
         return script
 
+    ########################################################################
+    
+    # combine working_dir, self.name, and readset.label to form the script filename:
     def scriptname(self):
-        reads_file_root=os.path.splitext(os.path.basename(self.readset.reads_file))[0]
-        return path_helpers.sanitize(self.name+'.'+reads_file_root)+".sh"
+        return path_helpers.sanitize(os.path.join(self.working_dir(), '.'.join([self.name, self.readset.label, 'sh'])))
 
-    # get the working directory for the pipeline.
-    # first ,check to see if the readset defines a working_dir
-    # second, see if the pipeline itself defines a pipeline (it shouldn't)
-    # each of the first two can be a directory, or a "policy".
-    # valid policies include "timestamp" (and nothing else, for the moment)
-    # fixme: add a check to see if a label is defined (in the readset).
-    # If nothing found, use default found in config file under "default_working_dir"
     def working_dir(self):
         return self.readset.working_dir
 
-    def working_dir_obsolete(self,*args):
-        try: self['working_dir']=args[0]
-        except IndexError: pass
 
-        
-        # (try to) get the base dir from the readset:
-        try:
-            readset=self.readset
-            readsfile=readset.reads_file
-            base_dir=os.path.dirname(readsfile)
-        except KeyError as ke:
-            raise UserError("Missing key: "+ke) # fixme: UserError?  really?
-
-        # see if self['working_dir'] is defined
-        try:
-            wd=os.path.join(base_dir, self['working_dir'])
-            return wd
-        except KeyError as ie:
-            pass
-
-        # see if the readset defines a working_dir:
-        try:
-            wd=os.path.join(base_dir, readset['working_dir'])
-            return wd
-        except KeyError as ie:
-            pass
-
-        # nothing found: generate a working_dir from a timestamp:
-        default='rnaseq_'+time.strftime(self.wd_time_format)
-        return os.path.join(base_dir, default)
-
-
-
-    # Determine the path of the working reads file.  Path will be
-    # a combination of a working_directory and the basename of the
-    # readsfile.  Final value will depend on whether the reads file
-    # or the specified working directory are relative or absolute.
-    # fixme: why doesn't this call self.readset.working_dir anywhere?
     def ID(self):
         return self.readset.ID
     
-    def ID_obsolete(self):
-        try: reads_file=self.readset.reads_file
-        except KeyError: return '${ID}' # defer until later???
-        except AttributeError as ae:
-            if re.search("'Pipeline' object has no attribute 'readset'", str(ae)): return '${ID}'
-            else:
-                print "ae is %s" % str(ae)
-                raise ae
 
-        if re.search('[\*\?]', reads_file):
-            raise ProgrammerGoof("%s contains glob chars; need to expand readset.path_iterator()" % reads_file)
-
-        # try a few different things to get the working directory:
-        try:
-            wd=self.readset['working_dir']
-            if (wd=='wd_timestamp'): wd='rnaseq_'+time.strftime(self.wd_time_format)
-            #print "1. wd is %s" % wd
-            
-        except KeyError:
-            try:
-                wd=self['working_dir']
-                if (wd=='wd_timestamp'): wd='rnaseq_'+time.strftime(self.wd_time_format)
-                #print "2. wd is %s" % wd
-
-            except KeyError:
-                if os.path.isabs(reads_file):
-                    wd=os.path.dirname(reads_file)
-                    #print "3. wd is %s" % wd
-                elif RnaseqGlobals.conf_value('rnaseq','wd_timestamp') or \
-                     ('wd_timestamp' in self.dict and \
-                      self.dict['wd_timestamp']): # -and isn't set to False
-                    wd='rnaseq_'+time.strftime(self.wd_time_format)
-                    #print "4. wd is %s" % wd
-                
-                else:
-                    wd=os.getcwd()
-                    #print "5. wd is %s" % wd
-
-        if os.path.isabs(wd):
-            id=os.path.join(wd,os.path.basename(reads_file)) #
-            #print "6. id is %s" % id
-        elif os.path.isabs(reads_file):
-            id=os.path.join(os.path.dirname(reads_file), wd, os.path.basename(reads_file))
-            #print "7. id is %s" % id
-        else:
-            id=os.path.join(os.getcwd(), wd, os.path.basename(reads_file))
-            #print "8. id is %s" % id
-
-        #self._ID=id
-        #print "ID() returning %s" % id
-        return id
-        
-
-
+    ########################################################################
     #  check to see that all defined steps are listed, and vice verse:
     def verify_steps(self):
         errors=[]
+        # attempt to get a list stephashs from self's dict by selecting everything that's not a
+        # string, int, or float.  Fixme: why not just select for type(t[1])==type({})???
+        
         l=[t[0] for t in self.items() if type(t[1])!=type('') and type(t[1])!=type(1) and type(t[1])!=type(1.0)]
         a=set(l)
 
@@ -359,43 +261,34 @@ class Pipeline(templated):
         return errors
 
 
+    ########################################################################
     # check to see that all inputs and outputs connect up correctly and are accounted for
     # outputs also include files defined by "create"
-    def verify_continuity(self):
+    def verify_continuity(self, context):
         step=self.steps[0]
         errors=[]
         dataset2stepname={}
         
         # first step: check that inputs exist on fs, prime dataset2stepname:
-        for input in step.inputs():
+        for input in context.inputs[step.name]:
             if not os.path.exists(input):
                 errors.append("missing inputs for %s: %s" % (step.name, input))
-        for output in step.outputs():
+        for output in context.outputs[step.name]:
             dataset2stepname[output]=step.name
-        for created in step.creates():
-            dataset2stepname[created]=step.name
-            if RnaseqGlobals.conf_value('verbose'):
-                print "added %s" % created
 
         # subsequent steps: check inputs exist in dataset2stepname, add outputs to dataset2stepname:
         for step in self.steps[1:]:        # skip first step
-            #print "%s: dataset2stepname:" % step.name
-            for k,v in dataset2stepname.items():
-                pass
-                #print "%s: %s\n" % (v,k)
-            #print ""
-
-            for input in step.inputs():
+            for input in context.inputs[step.name]:
                 if input not in dataset2stepname and not os.path.exists(input):
                     errors.append("pipeline '%s':\n  input %s \n  (in step '%s') is not produced by any previous step and does not currently exist" % (self.name, input, step.name))
-            for output in step.outputs():
+            for output in context.outputs[step.name]:
                 dataset2stepname[output]=step.name
-            for created in step.creates():
-                dataset2stepname[created]=step.name
 
         return errors
             
+            
 
+    ########################################################################
     def verify_exes(self):
         dirs=RnaseqGlobals.conf_value('rnaseq', 'path').split(":")
         dirs.extend([os.path.join(RnaseqGlobals.conf_value('rnaseq','root_dir'),'programs')])
@@ -422,6 +315,7 @@ class Pipeline(templated):
         return path_helpers.sanitize(os.path.join(self.readset.working_dir, "%s.err" % self.name))
         
 
+    ########################################################################
     # create the qsub script using a template:
     def qsub_script(self, script_filename, out_filename=None, err_filename=None):
         if out_filename==None: out_filename=self.out_filename()
@@ -444,7 +338,6 @@ class Pipeline(templated):
 
     
     ########################################################################
-
     # lookup self in db; if not found, store.  Same for all steps.
     def store_db(self):
         session=RnaseqGlobals.get_session()
@@ -458,41 +351,8 @@ class Pipeline(templated):
         return self
         
 
-########################################################################
 
-    def new_step(self, stepname, **kwargs):
-        try:
-            mod=__import__('Rnaseq.steps.%s' % stepname)
-        except ImportError as ie:
-            raise ConfigError("error loading step '%s': %s" % (stepname, str(ie)))
-        
-        mod=getattr(mod,"steps")
-
-        try:
-            mod=getattr(mod,stepname)
-            kls=getattr(mod,stepname)            
-        except AttributeError as ae:
-            raise ConfigError("step %s not defined: "+str(ae))
-
-        # add items to kwargs:
-        kwargs['pipeline']=self
-        kwargs['readset']=self.readset
-        step=kls(**kwargs)
-        
-        # If the step defines an attribute named export (fixme: and it's a list),
-        # copy the step's exorted attributes to the pipeline:
-        if hasattr(step,'export'):
-            try:
-                for attr in step.export:
-                    attr_val=getattr(step,attr)
-                    setattr(self,attr,attr_val)
-                    self.step_exports[attr]=attr_val
-            except AttributeError as ae:
-                raise ConfigError("step %s tries to export missing attr '%s'" % (step.name, attr))
-        
-        return step
-
-
+    ########################################################################
     # return a tuple containing a pipeline_run object and a dict of step_run objects (keyed by step name):
     def make_run_objects(self, session):
         self.store_db()
@@ -503,9 +363,6 @@ class Pipeline(templated):
         except AttributeError as ae:
             raise UserError("No label defined.  Please specify a label for the pipeline run, either in the readset or using the '--label' command line option")
 
-        # check uniqueness of label (not):
-        #self.check_label_unique(session, label)
-        
         pipeline_run=PipelineRun(pipeline_id=self.id,
                                  status='standby',
                                  input_file=self.readset.reads_file,
@@ -515,26 +372,35 @@ class Pipeline(templated):
 
         session.add(pipeline_run)
         session.commit()                # we need the pipelinerun_id below
-
+        self.context.pipeline_run_id=pipeline_run.id
+        RnaseqGlobals.set_conf_value('pipeline_run_id',pipeline_run.id)
+        #print "new pipeline_run.id: %d" % pipeline_run.id
+        
         # create step_run objects:
         step_runs={}
         for step in self.steps:
+            if step.is_prov_step: continue
             step_run=StepRun(step_name=step.name, pipeline_run_id=pipeline_run.id, status='standby')
-            for output in step.outputs():
+            for output in step.output_list():
+                output=evoque_template(output, step, self.readset)
                 step_run.file_outputs.append(FileOutput(path=output))
 
             if step.skip:               # as set by self.set_steps_current()
                 print "step %s is current, skipping" % step.name
                 step_run.status='skipped'
+                step_run.success=True
 
-            session.add(step_run)
             pipeline_run.step_runs.append(step_run)
+            #session.add(step_run)
+            session.commit()
+            pipeline_run.step_runs.append(step_run) # maintains list in db as well
             step_runs[step.name]=step_run
-        session.commit()                # we need the pipelinerun_id below
+            self.context.step_runs[step.name]=step_run
 
         return (pipeline_run, step_runs)
 
 
+    ########################################################################
     # check uniqueness of label:
     def check_label_unique(self, session, label):
         other_pr=session.query(PipelineRun).filterBy(label=label).first()
@@ -547,93 +413,90 @@ class Pipeline(templated):
 
         
 
+    ########################################################################
     # for each step, set an attribute 'skip' indicating whether or not to skip the step when creating the sh script:
     # fixme: convoluted logic, needs testing!
     def set_steps_current(self, global_force=False):
         force_rest=False
+        try: debug=os.environ['DEBUG']
+        except: debug=False
         
         for step in self.steps:
-#            print "%s.is_current=%s" % (step.name, step.is_current())
             skip=not (global_force or step.force or force_rest) and step.is_current()
             setattr(step, 'skip', skip)
-#            print "%s.skip is %s" % (step.name, step.skip)
 
             # once one step is out of date, all following steps will be, too:
             if not step.skip and not step.force:
                 force_rest=True
-                #print "step %s setting force_rest to True" % step.name
-
-    
-
+                if debug:
+                    print "pipeline: step %s not current, adding all following steps" % step.name
 
 
-########################################################################
-# Dead code:
-########################################################################
-    # read in the (s)yml file that defines the pipeline, passing the contents the evoque as needed.
-    # load in all of the steps (via a similar mechanism), creating a list in self.steps
-    # raise errors as needed (mostly ConfigError's)
-    # returns self
-    def load_obsolete(self):
-        vars={}
-        if hasattr(self,'dict'): vars.update(self.dict)
-        if hasattr(self, 'readset'): vars.update(self.readset)
-        vars.update(RnaseqGlobals.config)
-        vars['ID']=self.ID()
-        ev=evoque_dict()
-        ev.update(vars)
-        templated.load(self, vars=ev, final=False)
-        
-        # load steps.  (We're going to replace the current steps field, which holds a string of stepnames,
-        # with a list of step objects.
-        # fixme: explicitly add header and footer steps; 
+    ########################################################################
+    # convert the pipeline's depiction of a step's inputs into an array of input names:
+    # Note: the inputs to a step (noted here as 'inputs') are supposed to be the outputs of a previous step.
+    # for this function, everything is in the context of the step denoted by 'stepname'
+    # called by context.load_io().
+    # returns the updated context object.
+    def convert_io(self):
+        context=Context(self.readset)
+        debug='DEBUG' in os.environ
 
-        try:
-            self.stepnames=re.split('[,\s]+',self['stepnames'])
-        except AttributeError as ae:
-            raise ConfigError("pipeline %s does not define stepnames" % self.name)
-            
-        self.steps=[]                   # resest, just in case
-        for sn in self.stepnames:
-            step=Step(name=sn, pipeline=self)
-            assert step.pipeline==self
-            # load the step's template and self.update with the values:
-            try:
-                vars={}
-                vars.update(self.dict)
-                vars.update(RnaseqGlobals.config)
-                vars['ID']=self.ID()
-                step.load(vars=vars)
-            except IOError as ioe:      # IOError??? Where does this generate an IOError?
-                raise ConfigError("Unable to load step %s" % sn, ioe)
-            step.merge(self.readset)
-
-            # add in items from step sections in <pipeline.syml>
-            try:
-                step_hash=self[step.name]
-            except Exception as e:
-                raise ConfigError("Missing section: '%s' is listed as a step name in %s, but section with that name is absent." % \
-                                  (step.name, self.template_file()))
-                                  
-            #print "%s: step_hash is %s" % (step.name, step_hash)
-
-            try:
-                step.update(step_hash)
-            except KeyError as e:
-                raise ConfigError("no %s in\n%s" % (step.name, yaml.dump(self.__dict__)))
-
-            self.steps.append(step)
-            
-
-        # Check to see that the list of step names and the steps themselves match; dies on errors
         errors=[]
-        errors.extend(self.verify_steps())
-        errors.extend(self.verify_continuity())
-        errors.extend(self.verify_exes())
-        if len(errors)>0:
-            raise ConfigError("\n".join(errors))
-        
-        return self
+        for step in self.steps:
+            if debug: print "convert_io: step is %s" % step.name
+            
+            try: stephash=self[step.name]
+            except KeyError: errors.append("In pipeline '%s', step %s has no defining section" % (self.name, step.name))
 
-                
+            # get this out of the way now:
+            context.outputs[step.name]=step.output_list()
+            
+            # get the input specifier from the stephash; if not listed, assume no inputs, set outputs according to step, and continue:
+            try: inputs=stephash['inputs']
+            except KeyError:
+                context.inputs[step.name]=[]
+                if debug: print "no inputs for step '%s', skipping" % step.name
+                continue
+
+            names=re.split('[\s,]+', inputs)
+            input_list=[]
+            for term in names:
+                mg=re.search('(\w+)(\[\d+\])?$', term)
+                if mg==None:
+                    errors.append("%s: malformed input term" % term)
+
+                output_step=mg.group(1)
+                index=mg.group(2)      # can be None
+
+                # get the source of the inputs; can be the readset or the output of another step:
+                if output_step == 'readset':
+                    outputs=[self.readset.reads_file]
+                    if debug: print "  %s: getting outputs from readset" % step.name
+
+                else:
+                    try: outputs=context.outputs[output_step]
+                    except KeyError:
+                        if debug: print "context is %s" % yaml.dump(context)
+                        raise ConfigError("pipeline %s: unknown step '%s' for inputs '%s'" % (self.name, output_step, step.name))
+            
+                if index == None:
+                    input_list.extend(outputs)
+                else:
+                    index=int(re.sub('[[\]]','',index))
+                    try:
+                        input_list.append(outputs[index])
+                    except IndexError:
+                        raise ConfigError("step %s: outputs '%s': index %d out of range" % (step.name, outputs, index))
+
+            context.inputs[step.name]=input_list
+
+        self.context=context
+        return errors
+
+
+
+
 #print "%s checking in: Pipeline.__name__ is %s" % (__file__,Pipeline.__name__)
+
+

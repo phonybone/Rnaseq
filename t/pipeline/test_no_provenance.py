@@ -11,13 +11,13 @@ class TestInputs(unittest.TestCase):
         RnaseqGlobals.set_conf_value('silent',True)
         template_dir=RnaseqGlobals.abs_dir('testing', 'template_dir')
         templated.template_dir=template_dir
-        self.readset=Readset(reads_file=os.path.abspath(__file__+'/../../readset/s_1_export.txt'))
+
+        readset_file=RnaseqGlobals.root_dir()+'/t/fixtures/readsets/paired1.syml'
+        self.readset=Readset.load(filename=readset_file)[0]
+
         self.pipeline=Pipeline(name='filter', readset=self.readset)
 
-class TestListExpansion(TestInputs):
-    def runTest(self):
-        reads_path=self.readset.path_iterator()[0]
-        self.readset['reads_file']=reads_path
+    def test_list_expansion(self):
         pipeline=Pipeline(name='filter', readset=self.readset)            
         pipeline.load_steps()
         script=pipeline.sh_script(force=True) # neglecting to add pipeline_run or step_runs should exclude checks
@@ -35,6 +35,6 @@ class TestListExpansion(TestInputs):
 
 
 
-if __name__=='__main__':
-    unittest.main()
+suite = unittest.TestLoader().loadTestsFromTestCase(TestInputs)
+unittest.TextTestRunner(verbosity=2).run(suite)
 

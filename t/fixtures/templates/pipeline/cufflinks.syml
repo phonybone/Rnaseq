@@ -1,0 +1,53 @@
+name: cufflinks
+stepnames: header, filterQuality, filterLowComplex, filterVectors, ribosomal_mit, remove_erccs, repeats_consensus, equalize, bowtie, bowtie2bam, samtool_copy, cufflinks, footer
+
+header:
+  name: header
+
+filterQuality:
+  name: filterQuality
+  inputs: header
+
+filterLowComplex:
+  name: filterLowComplex
+  inputs: header
+
+filterVectors:
+  name: filterVectors
+  inputs: header
+
+ribosomal_mit:
+  name: ribosomal_mit
+  inputs: header
+
+remove_erccs:
+  name: remove_erccs
+  inputs: header
+
+repeats_consensus:
+  name: repeats_consensus
+  inputs: header
+
+equalize:
+  name: equalize
+  inputs: filterQuality, filterLowComplex, filterVectors, ribosomal_mit, remove_erccs, repeats_consensus
+
+bowtie:
+  name: bowtie
+  inputs: equalize
+  ewbt: hg19
+
+bowtie2bam:
+  name: bowtie2bam
+  inputs: bowtie
+
+samtool_copy:
+  name: samtool_copy
+  inputs: bowtie2bam
+
+cufflinks:
+  name: cufflinks
+  inputs: bowtie2bam
+
+footer:
+  name: footer

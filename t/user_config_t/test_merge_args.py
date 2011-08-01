@@ -11,14 +11,14 @@ class TestSetup(unittest.TestCase):
         RnaseqGlobals.set_conf_value('silent',True)
         template_dir=RnaseqGlobals.abs_dir('testing', 'template_dir')
         templated.template_dir=template_dir
-        self.readset=Readset(reads_file=os.path.abspath(__file__+'/../../readset/s_1_export.txt'))
+        readset_file=os.path.join(RnaseqGlobals.root_dir(),'t','fixtures','readsets','readset1.syml')
+        self.readset=Readset.load(readset_file)[0]
 
         self.pipeline=Pipeline(name='filter', readset=self.readset)
         self.pipeline.load_steps()
 
-class TestMergePipeline(TestSetup):
-    def runTest(self):
-        filename=os.path.abspath(os.path.dirname(__file__)+'/user_config.yml')
+    def test_merge_pipeline(self):
+        filename=os.path.join(RnaseqGlobals.root_dir(),'t','user_config_t','user_config.yml')
         user_config=UserConfig().read(filename)
 
         # check that we read in a list of merge-blocks under 'pipeline_runs':
@@ -34,7 +34,7 @@ class TestMergePipeline(TestSetup):
 
         # Check to see that a step parameter takes:
         self.assertEqual(pipeline_args['remove_erccs']['aligner'], 'blat')
-        re_step=pipeline.stepWithName('remove_erccs')
+        re_step=pipeline.step_with_name('remove_erccs')
         self.assertEqual(re_step.aligner(), 'blat')
 
         # Generate the step's sh_script, and see if it matches the expected (fixme: fragile test)
@@ -127,7 +127,5 @@ perl /proj/hoodlab/share/vcassen/rna-seq/rnaseq/bin/removeBlatHit.pl /proj/hoodl
         #self.assertEqual(script[0:i],expected_script[0:i])
         #self.assertEqual(len(script),len(expected_script))
 
-if __name__=='__main__':
-    unittest.main()
-
-        
+suite = unittest.TestLoader().loadTestsFromTestCase(TestSetup)
+unittest.TextTestRunner(verbosity=2).run(suite)

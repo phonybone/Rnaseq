@@ -4,3 +4,4 @@ org: mouse
 readlen: 75
 working_dir: rnaseq_wf
 label: rel_glob
+format: txt
