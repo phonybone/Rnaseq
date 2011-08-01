@@ -18,25 +18,20 @@ class TestCreate(unittest.TestCase):
         readset_file=RnaseqGlobals.root_dir()+"/t/fixtures/readsets/readset1.syml"
         self.readset=Readset.load(readset_file)[0]
         self.pipeline=Pipeline(name='juan', readset=self.readset).load_steps()
-        self.session=RnaseqGlobals.get_session()
+        session=RnaseqGlobals.get_session()
 
         # delete all pre-existing pipeline objects from the db:
-        plist=self.session.query(Pipeline)
+        plist=session.query(Pipeline)
         for p in plist:
-            self.session.delete(p)
-        self.session.commit()
-
-        # don't need to call this; RnaseqGlobals takes care of it (right?)
-        # Pipeline.create_table(RnaseqGlobals.metadata, RnaseqGlobals.engine)
-        # print "Pipeline table created"
-        
+            session.delete(p)
+        session.commit()
 
     def test_pipeline_id(self):
         pipeline=self.pipeline
         try: id=pipeline.id 
         except AttributeError: self.assertTrue(True)
             
-        session=self.session
+        session=RnaseqGlobals.get_session()
         
 
         session.add(pipeline)
