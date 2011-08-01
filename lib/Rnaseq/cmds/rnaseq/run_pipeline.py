@@ -52,6 +52,7 @@ class RunPipeline(Command):
                     (pipeline_run, step_runs)=pipeline.make_run_objects(session)
                     script_filename=pipeline.write_sh_script(pipeline_run=pipeline_run, step_runs=step_runs)
                 else:
+                    pipeline.store_db()
                     script_filename=pipeline.write_sh_script()
 
                 # if running on the cluster, generate a calling (qsub) script and invoke that;
