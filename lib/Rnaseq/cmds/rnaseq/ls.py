@@ -46,9 +46,10 @@ class Ls(Command):
             self.ls_pipeline(pipeline)
             return
 
-        pipeline_run=session.query(PipelineRun).filter_by(id=pipeline_run_id).first()
+        user=RnaseqGlobals.conf_value('user')
+        pipeline_run=session.query(PipelineRun).filter_by(id=pipeline_run_id, user=user).first()
         if pipeline_run==None:
-            raise UserError("no pipeline run with id=%s" % pipeline_run_id)
+            raise UserError("no pipeline run with id=%s, user=%s" % (pipeline_run_id, user))
         self.ls_pipeline_run(pipeline_run)
 
 
