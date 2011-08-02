@@ -256,7 +256,8 @@ class RnaseqGlobals(object):
     @classmethod
     def set_templated_dir(self):
         from templated import templated # has to be here because it's a class method
-        if self.conf_value('testing'):
+
+        if self.testing:
             template_dir=self.abs_dir('testing', 'template_dir')
         else:
             template_dir=os.path.join(self.root_dir(),'templates')

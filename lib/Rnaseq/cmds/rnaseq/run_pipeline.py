@@ -62,7 +62,7 @@ class RunPipeline(Command):
                 
                 # launch the subprocess and check for success:
                 if not RnaseqGlobals.conf_value('no_run'):
-                    self.launch(cmd, output, err)
+                    self.launch(pipeline, cmd, output, err)
 
                 # report on success if asked:
                 if not RnaseqGlobals.conf_value('no_run') and \
@@ -108,7 +108,8 @@ class RunPipeline(Command):
         return launcher
 
         
-    def launch(self, cmd, output, err):
+    def launch(self, pipeline, cmd, output, err):
+        #print "cmd is %s" % cmd
         pipe=subprocess.Popen(cmd, stdout=output, stderr=err)
         retcode=pipe.wait()
         if cmd[0]=="sh":

@@ -162,17 +162,16 @@ class Step(dict):                     # was Step(templated)
         if self.force: return False
         latest_input=0
         earliest_output=time.time()
-        try: debug=os.environ['DEBUG']
-        except: debug=False
+        verbose=RnaseqGlobals.conf_value('verbose')
         
         for input in self.input_list_expanded():
-            if debug:
+            if verbose:
                 print "%s: input checking %s" % (self.name, input)
             
             try:
                 mtime=os.stat(input).st_mtime
             except OSError as ose:
-                if debug:
+                if verbose:
                     print "%s: returning false due to failed stat: %s" % (self.name, ose)
                 return False            # missing/unaccessible inputs constitute not being current
             
@@ -181,19 +180,19 @@ class Step(dict):                     # was Step(templated)
 
 
         for output in self.output_list_expanded():
-            if debug:
+            if verbose:
                 print "%s: checking output %s" % (self.name, output)
             try:
                 stat_info=os.stat(output)
                 if (stat_info.st_mtime < earliest_output):
                     earliest_output=stat_info.st_mtime
             except OSError as ose:
-                if debug:
+                if verbose:
                     print "%s: returning false on %s" % (self.name, ose)
                 return False            # missing/unaccessible outputs definitely constitute not being current
 
-        if debug:
-            print "final: latest_input is %s, earliest_output is %s" % (latest_input, earliest_output)
+        if verbose:
+            print "%s final: latest_input is %s, earliest_output is %s" % (self.name, latest_input, earliest_output)
         return latest_input<earliest_output
     
 ########################################################################

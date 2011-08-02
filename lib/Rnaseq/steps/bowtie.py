@@ -23,6 +23,10 @@ class bowtie(Step):
         else:
             raise ConfigError("step %s: unknown output bowtie format '%s'" % (self.name, self.output_format))
             
+        if 'bowtie_index' not in self:
+            self.bowtie_index=RnaseqGlobals.conf_value('rnaseq', 'bowtie_index')
+
+
         threads=('--threads %d' % self.threads) if self.threads != 1 else ''
             
         usage='''
