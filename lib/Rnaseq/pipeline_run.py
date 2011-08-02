@@ -9,7 +9,7 @@ from step_run import StepRun
 
 class PipelineRun(object):
     __tablename__='pipeline_run'
-    time_format="%d%b%y %H:%M:%S"
+    time_format="%H:%M:%S %d%b%y"
     def __init__(self, **kwargs):
         for k,v in kwargs.items():
             setattr(self,k,v)

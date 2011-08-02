@@ -11,7 +11,7 @@ class FileOutput(object):
 
 
     __tablename__='file_output'
-    time_format="%d%b%y %H:%M:%S"
+    time_format="%H:%M:%S %d%b%y"
 
     @classmethod
     def create_table(self, metadata, engine):

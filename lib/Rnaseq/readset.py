@@ -10,7 +10,7 @@ from RnaseqGlobals import RnaseqGlobals
 
 class Readset(dict):
     required_attrs=['reads_file', 'label', 'ID']
-    wd_time_format="%d%b%y.%H%M%S"
+    wd_time_format="%H%M%S_%d%b%y"
 
     def __init__(self,*args,**kwargs):
         # if there are any dicts in *args, use them to update self; allows "d={'this':'that'}; r=Readset(d)" construction
