@@ -75,12 +75,12 @@ exit_on_failure()
         else:
             if self.paired_end():
                 link_part='''
-ln -s ${reads_file}_1.${format} ${ID}_1.${format}
-ln -s ${reads_file}_2.${format} ${ID}_2.${format}
+ln -fs ${reads_file}_1.${format} ${ID}_1.${format}
+ln -fs ${reads_file}_2.${format} ${ID}_2.${format}
 '''
             else:
                 link_part='''
-ln -s ${reads_file} ${ID}
+ln -fs ${reads_file} ${ID}
 '''
         template+=link_part
             

@@ -52,6 +52,7 @@ class RunPipeline(Command):
                     (pipeline_run, step_runs)=pipeline.make_run_objects(session)
                     script_filename=pipeline.write_sh_script(pipeline_run=pipeline_run, step_runs=step_runs)
                 else:
+                    pipeline.store_db()
                     script_filename=pipeline.write_sh_script()
 
                 # if running on the cluster, generate a calling (qsub) script and invoke that;
@@ -61,7 +62,7 @@ class RunPipeline(Command):
                 
                 # launch the subprocess and check for success:
                 if not RnaseqGlobals.conf_value('no_run'):
-                    self.launch(cmd, output, err)
+                    self.launch(pipeline, cmd, output, err)
 
                 # report on success if asked:
                 if not RnaseqGlobals.conf_value('no_run') and \
@@ -107,7 +108,8 @@ class RunPipeline(Command):
         return launcher
 
         
-    def launch(self, cmd, output, err):
+    def launch(self, pipeline, cmd, output, err):
+        #print "cmd is %s" % cmd
         pipe=subprocess.Popen(cmd, stdout=output, stderr=err)
         retcode=pipe.wait()
         if cmd[0]=="sh":

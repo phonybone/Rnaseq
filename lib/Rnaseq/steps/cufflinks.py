@@ -3,8 +3,9 @@ from Rnaseq import *
 class cufflinks(Step):
     def __init__(self,**kwargs):
         Step.__init__(self,**kwargs)
-        self.genome_dir='/proj/hoodlab/share/programs/Ensembl'
-        self.genome='hs37.61'
+        #self.genome_dir='/proj/hoodlab/share/programs/Ensembl'
+        #self.genome='hs37.61'
+        self.ensembl='/proj/hoodlab/share/programs/Ensembl'
         
     def usage(self,context):
         try: threads='-p %d' % self.threads

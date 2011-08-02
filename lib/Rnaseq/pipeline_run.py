@@ -68,6 +68,8 @@ class PipelineRun(object):
         return "(%d) start time: %s\tduration: %s\tstatus: %s\tsuccessful: %s\tlast step: %s" % \
                (self.id, start_time, dur, self.status, ('yes' if self.successful else 'no'), last_step_name)
 
+    # produce a full report of the pipeline run
+    # fixme: should include which readset was used
     def report(self):
         try: dur=duration(self.start_time, self.finish_time, 2)
         except: dur='n/a'
@@ -76,7 +78,7 @@ class PipelineRun(object):
         report+="        input file: %s\n" % self.input_file
         report+="        Steps:\n"
         for step_run in self.step_runs:
-            report+="\t%s\n" % step_run.report()
+            report+="\t%s\n\n" % step_run.report()
         return report
 
 #print __file__,"checking in"
