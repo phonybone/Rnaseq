@@ -191,7 +191,7 @@ class RnaseqGlobals(object):
     def get_db_file(self):
         db_name=self.conf_value('db','db_name') if not self.testing else self.conf_value('testing','test_db')
         db_file=os.path.join(self.conf_value('rnaseq','root_dir'), db_name)
-        print "get_db_file() returning %s" % db_file
+        #print "get_db_file() returning %s" % db_file
         return db_file
 
     @classmethod

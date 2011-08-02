@@ -16,5 +16,4 @@ if ( -f /sge/aegir/common/settings.sh ) then
    source /sge/aegir/common/settings.sh
 endif
 
-echo rnaseq_setup.csh done
   
