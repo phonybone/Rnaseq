@@ -357,7 +357,8 @@ class Pipeline(templated):
     # return a tuple containing a pipeline_run object and a dict of step_run objects (keyed by step name):
     def make_run_objects(self, session):
         self.store_db()
-        verbose=RnaseqGlobals.conf_value('verbose')
+        try: verbose=os.environ['DEBUG']
+        except: debug=False
         
         # create the pipeline_run object:
         try: 
@@ -388,7 +389,7 @@ class Pipeline(templated):
                 step_run.file_outputs.append(FileOutput(path=output))
 
             if step.skip:               # as set by self.set_steps_current()
-                if verbose: print "step %s is current, skipping" % step.name
+                if debug: print "step %s is current, skipping" % step.name
                 step_run.status='skipped'
                 step_run.success=True
 
