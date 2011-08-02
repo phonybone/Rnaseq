@@ -109,7 +109,7 @@ class RunPipeline(Command):
 
         
     def launch(self, pipeline, cmd, output, err):
-        #print "cmd is %s" % cmd
+        print "launching '%s'" % ' '.join(cmd)
         pipe=subprocess.Popen(cmd, stdout=output, stderr=err)
         retcode=pipe.wait()
         if cmd[0]=="sh":

@@ -143,6 +143,7 @@ class Pipeline(templated):
 
         script="#!/bin/sh\n\n"
         session=RnaseqGlobals.get_session()
+        verbose=RnaseqGlobals.conf_value('verbose')
         
         # determine if provenance is desired:
         try:
@@ -169,7 +170,7 @@ class Pipeline(templated):
         for step in self.steps:
             try:
                 if step.skip:
-                    print "skipping step %s (already current)" % step.name
+                    if verbose: print "skipping step %s (already current)" % step.name
                     continue  # in a try block in case step.skip doesn't even exist
             except:                     # really? step.skip doesn't exist, so assume it's True???
                 pass
@@ -356,6 +357,7 @@ class Pipeline(templated):
     # return a tuple containing a pipeline_run object and a dict of step_run objects (keyed by step name):
     def make_run_objects(self, session):
         self.store_db()
+        verbose=RnaseqGlobals.conf_value('verbose')
         
         # create the pipeline_run object:
         try: 
@@ -386,7 +388,7 @@ class Pipeline(templated):
                 step_run.file_outputs.append(FileOutput(path=output))
 
             if step.skip:               # as set by self.set_steps_current()
-                print "step %s is current, skipping" % step.name
+                if verbose: print "step %s is current, skipping" % step.name
                 step_run.status='skipped'
                 step_run.success=True
 

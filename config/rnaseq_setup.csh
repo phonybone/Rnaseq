@@ -6,9 +6,9 @@ rehash
 
 # add to PYTHONPATH:
 if ( $?PYTHONPATH ) then
-    setenv PYTHONPATH "${PYTHONPATH}:/proj/hoodlab/share/vcassen/rna-seq/rnaseq/lib:/proj/hoodlab/share/vcassen/lib/python"
+    setenv PYTHONPATH "${PYTHONPATH}:/proj/hoodlab/share/vcassen/rna-seq/Rnaseq/lib:/proj/hoodlab/share/vcassen/lib/python"
 else
-    setenv PYTHONPATH "/proj/hoodlab/share/vcassen/rna-seq/rnaseq/lib:/proj/hoodlab/share/vcassen/lib/python"
+    setenv PYTHONPATH "/proj/hoodlab/share/vcassen/rna-seq/Rnaseq/lib:/proj/hoodlab/share/vcassen/lib/python"
 endif
 
 # SGE
