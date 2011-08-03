@@ -11,6 +11,8 @@ class fq_all2std(Step):
 
 
     def usage(self, context):
+        #print "fq_all: context.inputs is %s" % context.inputs
+
         usage="\nformat=%s\n" % self.format
         if (self.paired_end()):
             usage+='''

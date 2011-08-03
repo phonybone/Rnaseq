@@ -58,10 +58,10 @@ class Ls(Command):
         pipelines=session.query(Pipeline).all()
         print "Available pipelines:"
         for p in pipelines:
-            print "pipeline %s" % p.name
+            print "pipeline '%s'" % p.name
 
     def ls_pipeline(self,pipeline):
-        print "pipeline: %s" % pipeline.name
+        print "pipeline: '%s'" % pipeline.name
         print "steps: %s" % ", ".join(pipeline.stepnames)
         
         s='' if len(pipeline.pipeline_runs)==1 else 's'

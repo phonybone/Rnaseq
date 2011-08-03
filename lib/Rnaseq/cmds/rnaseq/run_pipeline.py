@@ -58,7 +58,7 @@ class RunPipeline(Command):
                 # if running on the cluster, generate a calling (qsub) script and invoke that;
                 # if not a cluster job, just assemble cmd[].
                 (cmd,output,err)=self.write_qsub_script(pipeline, script_filename)
-                #print "launch cmd%s is '%s'" % (('(skipped)' if RnaseqGlobals.conf_value('no_run') else ''), " ".join(cmd))
+                print "launch cmd%s is '%s'" % (('(skipped)' if RnaseqGlobals.conf_value('no_run') else ''), " ".join(cmd))
                 
                 # launch the subprocess and check for success:
                 if not RnaseqGlobals.conf_value('no_run'):

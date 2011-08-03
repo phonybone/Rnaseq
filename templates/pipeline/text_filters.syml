@@ -1,0 +1,16 @@
+name: text_filters
+description: Juan's pipeline (text filters only)
+stepnames: header export2fq filterQuality filterLowComplex 
+
+header: 
+  pass:
+
+export2fq:
+  inputs: header
+
+filterQuality:
+  inputs: export2fq
+
+filterLowComplex:
+  inputs: filterQuality
+
