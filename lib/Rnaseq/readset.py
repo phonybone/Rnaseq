@@ -56,22 +56,8 @@ class Readset(dict):
         for key in kwargs:
             self[key] = kwargs[key]
 
-# ########################################################################
-
-        
-#     def __setitem__(self,k,v):
-#         super(Readset,self).__setitem__(k,v) # call dict.__setitem__()
-#         setattr(self,k,v)
-
-#     def __setattr__(self,attr,value):
-#         super(Readset,self).__setattr__(attr,value) # call dict.__setattr__()
-#         self.__dict__[attr]=value
-        
-        
-
-
     ########################################################################
-        
+
     __tablename__='readset'
 
     @classmethod

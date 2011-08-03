@@ -34,6 +34,29 @@ class templated(dict):
         except:
             return object.__str__(self)
 
+    ########################################################################
+
+    def __setitem__(self,k,v):
+        super(templated,self).__setitem__(k,v) # call dict.__setitem__()
+        super(templated,self).__setattr__(k,v)
+
+    def __setattr__(self,attr,value):
+        super(templated,self).__setattr__(attr,value) # call dict.__setattr__()
+        super(templated,self).__setitem__(attr,value)
+
+    # update() and setdefault() taken from http://stackoverflow.com/questions/2060972/subclassing-python-dictionary-to-override-setitem
+    def update(self, *args, **kwargs):
+        if args:
+            if len(args) > 1:
+                raise TypeError("update expected at most 1 arguments, got %d" % len(args))
+            other = dict(args[0])
+            for key in other:
+                self[key] = other[key]
+        for key in kwargs:
+            self[key] = kwargs[key]
+
+
+
     def merge(self,d):                  # fixme: should go into dict_helper class or some such
         if (not isinstance(d,dict)):    
             if (isinstance(d,templated)):

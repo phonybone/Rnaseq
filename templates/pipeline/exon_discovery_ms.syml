@@ -1,0 +1,42 @@
+description: exon discovery using mapsplice
+stepnames: header filterQuality filterVectors filterLowComplex ribosomal_mit remove_erccs repeats_consensus equalize mapsplice mapsplice2 cufflinks cuffcompare footer
+blat_index: /proj/hoodlab/share/programs/RNAseq-Pi/data/blat-indexes
+
+header:
+  name: header
+
+filterQuality:
+  inputs: header
+
+filterVectors:
+  inputs: header
+
+filterLowComplex:
+  inputs: header
+
+ribosomal_mit:
+  inputs: header
+
+remove_erccs:
+  inputs: header
+
+repeats_consensus:
+  inputs: header
+
+equalize:
+  inputs: filterQuality filterLowComplex ribosomal_mit remove_erccs repeats_consensus
+
+mapsplice:
+  inputs: equalize
+
+mapsplice2:
+  inputs: mapsplice
+
+cufflinks:
+  inputs: mapsplice2
+
+cuffcompare:
+  inputs: cufflinks
+
+footer:
+  name: footer

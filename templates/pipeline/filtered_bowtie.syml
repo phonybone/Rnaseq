@@ -1,30 +1,25 @@
 name: filtered bowtie
-stepnames: header export2fq filterQuality filterVectors filterLowComplex align
+stepnames: header export2fq filterQuality filterVectors filterLowComplex equalize bowtie
+bowtie_index: /proj/hoodlab/share/programs/bowtie-indexes
 
 header:
   name: header
 
 export2fq:
-  input: ${readset['reads_file']}
-  output: ${ID}.${rnaseq['align_suffix']}
-  args: ${rnaseq['fq_cmd']}
+  inputs: header
 
 filterQuality:
-  input: ${ID}.${rnaseq['align_suffix']}
-  output: ${ID}.qual_OK.${rnaseq['align_suffix']}
-  filtered: ${ID}.bowtie_qual_BAD.${rnaseq['align_suffix']}
-  args: -v -f ${rnaseq['align_suffix']}
+  inputs: export2fq
 
 filterVectors:
-  input: ${ID}.${rnaseq['align_suffix']}
-  output: ${ID}.vector_OK.${rnaseq['align_suffix']}
-  filtered: ${ID}.bowtie_vector_BAD.sam
-  psl: ${ID}.blat_vector_BAD.psl
+  inputs: export2fq
 
 filterLowComplex:
-  input: ${ID}.vector_OK.${rnaseq['align_suffix']}
-  output: ${ID}.complex_OK.${rnaseq['align_suffix']}
-  filtered: ${ID}.bowtie_complex_BAD.${rnaseq['align_suffix']}
-  args: -v -f ${rnaseq['align_suffix']}
+  inputs: export2fq
 
+equalize:
+  inputs: filterQuality filterVectors filterLowComplex
 
+bowtie:
+  inputs: equalize 
+  

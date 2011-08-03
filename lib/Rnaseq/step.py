@@ -14,6 +14,8 @@ from evoque_helpers import evoque_template
 
 class Step(dict):                     # was Step(templated)
     defaults={}
+    required_attrs=[]
+    
     def __init__(self,*args,**kwargs):
         # set defaults:
         self.name=self.__class__.__name__
@@ -29,6 +31,16 @@ class Step(dict):                     # was Step(templated)
             try: setattr(self,k,v)      # something in alchemy can eff this up
             except Exception as e: print "templated.__init__: caught %s" % e
 
+    def missing_required_attrs(self):
+        missing=[]
+        #print "%s: required are %s"  % (self.name, self.required_attrs)
+        for attr in self.required_attrs:
+            if not hasattr(self, attr):
+                missing.append(attr)
+            else:
+                pass
+                #print "%s.%s is %s" % (self.name, attr, getattr(self,attr))
+        return missing
 
     ########################################################################
 
@@ -90,6 +102,7 @@ class Step(dict):                     # was Step(templated)
 
     # entry point to step's sh "presence"; calls appropriate functions, as above.
     def sh_script(self, context, **args):
+        
         if 'echo_name' in args and args['echo_name']:
             echo_part="\n# step %s:\n" % self.name
             echo_part+="echo step %s 1>&2" % self.name
@@ -97,6 +110,13 @@ class Step(dict):                     # was Step(templated)
             echo_part=''
             
         usage=self.usage(context)
+
+        # check for missing attrs after calling step.usage()
+        missing_attrs=self.missing_required_attrs()
+        if len(missing_attrs) > 0:
+            raise ConfigError("step %s: missing attributes: %s" % (self.name, ', '.join(missing_attrs)))
+
+
         vars={}
         vars.update(self.__dict__)
         vars.update(self.pipeline.readset)

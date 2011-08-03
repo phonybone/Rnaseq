@@ -2,7 +2,7 @@
 export PATH="${PATH}:/proj/hoodlab/share/vcassen/rna-seq/Rnaseq/bin"
 
 # add to PYTHONPATH:
-export PYTHONPATH="${PYTHONPATH:-}:/proj/hoodlab/share/vcassen/rna-seq/rnaseq/lib:/proj/hoodlab/share/vcassen/lib/python"
+export PYTHONPATH="${PYTHONPATH:-}:/proj/hoodlab/share/vcassen/rna-seq/Rnaseq/lib:/proj/hoodlab/share/vcassen/lib/python"
 
 # SGE
 if [ -f /sge/aegir/common/settings.sh ]; then

@@ -117,7 +117,7 @@ class Pipeline(templated):
         ev.update(vars)
         templated.load(self, vars=ev, final=False)
         
-
+        return self
 
     ########################################################################
     # Write the pipeline's shell script to disk.
@@ -239,12 +239,8 @@ class Pipeline(templated):
     #  check to see that all defined steps are listed, and vice verse:
     def verify_steps(self):
         errors=[]
-        # attempt to get a list stephashs from self's dict by selecting everything that's not a
-        # string, int, or float.  Fixme: why not just select for type(t[1])==type({})???
         
-        l=[t[0] for t in self.items() if type(t[1])!=type('') and type(t[1])!=type(1) and type(t[1])!=type(1.0)]
-        a=set(l)
-
+        a=set(self.stepnames)
         b=set(s.name for s in self.steps)
         #print "%s: a is %s" % (self.name, a)
         #print "%s: b is %s" % (self.name, b)
@@ -345,6 +341,7 @@ class Pipeline(templated):
         other_self=session.query(Pipeline).filter_by(name=self.name).first()
         if other_self==None:
             session.add(self)
+            print "adding %s to db %s" % (self.name, RnaseqGlobals.get_db_file())
         else:
             self.id=other_self.id
 
@@ -465,10 +462,11 @@ class Pipeline(templated):
             names=re.split('[\s,]+', inputs)
             input_list=[]
             for term in names:
-                mg=re.search('(\w+)(\[\d+\])?$', term)
+                mg=re.search('([\w/${}]+)(\[\d+\])?$', term)
                 if mg==None:
-                    errors.append("%s: malformed input term" % term)
-
+                    errors.append("step %s: malformed input term '%s'" % (step.name, term))
+                    continue
+                
                 output_step=mg.group(1)
                 index=mg.group(2)      # can be None
 
