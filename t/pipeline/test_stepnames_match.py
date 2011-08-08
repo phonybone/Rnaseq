@@ -20,9 +20,9 @@ class TestStepnames(TestBase):
             pipeline=Pipeline(name='missing_stepname', readset=self.readset).load_steps()
             self.fail()
         except ConfigError as ce:
-            self.assertTrue("The following steps were listed as part of missing_stepname, but no defining section was found: repeats_consensus", str(ce))
+            self.assertRegexpMatches(str(ce), 'not listed: repeats_consensus$')
         except Exception as e:
-            print "caught %s" % e
+            #print "caught %s (%s)" % (e, type(e))
             self.fail()                 # getting here
 
     def atest_extra_stepname(self):

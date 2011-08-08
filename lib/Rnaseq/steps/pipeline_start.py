@@ -14,6 +14,6 @@ python ${root_dir}/bin/provenance pipeline_start ${pipeline_run_id} ${next_step_
 '''
         return usage
 
-    def outputs(self):
+    def outputs(self, *args):
         return []
     

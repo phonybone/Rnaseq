@@ -9,7 +9,7 @@ class repeats_consensus(align_filter):
         self.ewbt='human_RepBase15.10'
         self.blat_index='human_RepBase15.10.2bit'
 
-    def output_list(self):
+    def output_list(self,*args):
         return ['${ID}.repeats_BAD.${format}']
 
     

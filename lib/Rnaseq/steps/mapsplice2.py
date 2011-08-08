@@ -12,7 +12,7 @@ rm -rf ${ID}.mapsplice
 '''
         return usage
 
-    def output_list(self):
+    def output_list(self, *args):
         return ['${ID}.mapsplice.sam']
     
     

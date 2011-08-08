@@ -10,6 +10,6 @@ sort -k5,6 ${inputs[0]} > ${ID}.sorted.sample
         '''
         return usage
 
-    def output_list(self):
+    def output_list(self,*args):
         return ['${ID}.sorted.sample']
     

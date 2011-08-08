@@ -15,5 +15,5 @@ python ${root_dir}/bin/provenance pipeline_end ${pipelinerun_id} ${debug}
 '''
         return usage
 
-    def output_list(self):
+    def output_list(self, *args):
         return []

@@ -1,13 +1,10 @@
-import yaml
+import yaml, os
 from Rnaseq import *
 from RnaseqGlobals import *
 
 class StepFactory(object):
-    def __init__(self, pipeline):
-        self.pipeline=pipeline
-
     
-    def new_step(self, stepname, **kwargs):
+    def new_step(self, pipeline, stepname, **kwargs):
         try:
             mod=__import__('Rnaseq.steps.%s' % stepname)
         except ImportError as ie:
@@ -22,7 +19,6 @@ class StepFactory(object):
             raise ConfigError("step %s not defined: "+str(ae))
 
         # add items to kwargs:
-        pipeline=self.pipeline
         kwargs['pipeline']=pipeline
         step=kls(**kwargs)
         
@@ -39,4 +35,16 @@ class StepFactory(object):
         
         return step
 
+        
+    def is_step(self, stepname):
+        try: debug=os.environ['DEBUG']
+        except: debug=False
+        
+        try:
+            mod=__import__('Rnaseq.steps.%s' % stepname)
+            return True
+        except ImportError as ie:
+            #raise ConfigError("error loading step '%s': %s" % (stepname, str(ie)))
+            if debug: print "error importing %s: %s" % (stepname, ie)
+            return False
         

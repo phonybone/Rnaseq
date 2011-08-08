@@ -15,5 +15,5 @@ python $${programs}/mapsplice_segments.py -c $${genome_dir}/$${genome}.fa -B $${
 '''
         return usage
 
-    def output_list(self):
+    def output_list(self, *args):
         return ['${working_dir}/${ID}.mapsplice/alignments.sam','${working_dir}/${ID}.mapsplice/best_junction.bed']

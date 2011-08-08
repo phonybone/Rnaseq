@@ -17,7 +17,7 @@ perl $${programs}/removeBadReads.pl -v -paired %(inputs)s - %(outputs)s
         return usage
 
 
-    def output_list(self):
+    def output_list(self,*args):
         if self.paired_end():
             return ['${ID}_GOOD_1.${format}', '${ID}_GOOD_2.${format}']
         else:

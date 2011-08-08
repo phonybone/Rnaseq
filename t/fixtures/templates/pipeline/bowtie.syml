@@ -1,4 +1,4 @@
-name: bowtie pipeline
+name: bowtie
 description: pipeline to test the bowtie step
 stepnames: header bowtie footer
 

@@ -53,13 +53,10 @@ class bowtie(Step):
             pass
         
         # set threads:
-        if RnaseqGlobals.conf_value('use_cluster'):
-            if hasattr(self, 'threads'):
-                threads='--threads %s' % self.threads
-            else:
-                threads='--threads' % RnaseqGlobals.conf_value('qsub', 'nprocs')
+        if hasattr(self, 'threads'):
+            threads='--threads %s' % self.threads
         else:
-            threads=''
+            threads='--threads' % RnaseqGlobals.conf_value('qsub', 'nprocs')
 
         # set ewbt if necessary:
         if not hasattr(self, 'ewbt'):
@@ -82,6 +79,6 @@ bowtie %(format)s %(threads)s ${args} ${ewbt} %(input)s %(output_file)s
 
         return usage
 
-    def output_list(self):
+    def output_list(self,*args):
         output='${ID}.%s.%s' % (self.name, self.output_format)
         return [output]

@@ -167,7 +167,7 @@ class Step(dict):                     # was Step(templated)
         l=[evoque_template(x, self, self.pipeline.readset) for x in self.input_list()]
         return l
 
-    def output_list(self):
+    def output_list(self, *args):
         raise ProgrammerGoof("pipeline %s - step '%s' does not define it's outputs" % (self.pipeline.name, self.name))
 
     def output_list_expanded(self):

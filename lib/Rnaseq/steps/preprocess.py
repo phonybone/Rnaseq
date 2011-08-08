@@ -15,6 +15,6 @@ perl ${programs}/preprocessReads.pl ${args} -i ${inputs[0]} -o ${ID}.pre
 '''
         return script
 
-    def output_list(self):
+    def output_list(self, *args):
         return '${ID}.pre'
         

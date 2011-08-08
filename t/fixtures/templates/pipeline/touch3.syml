@@ -1,0 +1,7 @@
+name: touch3
+description: calls touch in three steps
+stepnames: touch touch touch
+
+touch:
+  inputs: header
+

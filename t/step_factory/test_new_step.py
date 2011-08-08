@@ -16,11 +16,11 @@ class TestNewStep(unittest.TestCase):
         self.context=Context(readset)
         
         self.pipeline=Pipeline(name='filter', readset=self.readset).load_steps()
-        self.factory=StepFactory(self.pipeline)
+        self.factory=StepFactory()
 
     def test_header(self):
         factory=self.factory
-        header_step=factory.new_step('header')
+        header_step=factory.new_step(self.pipeline, 'header')
         self.assertEqual(header_step.pipeline, self.pipeline)
 
         self.assertEqual(header_step.name, 'header')
@@ -43,7 +43,7 @@ class TestNewStep(unittest.TestCase):
     # test the fq_all2std step because it's the next simplest step type after header:
     # takes one input, writes one output
     def test_export2fq(self):
-        e2f_step=self.factory.new_step('export2fq')
+        e2f_step=self.factory.new_step(self.pipeline, 'export2fq')
         self.assertEqual(e2f_step.name, 'export2fq')
         self.assertEqual(e2f_step.__class__.__name__, 'export2fq')
 
@@ -53,7 +53,7 @@ class TestNewStep(unittest.TestCase):
         script=e2f_step.sh_script(c)
 
     def test_align_filter(self):
-        af_step=self.factory.new_step('align_filter', aligner='bowtie')
+        af_step=self.factory.new_step(self.pipeline, 'align_filter', aligner='bowtie')
         self.assertEqual(af_step.aligner, 'bowtie')
         
 

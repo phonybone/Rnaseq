@@ -6,5 +6,5 @@ class step3(test_step):
         Step.__init__(self,**kwargs)
         self.name='step3'
 
-    def output_list(self):
+    def output_list(self,*args):
         return ['${ID}.step3a.${format}','${ID}.step3b.${format}']

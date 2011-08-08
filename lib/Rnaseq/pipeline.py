@@ -84,10 +84,10 @@ class Pipeline(templated):
             raise ConfigError("pipeline %s does not define stepnames" % self.name)
 
         # 
-        step_factory=StepFactory(self)
+        step_factory=StepFactory()
         errors=[]
         for stepname in self.stepnames:
-            step=step_factory.new_step(stepname)
+            step=step_factory.new_step(self, stepname)
             if not stepname in self:
                 errors.append("missing step section for '%s'" % stepname)
                 continue
@@ -107,6 +107,7 @@ class Pipeline(templated):
 
     
     ########################################################################
+    # read the pipeline's .syml file and call templated.load on it:
     def load_template(self):
         vars={}
         vars.update(self.dict)
@@ -155,13 +156,14 @@ class Pipeline(templated):
             
         # create auxillary steps:
         if include_provenance:
-            step_factory=StepFactory(self)
-            pipeline_start=step_factory.new_step('pipeline_start',
+            step_factory=StepFactory()
+            pipeline_start=step_factory.new_step(self,
+                                                 'pipeline_start',
                                                  pipeline_run_id=pipeline_run.id,
                                                  step_run_id=None,
                                                  next_step_run_id=self.context.step_runs[self.steps[0].name].id)
-            mid_step=step_factory.new_step('mid_step', pipeline_run_id=pipeline_run.id)
-            pipeline_end=step_factory.new_step('pipeline_end', pipelinerun_id=pipeline_run.id,
+            mid_step=step_factory.new_step(self, 'mid_step', pipeline_run_id=pipeline_run.id)
+            pipeline_end=step_factory.new_step(self, 'pipeline_end', pipelinerun_id=pipeline_run.id,
                                                step_run_id=None, next_step_run_id=None)
             script+=pipeline_start.sh_script(self.context)
 
@@ -238,20 +240,25 @@ class Pipeline(templated):
     ########################################################################
     #  check to see that all defined steps are listed, and vice verse:
     def verify_steps(self):
-        errors=[]
+        try: debug=os.environ['DEBUG']
+        except: debug=False
         
+        step_factory=StepFactory()
         a=set(self.stepnames)
-        b=set(s.name for s in self.steps)
-        #print "%s: a is %s" % (self.name, a)
-        #print "%s: b is %s" % (self.name, b)
+        b=set([x for x in self.keys() if type(self[x])==type({}) and step_factory.is_step(x)])
+        if debug: print "a: %s" % a
+        if debug: print "b: %s" % b
         
-        if a==b: return errors            # set equality! we just love over-ridden operators
+        if a==b: return []            # set equality! we just love over-ridden operators
 
-        name_no_step=a-b                # more set subtraction!
+        errors=[]
+        name_no_step=a-b                # set subtraction!
+        if debug: print "name_no_step: %s" % name_no_step
         if len(name_no_step)>0:
             errors.append("The following steps were listed as part of %s, but no defining section was found: %s" % (self.name, ", ".join(list(name_no_step))))
             
         step_no_name=b-a                # more set subtraction!
+        if debug: print "step_no_name: %s" % step_no_name
         if len(step_no_name)>0:
             errors.append("The following steps were defined as part of %s, but not listed: %s" % (self.name, ", ".join(list(step_no_name))))
         
@@ -450,7 +457,7 @@ class Pipeline(templated):
             except KeyError: errors.append("In pipeline '%s', step %s has no defining section" % (self.name, step.name))
 
             # get this out of the way now:
-            context.outputs[step.name]=step.output_list()
+            context.outputs[step.name]=step.output_list(stephash)
             
             # get the input specifier from the stephash; if not listed, assume no inputs, set outputs according to step, and continue:
             try: inputs=stephash['inputs']

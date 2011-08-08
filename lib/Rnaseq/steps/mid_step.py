@@ -15,6 +15,6 @@ exit_on_failure $$? ${pipeline_run_id} ${step_run_id} ${next_step_run_id} ${debu
         '''
         return usage
 
-    def output_list(self):
+    def output_list(self, *args):
         return []
     

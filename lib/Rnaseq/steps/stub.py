@@ -9,6 +9,6 @@ class stub(Step):
         '''
         return usage
 
-    def output_list(self):
+    def output_list(self,*args):
         return ['']
     

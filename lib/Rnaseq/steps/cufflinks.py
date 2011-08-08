@@ -22,6 +22,6 @@ $${programs}/cufflinks -o $${ID}.cufflinks %(threads)s --frag-bias-correct $${bi
 
         return usage
 
-    def output_list(self):
+    def output_list(self,*args):
         return ['${ID}.cufflinks/genes.expr',  '${ID}.cufflinks/genes.fpkm_tracking',  '${ID}.cufflinks/isoforms.fpkm_tracking',  '${ID}.cufflinks/transcripts.expr',  '${ID}.cufflinks/transcripts.gtf']
     
