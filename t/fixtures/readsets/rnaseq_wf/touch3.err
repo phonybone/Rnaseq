@@ -1,0 +1,2 @@
+step touch
+/proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/fixtures/readsets/rnaseq_wf/touch3.rel_glob.sh: line 15: exit_on_failure: command not found

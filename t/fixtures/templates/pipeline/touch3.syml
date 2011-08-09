@@ -1,7 +1,6 @@
 name: touch3
-description: calls touch in three steps
-stepnames: touch touch touch
+description: calls touch
+stepnames: touch 
 
 touch:
-  inputs: header
-
+  inputs: readset

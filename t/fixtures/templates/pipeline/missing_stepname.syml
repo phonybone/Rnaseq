@@ -1,4 +1,5 @@
 name: Juan's pipeline testing version
+description: missing repeats_consensus in stepnames
 stepnames: preprocess filterQuality filterVectors filterLowComplex ribosomal_mit remove_erccs 
 
 preprocess:

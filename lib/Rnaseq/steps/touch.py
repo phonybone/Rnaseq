@@ -5,12 +5,13 @@ class touch(Step):
         Step.__init__(self,**kwargs)
 
     def usage(self,context):
-        self.filelist=' '.join(context.inputs)
+        self.filelist=' '.join(context.inputs[self.name])
         usage='''
 touch %(filelist)s
 ''' % { 'filelist': self.filelist}
         return usage
 
     def output_list(self, *args):
-        return self.input_list()
+        return []
+        #return self.input_list()
     

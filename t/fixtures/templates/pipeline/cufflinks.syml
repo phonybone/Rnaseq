@@ -2,7 +2,7 @@ name: cufflinks
 stepnames: header, filterQuality, filterLowComplex, filterVectors, ribosomal_mit, remove_erccs, repeats_consensus, equalize, bowtie, bowtie2bam, samtool_copy, cufflinks, footer
 
 header:
-  name: header
+  inputs: readset
 
 filterQuality:
   name: filterQuality

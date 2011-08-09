@@ -71,7 +71,7 @@ class RnaseqGlobals(object):
         parser.add_option('-l','--label',    dest='label',           help='specify a label for a pipeline run')
         parser.add_option("-n","--no_run",   dest="no_run",          help="supress actuall running", default=False, action='store_true')
         parser.add_option("-p","--pipeline", dest="pipeline_name",   help="pipeline name")
-        parser.add_option('-q',"--quiet",    dest="silent",          help="supress diagnostics and other messages", default=False)
+        parser.add_option('-q',"--quiet",    dest="silent",          help="supress diagnostics and other messages", action='store_true', default=False)
         parser.add_option("-r","--readset",  dest="readset_file",    help="readset filename")
         parser.add_option("--pr", "--pipeline-run", dest="pipeline_run_id", help="pipeline run id")
         parser.add_option('-u', "--user_config", dest='user_config_file', help="additional user specified parameters (config file)")

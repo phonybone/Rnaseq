@@ -450,15 +450,21 @@ class Pipeline(templated):
         debug='DEBUG' in os.environ
 
         errors=[]
+        outputs_deferred=[]
+        
         for step in self.steps:
             if debug: print "convert_io: step is %s" % step.name
             
             try: stephash=self[step.name]
             except KeyError: errors.append("In pipeline '%s', step %s has no defining section" % (self.name, step.name))
 
-            # get this out of the way now:
-            context.outputs[step.name]=step.output_list(stephash)
-            
+            # attempt to set outputs:
+            try: context.outputs[step.name]=step.output_list(stephash)
+            except AttributeError as ae:
+                 print "caught ae: %s" % ae
+                 if re.search("no attribute 'context'", str(ae)): outputs_deferred.append(step)
+                 else: raise ae
+                    
             # get the input specifier from the stephash; if not listed, assume no inputs, set outputs according to step, and continue:
             try: inputs=stephash['inputs']
             except KeyError:
@@ -497,9 +503,20 @@ class Pipeline(templated):
                     except IndexError:
                         raise ConfigError("step %s: outputs '%s': index %d out of range" % (step.name, outputs, index))
 
-            context.inputs[step.name]=input_list
+                context.inputs[step.name]=input_list
+
 
         self.context=context
+
+        # set context.outputs[] for each step:
+        for step in outputs_deferred:
+            try:
+                stephash=self[step.name]
+                context.outputs[step.name]=step.output_list(stephash)
+            except KeyError:
+                continue   # already checked for this error above
+            
+
         return errors
 
 
