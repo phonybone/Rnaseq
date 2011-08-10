@@ -3,4 +3,6 @@
 *.sqlite3
 *.db
 *.sh
+*.err
+*.out
 programs/*

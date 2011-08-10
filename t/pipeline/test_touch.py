@@ -19,7 +19,7 @@ class TouchStep(unittest.TestCase):
     
     
     def setUp(self):
-        self.argv=RnaseqGlobals.initialize(__file__, testing=True, opt_list=['run', '-f', '-r', self.readset_file, '-p', self.pipeline_name, '-q'])
+        self.argv=RnaseqGlobals.initialize(__file__, testing=True, opt_list=['run', '-f', '-r', self.readset_file, '-p', self.pipeline_name, '-q', '-d'])
         template_dir=RnaseqGlobals.abs_dir('testing', 'template_dir')
         templated.template_dir=template_dir
         
@@ -47,13 +47,14 @@ class TouchStep(unittest.TestCase):
             self.assertGreaterEqual(mod_time, before_run)
             print "checked %s" % f
 
+    dead_code='''
     def tearDown(self):
         session=RnaseqGlobals.get_session()
         plist=session.query(PipelineRun)
         for p in plist:
             session.delete(p)
         session.commit()
-        
+'''
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TouchStep)
 unittest.TextTestRunner(verbosity=2).run(suite)
