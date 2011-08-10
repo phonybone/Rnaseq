@@ -37,7 +37,11 @@ class Ls(Command):
         # get pipeline_run id; if none, ls all pipeline_run's for this pipeline:
         pipeline_run_id=RnaseqGlobals.conf_value('pipeline_run_id')
         if pipeline_run_id==None:
-            pipeline=session.query(Pipeline).filter_by(name=pipeline_name).first()
+            print "looking for pipeline '%s'" % pipeline_name
+            if re.match('\d+$',pipeline_name):
+                pipeline=session.query(Pipeline).get(pipeline_name)
+            else:
+                pipeline=session.query(Pipeline).filter_by(name=pipeline_name).first()
             if pipeline==None:
                 raise UserError("%s: no such pipeline" % pipeline_name)
             pipeline.__init__(readset=Readset(reads_file='dummy', label='dummy'))         # sqlalchemy doesn't call that for us???
@@ -58,7 +62,7 @@ class Ls(Command):
         pipelines=session.query(Pipeline).all()
         print "Available pipelines:"
         for p in pipelines:
-            print "pipeline '%s'" % p.name
+            print "pipeline '%s' (%d)" % (p.name, p.id)
 
     def ls_pipeline(self,pipeline):
         print "pipeline: '%s'" % pipeline.name

@@ -1,4 +1,13 @@
-import unittest, os
+import unittest, os, sys
+
+if os.path.dirname(__file__)=='':       # running in local directory
+    root_dir=(os.path.normpath(os.getcwd()+'/../..'))
+else:
+    root_dir=(os.path.normpath(os.path.dirname(__file__)+'/../..'))
+sys.path.append(os.path.join(root_dir, 'lib'))
+sys.path.append(os.path.join(root_dir, 'ext_libs'))
+
+
 from Rnaseq import *
 from RnaseqGlobals import RnaseqGlobals
 from warn import *
@@ -31,8 +40,17 @@ class TestLoad(unittest.TestCase):
     def test_glob_rel(self):
         readset_file=RnaseqGlobals.root_dir()+'/t/fixtures/readsets/readset_rel_glob.syml'
         rlist=Readset.load(readset_file)
-        for rs in rlist:
-            self.assertTrue(re.match('s_\d\d?_export.txt',os.path.basename(rs.reads_file)))
+        self.assertEqual(len(rlist),1)
+        filelist=rlist[0].reads_files
+        self.assertEqual(len(filelist), 3)
+        for i in range(1,3):
+            filename="s_%d_export.txt" % i
+            found=False
+            for f in filelist:
+                if re.search(filename, f):
+                    found=True
+                    break
+            self.assertTrue(found)
 
     # don't know how to test absolute globs because we don't know where installation directory
     # will be.  fixme.
@@ -81,9 +99,10 @@ class TestLoad(unittest.TestCase):
         os.chdir(dir)
         rlist=Readset.load('readset_rel_glob.syml')
         self.assertEqual(type(rlist),type([]))
-        self.assertEqual(len(rlist),3)
+        self.assertEqual(len(rlist),1)
 
         for rs in rlist:
+            print "rs.label is %s" % rs.label
             self.assertEqual(rs.label, 'rel_glob') # not really what we want, I think... They should be different
         
 

@@ -25,7 +25,7 @@ class Readset(dict):
             setattr(self,k,v)
             self[k]=v
 
-        self.resolve_reads_file().resolve_working_dir().set_ID().verify_complete()
+        self.evoque_fields().resolve_reads_file().resolve_working_dir().set_ID().verify_complete()
         self.exports=['org','readlen','working_dir','reads_file','label','format','ID']
 
 
@@ -100,9 +100,9 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
             raise ConfigError(msg)
 
         if 'readsets' in yml and 'reads_file' in yml:
-            raise ConfigError("%s contains both 'readsets' and 'reads_files' entries; only one may be present" % filename)
+            raise ConfigError("%s contains both 'readsets' and 'reads_file' entries; only one may be present" % filename)
         elif 'readsets' not in yml and 'reads_file' not in yml:
-            raise ConfigError("%s contains neither 'readsets' nor 'reads_files' entries; must have one or the other" % filename)
+            raise ConfigError("%s contains neither 'readsets' nor 'reads_file' entries; must have one or the other" % filename)
         elif 'readsets' in yml:           # contains a list of readsets
             rlist=self.load_list(yml,filename)
         elif 'reads_file' in yml:       # contains a glob and/or list of files (single block)
@@ -123,47 +123,71 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
         rlist=yml['readsets']
         if type(rlist) != type([]): # make sure rlist is a list
             raise ConfigError("%s: type of 'readsets' must be a list; got '%s'" % (filename, type(rlist)))
-        for r in rlist:
-            if not type(r)==type({}): # make sure elements of rlist are dicts
-                raise ConfigError("%s: elements of readsets must be dicts (hashes); got '%s'" % (filename, type(r)))
-            r.update(scalars)
-            readset_objs.append(Readset(r))
+        for ryml in rlist:
+            if not type(ryml)==type({}): # make sure elements of rlist are dicts
+                raise ConfigError("%s: elements of readsets must be dicts (hashes); got '%s'" % (filename, type(ryml)))
+
+            ryml.update(scalars)
+            rs=self.load_glob(ryml,filename)[0]
+            rs.update(scalars)
+            readset_objs.append(rs)
         return readset_objs
 
 
-    #
+    # returns a list of one Readset object based on the file glob contained in yml['reads_file']
     @classmethod
     def load_glob(self,yml,filename):
-        reads_file=yml['reads_file']
-
-        try: reads_dir=yml['reads_dir']
+        try: reads_files=yml['reads_file']
         except KeyError:
-            reads_dir=os.getcwd() # fixme: hope this is right thing to do
+            try: reads_files=yml['reads_files']
+            except KeyError: raise ConfigError("%s: readset does not define reads_file(s)" % filename)
+
+        # get the reads directory, if present
+        try: reads_dir=yml['reads_dir']
+        except KeyError: reads_dir=os.getcwd() # fixme: hope this is right thing to do
+
+        # hack?
+        reads_dir=evoque_template(reads_dir, RnaseqGlobals.config['rnaseq']) # in case of ${root_dir}
             
-        # make one readset object for each path described in reads_file (which can contain glob chars):
-        scalars=scalar_values(yml)      # select scalar values from yml
+        files=[]
+        globlist=re.split('[\s,]+',reads_files)
+        for fglob in globlist:
+            if not os.path.isabs(fglob):
+                fglob=os.path.normpath(os.path.join(reads_dir, fglob))
+            filelist=glob.glob(fglob)
+            files.extend(filelist)
+
+        # Make the Readset object:
+        scalars=scalar_values(yml)
         scalars['filename']=filename
-        try: del scalars['reads_dir']        # otherwise the constructor will barf
-        except KeyError: pass
+        scalars['reads_files']=files
+        return [Readset(scalars)]
 
-        readset_objs=[]
-        for reads_file in re.split('[\s,]+',yml['reads_file']):
-            path=os.path.join(reads_dir,reads_file) # build the full path
-            path=evoque_template(path, self.__dict__, root_dir=RnaseqGlobals.root_dir())
-            rlist=glob.glob(path)       # get all glob matches
-            for rf in rlist:
-                rsd=scalars.copy()
-                rsd['reads_file']=rf
-                rs=Readset(rsd)
-                rs.reads_dir=reads_dir  # put it back
-                readset_objs.append(rs)
+    ########################################################################
+    # attempt to resolve ${} vars listed in readset files with values from
+    # RnaseqGlobals.config['rnaseq'].  Mostly there for ${root_dir}.
+    def evoque_fields(self):
+        vars=self.__dict__
+        vars.update(RnaseqGlobals.conf_value('rnaseq'))
+        #print "RG.config is %s" % RnaseqGlobals.config['rnaseq']
+        
+        for a in dir(self):
+            if a.startswith('__'): continue
+            attr=getattr(self,a)
+            if type(attr) != type(''): continue
+            if not re.search('\$\{', attr): continue
 
-        if len(readset_objs)==0:
-            raise ConfigError("%s: no matches for %s" % (filename, os.path.join(reads_dir,yml['reads_file']))) # 
-        return readset_objs
+            try: setattr(self, a, evoque_template(attr, vars))
+            except NameError: pass
+            #print "self.%s set to %s" % (a, getattr(self,a))
 
+        return self
+
+    ########################################################################
+    # set self.reads_file so that it includes self.reads_dir if necessary:
     # Does this handle paired-end or multiple filenames?
     def resolve_reads_file(self,filename=None):
+        # get self.reads_file:
         try:
             reads_file=self.reads_file
             if reads_file == None:
@@ -172,13 +196,13 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
             raise ConfigError("no reads_file")
 
         
-        try:
+        try:                            # use self.reads_dir if it exists:
             reads_dir=self.reads_dir
             if (os.path.isabs(reads_file)):
                 raise ConfigError("%s: reads_file (%s) cannot be absolute in presence of reads_dir (%s)" % (filename, reads_file, reads_dir))
             self.reads_file=os.path.join(reads_dir, reads_file)
 
-        except AttributeError as e:
+        except AttributeError as e:     # otherwise use os.getcwd():
             self.reads_dir=os.getcwd()
             self.reads_file=os.path.join(self.reads_dir, reads_file)
 
@@ -287,32 +311,3 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
             user=os.environ['USER']
             suffix=".".join(socket.gethostname().split('.')[-2:])
             return "@".join((user,suffix))
-
-    ########################################################################
-    # Dead Code:
-    ########################################################################
-
-    def path_iterator_deadcode(self):
-        try:
-            l=glob.glob(self['reads_files'])
-        except Exception:
-            l=glob.glob(self['reads_file']) # danger! will get overwritten!
-
-        l.sort()
-        return l
-
-
-    def readsfile_deadcode(self,*args):
-        try: self['reads_file']=args[0]
-        except IndexError: pass
-        return self['reads_file']
-
-    def next_reads_file_deadcode(self):
-        try: path_it=self.current_path_list
-        except AttributeError: setattr(self,'current_path_list',self.path_iterator())
-
-        try: next_rf=self.current_path_list[0]
-        except IndexError: return None
-
-        del self.current_path_list[0]
-        return next_rf

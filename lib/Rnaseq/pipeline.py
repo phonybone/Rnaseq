@@ -40,6 +40,7 @@ class Pipeline(templated):
                              Column('id', Integer, primary_key=True, autoincrement=True),
                              Column('name', String, nullable=False, index=True, unique=True),
                              Column('description', String),
+                             Column('path',String,nullable=False),
                              useexisting=True
                              )
         metadata.create_all(engine)
@@ -76,7 +77,13 @@ class Pipeline(templated):
     # load all the steps
     # return self
     def load_steps(self):
+        debug='debug' in os.environ
+        name=self.name
         self.load_template()            # this barfs (in ID()) if no self.readset
+        if self.name!=name: # loading the template changed the name: bad
+            self.name=name
+            print >>sys.stderr, "Changed pipeline name back to %s" % name
+        
 
         try:
             self.stepnames=re.split('[,\s]+',self['stepnames'])
@@ -350,6 +357,7 @@ class Pipeline(templated):
             session.add(self)
             print "adding %s to db %s" % (self.name, RnaseqGlobals.get_db_file())
         else:
+            print "found pipeline %s: id=%d" % (self.name, other_self.id)
             self.id=other_self.id
 
         session.commit()
@@ -372,7 +380,7 @@ class Pipeline(templated):
 
         pipeline_run=PipelineRun(pipeline_id=self.id,
                                  status='standby',
-                                 input_file=self.readset.reads_file,
+                                 input_file=', '.join(self.readset.reads_files),
                                  user=RnaseqGlobals.conf_value('user'),
                                  label=label,
                                  working_dir=self.readset.working_dir)
@@ -485,7 +493,7 @@ class Pipeline(templated):
 
                 # get the source of the inputs; can be the readset or the output of another step:
                 if output_step == 'readset':
-                    outputs=[self.readset.reads_file]
+                    outputs=self.readset.reads_files
                     if debug: print "  %s: getting outputs from readset" % step.name
 
                 else:

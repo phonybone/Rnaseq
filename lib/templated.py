@@ -88,9 +88,13 @@ class templated(dict):
 
     def template_file(self):
         try:
-            return path_helpers.sanitize(self.filename)
+            path=path_helpers.sanitize(self.path)
         except AttributeError:
-            return path_helpers.sanitize("%s/%s.%s" % (self.type, self.name, self.suffix)) # fixme: self.name is always the name of the template file?
+            path=path_helpers.sanitize("%s/%s.%s" % (self.type, self.name, self.suffix)) # fixme: self.name is always the name of the template file?
+        except TypeError:               # sometimes self.path is None
+            path=path_helpers.sanitize("%s/%s.%s" % (self.type, self.name, self.suffix)) # fixme: self.name is always the name of the template file?
+        self.path=path
+        return path
             
 
     # load a temlplate (either default or as passed), call yaml.load on the template, and store the resulting dict in

@@ -1,4 +1,9 @@
-import unittest, os
+import unittest, os, sys
+
+dir=os.path.normpath(os.path.dirname(os.path.abspath(__file__))+"/../..")
+sys.path.append(os.path.join(dir+'/lib'))
+sys.path.append(os.path.join(dir+'/ext_libs'))
+
 from Rnaseq import *
 from RnaseqGlobals import RnaseqGlobals
 from warn import *
@@ -19,7 +24,7 @@ class TestDict(TestCreate):
         rlist=Readset.load(filename)
         readset=rlist[0]
         
-        self.assertRegexpMatches(readset['reads_file'], dir+'/s_\d_export.txt')
+        self.assertRegexpMatches(readset['reads_file'], dir+'/s_\?_export.txt')
         self.assertEqual(readset['description'],'this is a sample readset (fixture)')
         self.assertEqual(readset['org'],'mouse')
         self.assertEqual(readset['readlen'],75)

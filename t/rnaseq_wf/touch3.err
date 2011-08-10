@@ -1,2 +1,11 @@
+No pipeline run object w/id=1
 step touch
 /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/rnaseq_wf/touch3.rel_glob.sh: line 15: exit_on_failure: command not found
+Traceback (most recent call last):
+  File "/proj/hoodlab/share/vcassen/rna-seq/rnaseq/bin/provenance", line 43, in <module>
+    main()
+  File "/proj/hoodlab/share/vcassen/rna-seq/rnaseq/bin/provenance", line 37, in main
+    cmd.run(argv, config=RnaseqGlobals.config)
+  File "/proj/hoodlab/share/vcassen/rna-seq/rnaseq/lib/Rnaseq/cmds/provenance/pipeline_end.py", line 30, in run
+    pipeline_run.finish_time=now
+AttributeError: 'NoneType' object has no attribute 'finish_time'

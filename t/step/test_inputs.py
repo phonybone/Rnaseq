@@ -1,6 +1,9 @@
-import unittest, os, sys, yaml
+import unittest, os, sys
 
-sys.path.append(os.path.normpath(os.path.abspath(__file__)+"/../../../lib"))
+dir=os.path.normpath(os.path.dirname(os.path.abspath(__file__))+"/../..")
+sys.path.append(os.path.join(dir+'/lib'))
+sys.path.append(os.path.join(dir+'/ext_libs'))
+
 from Rnaseq import *
 from RnaseqGlobals import *
 from warn import *
@@ -17,7 +20,6 @@ class TestInputs(unittest.TestCase):
 
     def test_list_expansion(self):
         for rs in self.rlist:
-
             pipeline=Pipeline(name='filter', readset=rs).load_steps()
             step=pipeline.step_with_name('export2fq')
 
