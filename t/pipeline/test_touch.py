@@ -9,7 +9,7 @@ from RnaseqGlobals import *
 from warn import *
 
 class TouchStep(unittest.TestCase):
-    print "os.path.dirname(__file__) is %s" % os.path.dirname(__file__)
+    #print "os.path.dirname(__file__) is %s" % os.path.dirname(__file__)
     if os.path.dirname(__file__)=='': 
         readset_file=os.path.abspath(os.path.dirname(__file__)+'../fixtures/readsets/readset_rel_glob.syml')
     else:

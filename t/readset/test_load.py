@@ -19,8 +19,8 @@ from templated import *
 class TestLoad(unittest.TestCase):
     def setUp(self):
         RnaseqGlobals.initialize(__file__, testing=True)
-        templated.template_dir=RnaseqGlobals.root_dir()+"/../../fixtures/templates"
-        
+        #templated.template_dir=RnaseqGlobals.root_dir()+"/../../fixtures/templates"
+        self.readset_dir=os.path.join(RnaseqGlobals.root_dir(),'t/fixtures/readsets')
 
     def test_list(self):
         readset_file=RnaseqGlobals.root_dir()+'/t/fixtures/readsets/readset12.syml'
@@ -31,7 +31,7 @@ class TestLoad(unittest.TestCase):
         for rs in rlist:
             self.assertEqual(rs.org, 'mouse')
             self.assertEqual(rs.readlen, 75)
-            self.assertEqual(os.path.dirname(rs.reads_file), '/some/path/to/data')
+            self.assertEqual(os.path.dirname(rs.reads_file), self.readset_dir)
             self.assertTrue(re.match('s_\d\d?_\d_sequence.txt',os.path.basename(rs.reads_file)))
             self.assertTrue(re.search(rs.label,os.path.basename(rs.reads_file)))
             self.assertEqual(rs.label,rs.description)
@@ -102,7 +102,7 @@ class TestLoad(unittest.TestCase):
         self.assertEqual(len(rlist),1)
 
         for rs in rlist:
-            print "rs.label is %s" % rs.label
+            #print "rs.label is %s" % rs.label
             self.assertEqual(rs.label, 'rel_glob') # not really what we want, I think... They should be different
         
 

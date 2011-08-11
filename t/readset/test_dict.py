@@ -24,7 +24,7 @@ class TestDict(TestCreate):
         rlist=Readset.load(filename)
         readset=rlist[0]
         
-        self.assertRegexpMatches(readset['reads_file'], dir+'/s_\?_export.txt')
+        self.assertRegexpMatches(readset['reads_file'], dir+'/s_\d_export.txt')
         self.assertEqual(readset['description'],'this is a sample readset (fixture)')
         self.assertEqual(readset['org'],'mouse')
         self.assertEqual(readset['readlen'],75)

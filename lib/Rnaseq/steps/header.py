@@ -70,7 +70,7 @@ exit_on_failure()
         restore_indent=True
 
         # add link part if necessary:
-        if readset.reads_file==readset.ID:
+        if hasattr(readset, 'ID') and readset.reads_file==readset.ID:
             link_part=''
         else:
             if self.paired_end():
@@ -91,5 +91,7 @@ ln -fs ${reads_file} ${ID}
     def output_list(self,*args):
         if self.paired_end():
             return ['${ID}_1.${format}', '${ID}_2.${format}']
-        else:
+        elif hasattr(self.pipeline.readset, 'ID'):
             return ['${ID}']
+        else:
+            return self.input_list()

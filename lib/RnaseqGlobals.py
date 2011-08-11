@@ -24,10 +24,12 @@ class RnaseqGlobals(object):
             
         self.define_opts()
         opt_list=sys.argv
-        try:
-            opt_list.extend(args['opt_list'])
+        try: opt_list.extend(args['opt_list'])
         except KeyError as ke:
             if str(ke) != "'opt_list'": raise ke
+
+        if self.testing:
+            opt_list.append('-d')
         (values,argv)=self.parse_cmdline(opt_list=opt_list)
         self.values=values
 
@@ -42,7 +44,7 @@ class RnaseqGlobals(object):
         self.get_session()
         self.read_user_config()
         self.set_templated_dir()
-        
+
         return argv
 
     @classmethod

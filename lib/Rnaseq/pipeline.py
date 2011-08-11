@@ -121,6 +121,7 @@ class Pipeline(templated):
         vars.update(RnaseqGlobals.config)
         vars['ID']=self.ID()
 
+
         ev=evoque_dict()
         ev.update(vars)
         templated.load(self, vars=ev, final=False)
@@ -241,7 +242,8 @@ class Pipeline(templated):
 
 
     def ID(self):
-        return self.readset.ID
+        try: return self.readset.ID
+        except AttributeError: return None
     
 
     ########################################################################
@@ -357,7 +359,7 @@ class Pipeline(templated):
             session.add(self)
             print "adding %s to db %s" % (self.name, RnaseqGlobals.get_db_file())
         else:
-            print "found pipeline %s: id=%d" % (self.name, other_self.id)
+            if RnaseqGlobals.conf_value('debug'): print "found pipeline %s: id=%d" % (self.name, other_self.id)
             self.id=other_self.id
 
         session.commit()
@@ -469,9 +471,9 @@ class Pipeline(templated):
             # attempt to set outputs:
             try: context.outputs[step.name]=step.output_list(stephash)
             except AttributeError as ae:
-                 print "caught ae: %s" % ae
-                 if re.search("no attribute 'context'", str(ae)): outputs_deferred.append(step)
-                 else: raise ae
+                if debug: print "pipeline.convert_io: caught ae: %s" % ae
+                if re.search("no attribute 'context'", str(ae)): outputs_deferred.append(step)
+                else: raise ae
                     
             # get the input specifier from the stephash; if not listed, assume no inputs, set outputs according to step, and continue:
             try: inputs=stephash['inputs']

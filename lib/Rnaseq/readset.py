@@ -10,10 +10,12 @@ from RnaseqGlobals import RnaseqGlobals
 
 class Readset(dict):
     required_attrs=['reads_file', 'label', 'ID']
+    required_attrs=['reads_file', 'label']
     wd_time_format="%H%M%S_%d%b%y"
 
     def __init__(self,*args,**kwargs):
         # if there are any dicts in *args, use them to update self; allows "d={'this':'that'}; r=Readset(d)" construction
+        self.paired_end=False           # may get overwritten
         for a in args:
             try:
                 self.update(a)
@@ -120,6 +122,7 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
         scalars['filename']=filename
 
         readset_objs=[]
+        errors=[]
         rlist=yml['readsets']
         if type(rlist) != type([]): # make sure rlist is a list
             raise ConfigError("%s: type of 'readsets' must be a list; got '%s'" % (filename, type(rlist)))
@@ -128,9 +131,17 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
                 raise ConfigError("%s: elements of readsets must be dicts (hashes); got '%s'" % (filename, type(ryml)))
 
             ryml.update(scalars)
-            rs=self.load_glob(ryml,filename)[0]
+            try: rs=self.load_glob(ryml,filename)[0]
+            except ConfigError as ce:
+                errors.append(str(ce))
+                continue
+            #except Exception as e: raise e
             rs.update(scalars)
             readset_objs.append(rs)
+
+        if len(errors)>0:
+            raise ConfigError("%s:\n"%filename+"\n".join(errors))
+        
         return readset_objs
 
 
@@ -148,16 +159,27 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
 
         # hack?
         reads_dir=evoque_template(reads_dir, RnaseqGlobals.config['rnaseq']) # in case of ${root_dir}
-            
+        #print "lg: reads_dir is %s" % reads_dir
+        
         files=[]
         globlist=re.split('[\s,]+',reads_files)
+        missing=[]
         for fglob in globlist:
             if not os.path.isabs(fglob):
                 fglob=os.path.normpath(os.path.join(reads_dir, fglob))
+            
             filelist=glob.glob(fglob)
+            if len(files)==0:
+                missing.append("no matching files for %s" % fglob)
             files.extend(filelist)
 
+        if len(files)==0:
+            msg=", ".join(missing)
+            raise ConfigError(msg)
+
+
         # Make the Readset object:
+        #print "load_glob: files is %s" % files
         scalars=scalar_values(yml)
         scalars['filename']=filename
         scalars['reads_files']=files
@@ -169,7 +191,6 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
     def evoque_fields(self):
         vars=self.__dict__
         vars.update(RnaseqGlobals.conf_value('rnaseq'))
-        #print "RG.config is %s" % RnaseqGlobals.config['rnaseq']
         
         for a in dir(self):
             if a.startswith('__'): continue
@@ -179,7 +200,6 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
 
             try: setattr(self, a, evoque_template(attr, vars))
             except NameError: pass
-            #print "self.%s set to %s" % (a, getattr(self,a))
 
         return self
 
@@ -191,24 +211,39 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
         try:
             reads_file=self.reads_file
             if reads_file == None:
-                raise ConfigError("no reads_file")
+                raise ConfigError("no reads_file 1")
         except: 
-            raise ConfigError("no reads_file")
+            raise ConfigError("no reads_file 2")
 
-        
+        # try to verify that only one reads file is present, even if paired end input.
+        # Can't really set self.reads_file if more than one present
+        try:
+            if len(self.reads_files) > 1:
+                self.reads_file=self.reads_files[0]
+                return self
+        except AttributeError:
+            pass
+
         try:                            # use self.reads_dir if it exists:
             reads_dir=self.reads_dir
+            #print "rrf: got reads_dir: %s" % reads_dir
             if (os.path.isabs(reads_file)):
                 raise ConfigError("%s: reads_file (%s) cannot be absolute in presence of reads_dir (%s)" % (filename, reads_file, reads_dir))
             self.reads_file=os.path.join(reads_dir, reads_file)
 
         except AttributeError as e:     # otherwise use os.getcwd():
             self.reads_dir=os.getcwd()
+            #print "rrf: setting reads_dir to %s" % self.reads_dir
             self.reads_file=os.path.join(self.reads_dir, reads_file)
 
+        if not hasattr(self,'reads_files'): # this can happen if Readset(**kwargs) is called manually, not through load(), as in testing
+            self.reads_files=[self.reads_file] # assumes just one reads_file
+            #print "rrf: setting reads_files to %s (from self.reads_file)" % self.reads_files 
         return self
 
 
+    # verify that paired end filenames are of correct form.
+    # throw exception if not so, otherwise return self.
     def verify_paired_end_filenames(self):
         '''for paired end reads, verify self.reads_file defines exactly two files'''
         # Return if self.paired_end not defined or if set to false
@@ -217,17 +252,13 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
                 return self
         except AttributeError: return self 
 
-        # reads_file can be comma separated list or file glob
-        # try glob first:
-        rlist=glob.glob(self.reads_file)
-        if len(rlist) != 2:
-            rlist=re.split('[\s,]+',self.reads_file)
-        if len(rlist) != 2:
+        # check that there are exactly two files:
+        if len(self.reads_files) != 2:
             raise ConfigError("reads_file: '%s' is not a list or file glob defining exactly two files" % self.reads_file)
 
         # reads_file correctly defines two files; are the filenames in the correct format?
         errors=[]
-        for fn in rlist:
+        for fn in self.reads_list:
             if not re.search('_[12]\.[\w_]$', fn):
                 errors.append("%s is ill-formed: must contain _1 or _2 followed by .<suffix>" % fn)
         if len(errors) != 0:
@@ -238,6 +269,7 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
     # returns a "fixed" version of working_dir
     def resolve_working_dir(self):
         reads_file=self.reads_file
+
         try: working_dir=self.working_dir
         except: working_dir=None
 
@@ -276,13 +308,29 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
 
         # see if self.ID exists, and if it does, is it an absolute path.  If so, do nothing
         try:
-            if os.path.isabs(self.ID):
-                pass
-            else:
-                self.ID=os.path.join(self.working_dir, self.ID) # self.ID is relative
+            if os.path.isabs(self.ID): pass
+            else: self.ID=os.path.join(self.working_dir, self.ID) # self.ID exists and is relative
         except AttributeError: 
-            self.ID=os.path.join(self.working_dir,os.path.basename(self.reads_file)) # self.ID didn't exist
+            # self.ID didn't exist, set to combination of working_dir and basename of reads_file
+            # WRONG: uses reads_file, not reads_files[]
+            if len(self.reads_files)==1:
+                self.ID=os.path.join(self.working_dir,os.path.basename(self.reads_file))
+            elif len(self.reads_files)==2 and self.paired_end:
+                # check that file names are of proper form:
+                self.verify_paired_end_filenames()
+                mg=re.search('^(.*_[12])\.[\w_]+$', self.reads_files[0])
+                try: self.ID=mg.groups()[0]
+                except IndexError:
+                    raise ConfigError("'%s' isn't a well-formed filename for paired_end data: must match '_[12].ext'" % self.reads_files[0])
+                
+            else:
+                if RnaseqGlobals.conf_value('verbose') or RnaseqGlobals.conf_value('debug'):
+                    print >>sys.stderr, "Cannot set ID: too many files (%d), paired_end=%s" % (len(self.reads_files), self.paired_end)
+                return self
+            
 
+
+        # 
         self['ID']=self.ID              # god dammit
 
         # set self.id as 
