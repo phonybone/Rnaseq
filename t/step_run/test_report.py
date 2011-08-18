@@ -1,6 +1,10 @@
 import unittest, os, sys
 
-sys.path.append(os.path.normpath(os.path.abspath(__file__)+"/../../../lib"))
+
+dir=os.path.normpath(os.path.dirname(os.path.abspath(__file__))+"/../..")
+sys.path.append(os.path.join(dir+'/lib'))
+sys.path.append(os.path.join(dir+'/ext_libs'))
+
 from Rnaseq import *
 from RnaseqGlobals import *
 from warn import *
@@ -11,7 +15,7 @@ class TestReport(unittest.TestCase):
 
     def runTest(self):
         step_run=StepRun(step_name='header', status='failed', successful=False, start_time=2, finish_time=5)
-        expected='header                    '+"\t".join(['status: failed','success: failed','duration: 3 secs'])
+        expected='header                    '+"\t".join(['status: failed','success: failed','duration: 3 secs','id: None'])
         self.assertEqual(step_run.report(),expected)
 
 if __name__=='__main__':

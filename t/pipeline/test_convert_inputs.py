@@ -1,7 +1,13 @@
-import sys, unittest, os, yaml
+import sys, unittest, os
+
+dir=os.path.normpath(os.path.dirname(os.path.abspath(__file__))+"/../..")
+sys.path.append(os.path.join(dir+'/lib'))
+sys.path.append(os.path.join(dir+'/ext_libs'))
+
 from Rnaseq import *
 from RnaseqGlobals import *
 from warn import *
+import yaml
 
 class TestBase(unittest.TestCase):
     readset_name='readset1.syml'

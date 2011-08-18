@@ -42,7 +42,7 @@ class PipelineRun(object):
             dur=duration(self.start_time, self.finish_time, 2)
         except: dur='dur=n/a'
         return "\t".join(str(x) for x in [self.pipeline.name, self.id, self.status, self.successful, self.starttime(), self.finishtime(),
-                                          dur])
+                                          dur, self.id])
                                           
 
     def starttime(self):
@@ -71,11 +71,14 @@ class PipelineRun(object):
     # produce a full report of the pipeline run
     # fixme: should include which readset was used
     def report(self):
+        try: id=self.id
+        except: id=None
+        
         try: dur=duration(self.start_time, self.finish_time, 2)
         except: dur='n/a'
-        report="pipeline: '%s' (pr_id=%d)\tstatus: %s\tsuccess: %s\ttotal duration: %s\n" % \
-                (self.pipeline.name, self.id, self.status, ('yes' if self.successful else 'no'), dur)
-        report+="        input file: %s\n" % self.input_file
+        report="pipeline: '%s' (pr_id=%s)\tstatus: %s\tsuccess: %s\ttotal duration: %s\n" % \
+                (self.pipeline.name, id, self.status, ('yes' if self.successful else 'no'), dur)
+        report+="        input file(s): %s\n" % self.input_file
         report+="        Steps:\n"
         for step_run in self.step_runs:
             report+="\t%s\n\n" % step_run.report()

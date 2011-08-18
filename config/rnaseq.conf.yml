@@ -17,9 +17,10 @@ rnaseq:
 # Don't edit this section
 provenance:
   cmds:
-    create_table: create_table.py
-    insert: insert.py
-    update: update.py
+#    create_table: create_table.py
+#    insert: insert.py
+#    update: update.py
+    load_pipeline: load_pipeline.py
     pipeline_start: pipeline_start.py
     mid_step: mid_step.py
     pipeline_end: pipeline_end.py

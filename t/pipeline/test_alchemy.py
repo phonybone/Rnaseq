@@ -1,4 +1,9 @@
-import unittest
+import unittest, os, sys
+
+dir=os.path.normpath(os.path.dirname(os.path.abspath(__file__))+"/../..")
+sys.path.append(os.path.join(dir+'/lib'))
+sys.path.append(os.path.join(dir+'/ext_libs'))
+
 from Rnaseq import *
 from RnaseqGlobals import RnaseqGlobals
 from warn import *
@@ -16,7 +21,9 @@ class TestCreate(unittest.TestCase):
         session=RnaseqGlobals.get_session()
         ps=session.query(Pipeline).all()
         for p in ps:
+            print "test_alchemy.setup: p.name is %s" % p.name
             session.delete(p)
+            print "deleting pipeline %s" % p.name
         session.commit()
 
     def test_insert(self):

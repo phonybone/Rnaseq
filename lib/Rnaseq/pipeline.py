@@ -23,8 +23,6 @@ class Pipeline(templated):
         self.suffix='syml'
         self.steps=[]
         self.step_exports={}
-        assert self.readset
-        assert self.readset.__class__.__name__=='Readset'
 
         
     def __str__(self):
@@ -45,7 +43,7 @@ class Pipeline(templated):
                              )
         metadata.create_all(engine)
 
-        sa_properties={'pipeline_runs':relationship(PipelineRun, backref='pipeline'),
+        sa_properties={'pipeline_runs':relationship(PipelineRun, backref='pipeline', cascade='all, delete, delete-orphan'),
                        }
         mapper(Pipeline, pipeline_table, sa_properties)
         return pipeline_table
@@ -77,6 +75,9 @@ class Pipeline(templated):
     # load all the steps
     # return self
     def load_steps(self):
+        assert self.readset
+        assert self.readset.__class__.__name__=='Readset'
+
         debug='debug' in os.environ
         name=self.name
         self.load_template()            # this barfs (in ID()) if no self.readset
@@ -157,14 +158,19 @@ class Pipeline(templated):
         # determine if provenance is desired:
         try:
             pipeline_run=kwargs['pipeline_run']
+            print "pipeline_run.id is %d" % pipeline_run.id
             step_runs=kwargs['step_runs']
             include_provenance=True
         except KeyError:
             include_provenance=False
-            
+        print "include_provenance is %s" % include_provenance
+        
         # create auxillary steps:
         if include_provenance:
             step_factory=StepFactory()
+            print "pipeline.sh_script: pipeline_run.id is %d" % pipeline_run.id
+            print "pipeline.sh_script: next_step_run_id is %d" % self.context.step_runs[self.steps[0].name].id
+
             pipeline_start=step_factory.new_step(self,
                                                  'pipeline_start',
                                                  pipeline_run_id=pipeline_run.id,
@@ -380,24 +386,23 @@ class Pipeline(templated):
         except AttributeError as ae:
             raise UserError("No label defined.  Please specify a label for the pipeline run, either in the readset or using the '--label' command line option")
 
-        pipeline_run=PipelineRun(pipeline_id=self.id,
-                                 status='standby',
+        pipeline_run=PipelineRun(status='standby',
                                  input_file=', '.join(self.readset.reads_files),
                                  user=RnaseqGlobals.conf_value('user'),
                                  label=label,
                                  working_dir=self.readset.working_dir)
 
-        session.add(pipeline_run)
-        session.commit()                # we need the pipelinerun_id below
+        self.pipeline_runs.append(pipeline_run)
+        session.merge(self)
+        session.commit()                
         self.context.pipeline_run_id=pipeline_run.id
         RnaseqGlobals.set_conf_value('pipeline_run_id',pipeline_run.id)
-        #print "new pipeline_run.id: %d" % pipeline_run.id
         
         # create step_run objects:
         step_runs={}
         for step in self.steps:
             if step.is_prov_step: continue
-            step_run=StepRun(step_name=step.name, pipeline_run_id=pipeline_run.id, status='standby')
+            step_run=StepRun(step_name=step.name, status='standby')
             for output in step.output_list():
                 output=evoque_template(output, step, self.readset)
                 step_run.file_outputs.append(FileOutput(path=output))
@@ -408,12 +413,13 @@ class Pipeline(templated):
                 step_run.success=True
 
             pipeline_run.step_runs.append(step_run)
-            #session.add(step_run)
             session.commit()
             pipeline_run.step_runs.append(step_run) # maintains list in db as well
             step_runs[step.name]=step_run
             self.context.step_runs[step.name]=step_run
 
+        session.commit()
+        print ">>> Report\n%s\n<<<" % pipeline_run.report() # doesn anything have an id? no.
         return (pipeline_run, step_runs)
 
 

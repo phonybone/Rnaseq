@@ -44,8 +44,8 @@ class TouchStep(unittest.TestCase):
         rs=self.readset_list[0]
         for f in rs.reads_files:
             mod_time=os.stat(f).st_mtime
+            print "checking %s: mod_time-before_run=%d" % (f, mod_time-before_run)
             self.assertGreaterEqual(mod_time, before_run)
-            print "checked %s" % f
 
     dead_code='''
     def tearDown(self):

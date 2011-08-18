@@ -170,7 +170,7 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
             
             filelist=glob.glob(fglob)
             if len(files)==0:
-                missing.append("no matching files for %s" % fglob)
+                missing.append("%s: no matching files for %s" % (filename, fglob))
             files.extend(filelist)
 
         if len(files)==0:
