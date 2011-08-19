@@ -23,5 +23,5 @@ class LoadPipeline(Command):
             #print "caught %s" % ie
             raise UserError(self.usage())
 
-        pipeline=Pipeline(name=pipeline_name, path=os.path.join(RnaseqGlobals.root_dir(),'templates','pipelines',pipeline_name+'.syml'))
+        pipeline=Pipeline(name=pipeline_name, path=os.path.join(RnaseqGlobals.root_dir(),'templates','pipeline',pipeline_name+'.syml'))
         pipeline.store_db()

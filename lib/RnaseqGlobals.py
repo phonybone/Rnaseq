@@ -268,4 +268,9 @@ class RnaseqGlobals(object):
         templated.template_dir=template_dir
         
 
+    @classmethod
+    def has_local_qsub(self):
+        rc=os.system('which qsub &> /dev/null')
+        return rc==0
+
 #print __file__,"checking in"

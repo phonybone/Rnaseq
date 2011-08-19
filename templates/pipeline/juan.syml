@@ -1,4 +1,5 @@
-name: pipeline de Juan
+name: juan
+description: perform gene expression and exon discovery using mapsplice and cufflinks; input is Illumina data
 stepnames: header export2fq filterQuality filterVectors filterLowComplex ribosomal_mit remove_erccs repeats_consensus equalize mapsplice mapsplice2 cufflinks cuffcompare footer
 blat_index: /proj/hoodlab/share/programs/RNAseq-Pi/data/blat-indexes
 

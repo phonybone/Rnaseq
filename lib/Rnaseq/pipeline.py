@@ -82,8 +82,9 @@ class Pipeline(templated):
         name=self.name
         self.load_template()            # this barfs (in ID()) if no self.readset
         if self.name!=name: # loading the template changed the name: bad
+            old_name=self.name
             self.name=name
-            print >>sys.stderr, "Changed pipeline name back to %s" % name
+            if debug: print >>sys.stderr, "Changed pipeline name back to %s (from %s)" % (name, old_name)
         
 
         try:

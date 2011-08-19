@@ -1,4 +1,4 @@
-description: exon discovery using mapsplice
+description: exon discovery using mapsplice and cufflinks/cuffcompare
 stepnames: header filterQuality filterVectors filterLowComplex ribosomal_mit remove_erccs repeats_consensus equalize mapsplice mapsplice2 cufflinks cuffcompare footer
 blat_index: /proj/hoodlab/share/programs/RNAseq-Pi/data/blat-indexes
 

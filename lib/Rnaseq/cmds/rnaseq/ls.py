@@ -22,7 +22,8 @@ class Ls(Command):
         except IndexError as e: raise ProgrammerGoof(e)
 
         session=RnaseqGlobals.get_session()
-
+        debug='debug' in os.environ or 'DEBUG' in os.environ
+        
         # fixme: re-work the logic on this:
         # 'rnaseq ls --pr' ought to do the obvious thing.
         # Reverse order of determining what to do; empty case
@@ -37,7 +38,7 @@ class Ls(Command):
         # get pipeline_run id; if none, ls all pipeline_run's for this pipeline:
         pipeline_run_id=RnaseqGlobals.conf_value('pipeline_run_id')
         if pipeline_run_id==None:
-            print "looking for pipeline '%s'" % pipeline_name
+            if debug: print "looking for pipeline '%s'" % pipeline_name
             if re.match('\d+$',pipeline_name):
                 pipeline=session.query(Pipeline).get(pipeline_name)
             else:
@@ -66,7 +67,8 @@ class Ls(Command):
 
     def ls_pipeline(self,pipeline):
         print "pipeline: '%s'" % pipeline.name
-        print "steps: %s" % ", ".join(pipeline.stepnames)
+        print "   description: %s" % pipeline.description
+        print "   steps: %s" % ", ".join(pipeline.stepnames)
         
         s='' if len(pipeline.pipeline_runs)==1 else 's'
         print "%d run%s of %s" % (len(pipeline.pipeline_runs), s, pipeline.name)

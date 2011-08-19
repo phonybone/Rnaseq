@@ -3,7 +3,7 @@ description: pipeline for testing purposes;
 stepnames: header extract_significant sort_by_name sort_by_sample footer
 
 header:
-  name: header
+  inputs: readset
 
 extract_significant:
   inputs: header

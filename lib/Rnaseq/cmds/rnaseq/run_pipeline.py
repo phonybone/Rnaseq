@@ -98,13 +98,15 @@ class RunPipeline(Command):
     def qsub_launcher(self):
         # want to build list that looks like "ssh user@host /bin/qsub /working_dir/qsub_file
         launcher=[]
-        launcher.append(RnaseqGlobals.conf_value('qsub','ssh_cmd'))
+        if RnaseqGlobals.has_local_qsub():
+            launcher.append('qsub')
+        else:
+            launcher.append(RnaseqGlobals.conf_value('qsub','ssh_cmd'))
+            user=RnaseqGlobals.conf_value('qsub','user') or os.environ['USER']
+            host=RnaseqGlobals.conf_value('qsub','host')
+            launcher.append("%s@%s" % (user,host))
+            launcher.append(RnaseqGlobals.conf_value('qsub','exe'))
 
-        user=RnaseqGlobals.conf_value('qsub','user') or os.environ['USER']
-        host=RnaseqGlobals.conf_value('qsub','host')
-        launcher.append("%s@%s" % (user,host))
-                                   
-        launcher.append(RnaseqGlobals.conf_value('qsub','exe'))
         return launcher
 
         

@@ -1,5 +1,5 @@
 name: gene_expression
-description: gene expression using cufflinks
+description: gene expression using cufflinks, using fastq inputs (single or paired end)
 stepnames: header, filterQuality, filterLowComplex, filterVectors, ribosomal_mit, remove_erccs, repeats_consensus, equalize, bowtie, bowtie2bam, samtool_copy, cufflinks, footer
 
 header:

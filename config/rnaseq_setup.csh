@@ -12,8 +12,8 @@ else
 endif
 
 # SGE
-if ( -f /sge/aegir/common/settings.sh ) then
-   source /sge/aegir/common/settings.sh
+if ( -f /sge/aegir/common/settings.csh ) then
+   source /sge/aegir/common/settings.csh
 endif
 
   
