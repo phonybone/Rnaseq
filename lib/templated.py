@@ -115,7 +115,8 @@ class templated(dict):
             tf=self.template_file()
             template=domain.get_template(tf)
         except ValueError as ve:
-            raise UserError("%s '%s': missing template file %s/%s" % (self.type, self.name, self.template_dir, self.template_file()))
+            raise UserError("%s '%s': missing template file %s" % (self.type, self.name,
+                                                                  self.template_file()))
         
         vars=args['vars'] if args.has_key('vars') else {} # consider default of self instead of {}?  Or is that stupid?
         vars['config']=RnaseqGlobals.config
