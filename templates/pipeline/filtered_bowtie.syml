@@ -1,6 +1,7 @@
 name: filtered bowtie
 stepnames: header export2fq filterQuality filterVectors filterLowComplex equalize bowtie
 bowtie_index: /proj/hoodlab/share/programs/bowtie-indexes
+description: align Illumina reads to a genome
 
 header:
   name: header
