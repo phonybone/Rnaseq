@@ -71,7 +71,7 @@ class bowtie(Step):
                 self.ewbt={'human':'hg19',
                            'mouse':'mm37.61'}[org]
             except:
-                raise UserError("unable to set bowtie index for organism '%s'" % org")
+                raise UserError("unable to set bowtie index for organism '%s'" % org)
 
         usage='''
 export BOWTIE_INDEXES=${bowtie_index}
