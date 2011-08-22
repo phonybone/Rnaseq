@@ -59,9 +59,9 @@ class Step(dict):                     # was Step(templated)
                 raise TypeError("update expected at most 1 arguments, got %d" % len(args))
             other = dict(args[0])
             for key in other:
-                self[key] = other[key]
+                if key not in self: self[key] = other[key]
         for key in kwargs:
-            self[key] = kwargs[key]
+            if key not in self: self[key] = kwargs[key]
 
     ########################################################################
 

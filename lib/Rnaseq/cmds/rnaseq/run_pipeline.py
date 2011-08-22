@@ -35,7 +35,6 @@ class RunPipeline(Command):
 
         # Iterate through reads files defined in readset:
         for readset in self.readsets:
-
             user_runs=RnaseqGlobals.user_runs()
             for user_run in user_runs:
                 

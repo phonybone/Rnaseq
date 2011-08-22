@@ -135,6 +135,7 @@ class Pipeline(templated):
     # Returns full path of script name.
     def write_sh_script(self, **kwargs):
         script=self.sh_script(**kwargs)
+
         script_filename=os.path.join(self.readset.working_dir, self.scriptname())
         try:
             os.makedirs(self.readset.working_dir)
@@ -159,18 +160,14 @@ class Pipeline(templated):
         # determine if provenance is desired:
         try:
             pipeline_run=kwargs['pipeline_run']
-            print "pipeline_run.id is %d" % pipeline_run.id
             step_runs=kwargs['step_runs']
             include_provenance=True
         except KeyError:
             include_provenance=False
-        print "include_provenance is %s" % include_provenance
         
         # create auxillary steps:
         if include_provenance:
             step_factory=StepFactory()
-            print "pipeline.sh_script: pipeline_run.id is %d" % pipeline_run.id
-            print "pipeline.sh_script: next_step_run_id is %d" % self.context.step_runs[self.steps[0].name].id
 
             pipeline_start=step_factory.new_step(self,
                                                  'pipeline_start',
@@ -194,6 +191,7 @@ class Pipeline(templated):
                 
             
             # append step.sh_script(self.context)
+            step_script=step.sh_script(self.context, echo_name=True)
             try: step_script=step.sh_script(self.context, echo_name=True)
             except Exception as e:
                 errors.append("%s: %s" % (step.name,str(e)))

@@ -174,7 +174,7 @@ class RnaseqGlobals(object):
         except AttributeError: 
             db_name=self.get_db_file()
             engine=create_engine('sqlite:///%s' % db_name, echo=False)
-            print >> sys.stderr, "connected to %s" % db_name
+            #print >> sys.stderr, "connected to %s" % db_name
             metadata=MetaData()
 
             # have to import these explicitly because we're in a classmethod: (or something)

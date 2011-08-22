@@ -54,9 +54,9 @@ class Readset(dict):
                 raise TypeError("update expected at most 1 arguments, got %d" % len(args))
             other = dict(args[0])
             for key in other:
-                self[key] = other[key]
+                if key not in self: self[key] = other[key]
         for key in kwargs:
-            self[key] = kwargs[key]
+            if key not in self: self[key] = kwargs[key]
 
     ########################################################################
 
@@ -127,11 +127,12 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
         if type(rlist) != type([]): # make sure rlist is a list
             raise ConfigError("%s: type of 'readsets' must be a list; got '%s'" % (filename, type(rlist)))
         for ryml in rlist:
-            if not type(ryml)==type({}): # make sure elements of rlist are dicts
+            if type(ryml)!=type({}): # make sure elements of rlist are dicts
                 raise ConfigError("%s: elements of readsets must be dicts (hashes); got '%s'" % (filename, type(ryml)))
 
             ryml.update(scalars)
-            try: rs=self.load_glob(ryml,filename)[0]
+            try:
+                rs=self.load_glob(ryml,filename)[0]
             except ConfigError as ce:
                 errors.append(str(ce))
                 continue
@@ -141,7 +142,7 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
 
         if len(errors)>0:
             raise ConfigError("%s:\n"%filename+"\n".join(errors))
-        
+
         return readset_objs
 
 
@@ -258,8 +259,8 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
 
         # reads_file correctly defines two files; are the filenames in the correct format?
         errors=[]
-        for fn in self.reads_list:
-            if not re.search('_[12]\.[\w_]$', fn):
+        for fn in self.reads_files:
+            if not re.search('_[12]\.[\w_]+$', fn):
                 errors.append("%s is ill-formed: must contain _1 or _2 followed by .<suffix>" % fn)
         if len(errors) != 0:
             raise ConfigError("\n".join(errors))

@@ -56,7 +56,7 @@ class bowtie(Step):
         if hasattr(self, 'threads'):
             threads='--threads %s' % self.threads
         else:
-            threads='--threads' % RnaseqGlobals.conf_value('qsub', 'nprocs')
+            threads='--threads %s' % RnaseqGlobals.conf_value('qsub', 'nprocs')
 
         # set ewbt if necessary:
         if not hasattr(self, 'ewbt'):
