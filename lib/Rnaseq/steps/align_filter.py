@@ -15,7 +15,7 @@ class align_filter(Step):
 
         aligner=self.aligner
         if aligner=='bowtie':
-            self.exe='blat'
+            self.exe='bowtie'
             self.args='--quiet -p 4 -S --sam-nohead -k 1 -v 2 -q'
         elif aligner=='blat':
             self.exe='blat'

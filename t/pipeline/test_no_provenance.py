@@ -22,6 +22,7 @@ class TestInputs(unittest.TestCase):
 
     def test_list_expansion(self):
         pipeline=Pipeline(name='filter', readset=self.readset)            
+        print "pipeline.type is %s" % pipeline.type
         pipeline.load_steps()
         script=pipeline.sh_script(force=True) # neglecting to add pipeline_run or step_runs should exclude checks
 

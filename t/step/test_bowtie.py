@@ -1,4 +1,8 @@
-import unittest, os
+import unittest, sys, os
+dir=os.path.normpath(os.path.dirname(os.path.abspath(__file__))+"/../..")
+sys.path.append(os.path.join(dir+'/lib'))
+sys.path.append(os.path.join(dir+'/ext_libs'))
+
 from Rnaseq import *
 from RnaseqGlobals import *
 from warn import *
@@ -24,7 +28,7 @@ class TestBowtieStep(unittest.TestCase):
 
         expected='''
 export BOWTIE_INDEXES=/proj/hoodlab/share/programs/bowtie-indexes
-bowtie --sam --threads 4 --quiet -k 1 -v 2 -q hg19 -1 ${ID}.${format} %s
+bowtie --threads 4 --quiet -k 1 -v 2 -q hg19 -1 ${ID}.${format} %s
         ''' % output
         #print "expected:\n>>>%s<<<" % expected
 
@@ -39,7 +43,7 @@ bowtie --sam --threads 4 --quiet -k 1 -v 2 -q hg19 -1 ${ID}.${format} %s
         
         expected='''
 export BOWTIE_INDEXES=/proj/hoodlab/share/programs/bowtie-indexes
-bowtie --sam --threads 4 --quiet -k 1 -v 2 -q hg19 -1 ${ID}_1.${format} -2 ${ID}_2.${format} %s
+bowtie  --threads 4 --quiet -k 1 -v 2 -q hg19 -1 ${ID}_1.${format} -2 ${ID}_2.${format} %s
 ''' % output
         #print "script:\n>>>%s<<<" % script
         #print "expected:\n>>>%s<<<" % expected

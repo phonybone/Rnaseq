@@ -19,10 +19,25 @@ from context import Context
 class Pipeline(templated):
     def __init__(self,*args,**kwargs):
         templated.__init__(self,*args,**kwargs)
+
+        session=RnaseqGlobals.get_session()
+        found=False
+        if 'name' in kwargs:
+            other_self=session.query(Pipeline).filter_by(name=kwargs['name']).first()
+            if other_self:
+                self.merge(other_self)
+                found=True
+
+            
         self.type='pipeline'
         self.suffix='syml'
         self.steps=[]
         self.step_exports={}
+
+        if not found:
+            path=self.template_file()       # in templated, needed for db
+            session.add(self)
+            session.commit()
 
         
     def __str__(self):
@@ -260,8 +275,8 @@ class Pipeline(templated):
         step_factory=StepFactory()
         a=set(self.stepnames)
         b=set([x for x in self.keys() if type(self[x])==type({}) and step_factory.is_step(x)])
-        if debug: print "a: %s" % a
-        if debug: print "b: %s" % b
+        if debug: print >>sys.stderr, "a: %s" % a
+        if debug: print >>sys.stderr, "b: %s" % b
         
         if a==b: return []            # set equality! we just love over-ridden operators
 
@@ -270,11 +285,13 @@ class Pipeline(templated):
         if debug: print "name_no_step: %s" % name_no_step
         if len(name_no_step)>0:
             errors.append("The following steps were listed as part of %s, but no defining section was found: %s" % (self.name, ", ".join(list(name_no_step))))
+            #print >>sys.stderr, "The following steps were listed as part of %s, but no defining section was found: %s" % (self.name, ", ".join(list(name_no_step)))
             
         step_no_name=b-a                # more set subtraction!
         if debug: print "step_no_name: %s" % step_no_name
         if len(step_no_name)>0:
             errors.append("The following steps were defined as part of %s, but not listed: %s" % (self.name, ", ".join(list(step_no_name))))
+            #print >>sys.stderr, "The following steps were defined as part of %s, but not listed: %s" % (self.name, ", ".join(list(step_no_name)))
         
         return errors
 
@@ -357,17 +374,20 @@ class Pipeline(templated):
     
     ########################################################################
     # lookup self in db; if not found, store.  Same for all steps.
+    # this should be obsolete now if the new code in __init__() works
     def store_db(self):
+        return self
         session=RnaseqGlobals.get_session()
         other_self=session.query(Pipeline).filter_by(name=self.name).first()
+
         if other_self==None:
             session.add(self)
-            print "adding %s to db %s" % (self.name, RnaseqGlobals.get_db_file())
+            session.commit()
         else:
             if RnaseqGlobals.conf_value('debug'): print "found pipeline %s: id=%d" % (self.name, other_self.id)
             self.id=other_self.id
+            self=other_self
 
-        session.commit()
         return self
         
 
@@ -375,7 +395,7 @@ class Pipeline(templated):
     ########################################################################
     # return a tuple containing a pipeline_run object and a dict of step_run objects (keyed by step name):
     def make_run_objects(self, session):
-        self.store_db()
+        self=self.store_db()
         try: verbose=os.environ['DEBUG']
         except: debug=False
         
@@ -392,9 +412,13 @@ class Pipeline(templated):
                                  working_dir=self.readset.working_dir)
 
         self.pipeline_runs.append(pipeline_run)
+        print "mro: self.pipeline_runs is %s" % ", ".join(str(x.id) for x in self.pipeline_runs)
         session.merge(self)
         session.commit()                
         self.context.pipeline_run_id=pipeline_run.id
+        if pipeline_run.id==None:
+            raise ProgrammerGoof("no id in %s" % pipeline_run)
+
         RnaseqGlobals.set_conf_value('pipeline_run_id',pipeline_run.id)
         
         # create step_run objects:
