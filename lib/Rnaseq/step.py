@@ -224,7 +224,7 @@ class Step(dict):                     # was Step(templated)
     
     def verify_exe(self):
         if not hasattr(self,'exe'): return True
-
+        
         dir_list=RnaseqGlobals.conf_value('rnaseq', 'path').split(":")
         dir_list.extend([os.path.join(RnaseqGlobals.root_dir(),'programs')])
 

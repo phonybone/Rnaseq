@@ -8,7 +8,6 @@ class filterVectors(align_filter):
         self.description='filter vectors'
         self.ewbt='UniVec_Core'
         self.blat_index='solexa_primers.2bit'
-        self
 
 
     def output_list(self,*args):
