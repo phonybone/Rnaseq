@@ -70,28 +70,29 @@ exit_on_failure()
         restore_indent=True
 
         # add link part if necessary:
-        if hasattr(readset, 'ID') and readset.reads_file==readset.ID:
-            link_part=''
-        else:
-            if self.paired_end():
-                link_part='''
-ln -fs ${reads_file}_1.${format} ${ID}_1.${format}
-ln -fs ${reads_file}_2.${format} ${ID}_2.${format}
-'''
-            else:
-                link_part='''
-ln -fs ${reads_file} ${ID}
-'''
+        # Is necessary if original location of data is different from working_dir:
+        link_part=''
+        if os.path.dirname(readset.reads_files[0]) != readset.working_dir:
+            for rf in readset.reads_files:
+                link_part+="ln -fs %s %s" % (rf, readset.working_dir)
         template+=link_part
             
         return template
         
     ########################################################################
 
+    # This shouldn't call self.input_list(), because it sets up a circular dependency
+    # in conjunction with pipeline.convert_io().  
     def output_list(self,*args):
+        readset=self.pipeline.readset
+        list=[]
         if self.paired_end():
-            return ['${ID}_1.${format}', '${ID}_2.${format}']
-        elif hasattr(self.pipeline.readset, 'ID'):
-            return ['${ID}']
+            list.extend(['${ID}_1.${format}', '${ID}_2.${format}'])
         else:
-            return self.input_list()
+            working_dir=readset.working_dir
+            for rf in readset.reads_files:
+                basename=os.path.basename(rf)
+                list.append(os.path.join(working_dir, basename))
+
+        return list
+        

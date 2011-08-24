@@ -1,12 +1,8 @@
 import unittest, os, sys
 
-if os.path.dirname(__file__)=='':       # running in local directory
-    root_dir=(os.path.normpath(os.getcwd()+'/../..'))
-else:
-    root_dir=(os.path.normpath(os.path.dirname(__file__)+'/../..'))
-sys.path.append(os.path.join(root_dir, 'lib'))
-sys.path.append(os.path.join(root_dir, 'ext_libs'))
-
+dir=os.path.normpath(os.path.dirname(os.path.abspath(__file__))+"/../..")
+sys.path.append(os.path.join(dir+'/lib'))
+sys.path.append(os.path.join(dir+'/ext_libs'))
 
 from Rnaseq import *
 from RnaseqGlobals import RnaseqGlobals
@@ -61,35 +57,35 @@ class TestLoad(unittest.TestCase):
     def test_wd_rel_rel(self):
         rs=Readset(reads_file='subdir/some_data.txt',working_dir='some_dir', label='label')
         self.assertEqual(rs.working_dir, os.path.join(os.getcwd(),'subdir/some_dir'))
-        self.assertEqual(rs.ID, os.path.join(os.getcwd(),'subdir','some_dir/some_data.txt'))
-        self.assertEqual(rs.id, 'some_data.txt')
+        self.assertEqual(rs.ID, os.path.join(os.getcwd(),'subdir','some_dir/some_data'))
+        self.assertEqual(rs.id, 'some_data')
 
     def test_wd_rel_abs(self):
         rs=Readset(reads_file='subdir/some_data.txt',working_dir='/some_dir', label='label')
         self.assertEqual(rs.working_dir, '/some_dir')
-        self.assertEqual(rs.ID, '/some_dir/some_data.txt')
+        self.assertEqual(rs.ID, '/some_dir/some_data')
 
     def test_wd_rel_none(self):
         rs=Readset(reads_file='subdir/some_data.txt',working_dir=None, label='label')
         self.assertEqual(rs.working_dir, os.path.join(os.getcwd(),'subdir'))
-        self.assertEqual(rs.ID, os.path.join(os.getcwd(),'subdir/some_data.txt'))
+        self.assertEqual(rs.ID, os.path.join(os.getcwd(),'subdir/some_data'))
 
     def test_wd_abs_rel(self):
         rs=Readset(reads_file='/some/subdir/some_data.txt',working_dir='some_dir', label='label')
         self.assertEqual(rs.working_dir, '/some/subdir/some_dir')
-        self.assertEqual(rs.ID, '/some/subdir/some_dir/some_data.txt')
+        self.assertEqual(rs.ID, '/some/subdir/some_dir/some_data')
 
     def test_wd_abs_abs(self):
         rs=Readset(reads_file='/some/subdir/some_data.txt',
                    working_dir='/some/other/dir',
                    label='label')
         self.assertEqual(rs.working_dir, '/some/other/dir')
-        self.assertEqual(rs.ID, '/some/other/dir/some_data.txt')
+        self.assertEqual(rs.ID, '/some/other/dir/some_data')
 
     def test_wd_abs_none(self):
         rs=Readset(reads_file='/some/subdir/some_data.txt',working_dir=None, label='label')
         self.assertEqual(rs.working_dir, '/some/subdir')
-        self.assertEqual(rs.ID, '/some/subdir/some_data.txt')
+        self.assertEqual(rs.ID, '/some/subdir/some_data')
 
 
     def test_glob(self):

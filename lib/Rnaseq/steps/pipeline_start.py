@@ -12,9 +12,11 @@ class pipeline_start(Step):
         usage='''
 python ${root_dir}/bin/provenance pipeline_start ${pipeline_run_id} ${next_step_run_id} ${debug}
 '''
-        print "pipeline start: pipeline_run_id is %d" % self.pipeline_run_id
-        print "pipeline start: next_step_run_id is %d" % self.next_step_run_id
-        print "pipeline start: usage is %s" % usage
+
+        if self.debug:
+            print "pipeline start: pipeline_run_id is %d" % self.pipeline_run_id
+            print "pipeline start: next_step_run_id is %d" % self.next_step_run_id
+            print "pipeline start: usage is %s" % usage
         return usage
 
     def outputs(self, *args):

@@ -2,6 +2,7 @@ name: readset1.syml
 org: mouse
 readlen: 75
 working_dir: working_dir
+reads_dir: ${root_dir}/t/fixtures/readsets
 reads_file: s_1_export.txt
 label: readset1
 format: txt

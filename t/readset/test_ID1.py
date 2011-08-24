@@ -10,7 +10,7 @@ from RnaseqGlobals import *
 from warn import *
 
 
-class TestHeaderStep(unittest.TestCase):
+class TestID1(unittest.TestCase):
     def setUp(self):
         argv=RnaseqGlobals.initialize(__file__, testing=True)       # not to be confused with sys.argv
 
@@ -24,26 +24,17 @@ class TestHeaderStep(unittest.TestCase):
         self.assertEqual(self.pipeline.name, 'link')
         self.assertTrue(self.pipeline.context != None)
         
-    #def test_header_script(self):
-        #header_step=self.pipeline.step_with_name('header')
-        
-
-    def test_readset_exports(self):
+    def test_ID(self):
+        readset=self.readset
         header_step=self.pipeline.step_with_name('header')
         script=header_step.sh_script(self.pipeline.context)
-        for ex in self.readset.exports:
-            target='export %s=%s' % (ex, getattr(self.readset, ex))
-            self.assertRegexpMatches(script, target)
-            #print >>sys.stderr, "got %s" % target
+        self.assertEqual(len(readset.reads_files), 1)
+        rf=readset.reads_files[0]
+        target_ID=readset.working_dir+'/'+os.path.basename(rf)
+        target_ID=re.sub('\..*$', '', target_ID)
+        ID=readset.ID
+        self.assertEqual(ID, target_ID)
+        print "%s=\n%s" % (ID, target_ID)
 
-
-    def test_links(self):
-        header_step=self.pipeline.step_with_name('header')
-        script=header_step.sh_script(self.pipeline.context)
-        for rf in self.readset.reads_files:
-            target='ln -fs %s %s' % (rf, self.readset.working_dir)
-            self.assertRegexpMatches(script, target)
-            #print >>sys.stderr, "got %s" % target
-
-suite = unittest.TestLoader().loadTestsFromTestCase(TestHeaderStep)
+suite = unittest.TestLoader().loadTestsFromTestCase(TestID1)
 unittest.TextTestRunner(verbosity=2).run(suite)

@@ -1,8 +1,8 @@
 
 ****************************************************************
 starting touch3
-Tue Aug 23 10:55:17 PDT 2011
+Wed Aug 24 13:50:30 PDT 2011
 
-header: /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/s_2_export.txt created
-header: /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/s_1_export.txt created
-header: /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/s_3_export.txt created
+header: /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/rnaseq_wf/s_2_export.txt created
+header: /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/rnaseq_wf/s_1_export.txt created
+header: /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/rnaseq_wf/s_3_export.txt created

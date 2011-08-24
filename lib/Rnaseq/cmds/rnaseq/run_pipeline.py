@@ -39,8 +39,10 @@ class RunPipeline(Command):
             for user_run in user_runs:
                 
                 # set up the pipeline:
-                pipeline=Pipeline(name=pipeline_name, readset=readset).load_steps()
-                self.pipelines[id(readset)]=pipeline
+                #pipeline=Pipeline(name=pipeline_name, readset=readset).load_steps()
+                pipeline=Pipeline.get_pipeline(name=pipeline_name, readset=readset)
+                pipeline.load_steps()
+                #self.pipelines[id(readset)]=pipeline
                 
                 pipeline.update(RnaseqGlobals.config)
                 RnaseqGlobals.user_config.merge_args(pipeline, user_run)

@@ -27,6 +27,8 @@ class Readset(dict):
             setattr(self,k,v)
             self[k]=v
 
+        if not hasattr(self,'format') or self.format==None: self.format='fq' # I bet this comes back to bite
+        
         self.evoque_fields().resolve_reads_file().resolve_working_dir().set_ID().verify_complete()
         self.exports=['org','readlen','working_dir','reads_file','label','format','ID']
 
@@ -136,7 +138,7 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
             except ConfigError as ce:
                 errors.append(str(ce))
                 continue
-            #except Exception as e: raise e
+
             rs.update(scalars)
             readset_objs.append(rs)
 
@@ -268,11 +270,15 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
             
 
     # returns a "fixed" version of working_dir
+    # guarantees that self.working_dir is set
     def resolve_working_dir(self):
         reads_file=self.reads_file
 
         try: working_dir=self.working_dir
         except: working_dir=None
+
+        try: label=self.label
+        except: label=''
 
         if os.path.isabs(reads_file):
             if working_dir==None:
@@ -300,7 +306,11 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
         return self
 
     # set self.ID and self.id
-    # must be called *after* self.resolve_working_dir()
+    # we only set self.ID if:
+    # a) there is exactly 1 reads_file, or
+    # b) there are two reads_files, self.paired_end is True, and the filenames are verified to be of the right format
+    #
+    # This must be called *after* self.resolve_working_dir()
     # returs self
     def set_ID(self, *ID):
         # try to assign self.ID from ID[0], which might not be there:
@@ -311,16 +321,19 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
         try:
             if os.path.isabs(self.ID): pass
             else: self.ID=os.path.join(self.working_dir, self.ID) # self.ID exists and is relative
+
         except AttributeError: 
             # self.ID didn't exist, set to combination of working_dir and basename of reads_file
-            # WRONG: uses reads_file, not reads_files[]
             if len(self.reads_files)==1:
-                self.ID=os.path.join(self.working_dir,os.path.basename(self.reads_file))
+                ID=os.path.join(self.working_dir,os.path.basename(self.reads_file))
+                ID=re.sub('\..*$', '', ID)
+                self.ID=ID
             elif len(self.reads_files)==2 and self.paired_end:
                 # check that file names are of proper form:
                 self.verify_paired_end_filenames()
-                mg=re.search('^(.*_[12])\.[\w_]+$', self.reads_files[0])
-                try: self.ID=mg.groups()[0]
+                mg=re.search('^(.*)_[12]\.[\w_]+$', os.path.basename(self.reads_files[0])) # works of self.reads_files[0]...
+                try:
+                    self.ID=os.path.join(self.working_dir, mg.groups()[0])
                 except IndexError:
                     raise ConfigError("'%s' isn't a well-formed filename for paired_end data: must match '_[12].ext'" % self.reads_files[0])
                 
@@ -332,11 +345,12 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
 
 
         # 
-        self['ID']=self.ID              # god dammit
+        #self['ID']=self.ID              # god dammit
 
-        # set self.id as 
+        # set self.id as ...something.  why?
         self.id=os.path.basename(self.ID)
         self['id']=self.id
+
         return self
                 
 

@@ -51,13 +51,13 @@ class templated(dict):
                 raise TypeError("update expected at most 1 arguments, got %d" % len(args))
             other = dict(args[0])
             for key in other:
-                self[key] = other[key]
+                if key not in self: self[key] = other[key]
         for key in kwargs:
-            self[key] = kwargs[key]
+            if key not in self: self[key] = kwargs[key]
 
 
 
-    def merge(self,d):                  # fixme: should go into dict_helper class or some such
+    def old_merge(self,d):                  # fixme: should go into dict_helper class or some such
         if (not isinstance(d,dict)):    
             if (isinstance(d,templated)):
                 d=d.dict
@@ -65,8 +65,12 @@ class templated(dict):
                 raise ProgrammerGoof("%s: not a dict or templated" % type(d))
 
         for (k,v) in d.items():
+            print "templated.merge: %s=%s" % (k,v)
             if (k not in self.dict):
                 self[k]=v
+            else:
+                print "  skipping, %s already set to %s" % (k,self[k])
+                
 
         return self
 

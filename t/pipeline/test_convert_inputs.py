@@ -36,10 +36,12 @@ class TestBase(unittest.TestCase):
 
     def test_input_conversion(self):
         c=self.pipeline.context
+        readset=self.pipeline.readset
         # print "test_convert_inputs: context:\n%s" % yaml.dump(c)
 
         self.assertEqual(c.inputs['header'],[])
-        self.assertEqual(c.outputs['header'],['${ID}'])
+        target=os.path.join(readset.working_dir, os.path.basename(readset.reads_files[0]))
+        self.assertEqual(c.outputs['header'], [target])
 
         self.assertEqual(c.inputs['step1'],c.outputs['header'])
         self.assertEqual(c.outputs['step1'],['${ID}.step1.${format}'])

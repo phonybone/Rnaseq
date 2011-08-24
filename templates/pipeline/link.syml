@@ -1,0 +1,8 @@
+name: link
+stepnames: header footer
+
+header: 
+  inputs: readset
+
+footer: 
+  inputs: header

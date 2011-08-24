@@ -160,8 +160,9 @@ class Step(dict):                     # was Step(templated)
 
     ########################################################################
 
+    # get the input list from the pipeline's context (which means pipeline.convert_io() must have completed)
     def input_list(self):
-        return self.pipeline.context.inputs[self.name]
+        return self.pipeline.context.inputs[self.name] # barfing on no context
 
     def input_list_expanded(self):
         l=[evoque_template(x, self, self.pipeline.readset) for x in self.input_list()]

@@ -20,25 +20,37 @@ class Pipeline(templated):
     def __init__(self,*args,**kwargs):
         templated.__init__(self,*args,**kwargs)
 
-        session=RnaseqGlobals.get_session()
-        found=False
-        if 'name' in kwargs:
-            other_self=session.query(Pipeline).filter_by(name=kwargs['name']).first()
-            if other_self:
-                self.merge(other_self)
-                found=True
-
-            
         self.type='pipeline'
         self.suffix='syml'
         self.steps=[]
         self.step_exports={}
 
+
+    @classmethod
+    def get_pipeline(self,**kwargs):
+        session=RnaseqGlobals.get_session()
+        found=False
+        if 'name' in kwargs:
+            pipeline=session.query(Pipeline).filter_by(name=kwargs['name']).first()
+            if pipeline!=None:
+                pipeline.type='pipeline'
+                pipeline.suffix='syml'
+                pipeline.steps=[]
+                pipeline.step_exports={}
+                
+                for k,v in kwargs.items():
+                    setattr(pipeline,k,v)
+                found=True
+
         if not found:
-            path=self.template_file()       # in templated, needed for db
-            session.add(self)
+            pipeline=Pipeline(**kwargs)
+            pipeline.template_file()    # sets pipeline.path
+            session.add(pipeline)
             session.commit()
 
+
+        assert(hasattr(pipeline,'readset'))
+        return pipeline    
         
     def __str__(self):
         return "%s" % self.name
@@ -90,12 +102,12 @@ class Pipeline(templated):
     # load all the steps
     # return self
     def load_steps(self):
-        assert self.readset
-        assert self.readset.__class__.__name__=='Readset'
-
+        assert(hasattr(self,'readset'))
+        
         debug='debug' in os.environ
         name=self.name
         self.load_template()            # this barfs (in ID()) if no self.readset
+        assert(hasattr(self,'stepnames'))
         if self.name!=name: # loading the template changed the name: bad
             old_name=self.name
             self.name=name
@@ -103,9 +115,12 @@ class Pipeline(templated):
         
 
         try:
-            self.stepnames=re.split('[,\s]+',self['stepnames'])
+            self.stepnames=re.split('[,\s]+',self.stepnames)
         except AttributeError:
             raise ConfigError("pipeline %s does not define stepnames" % self.name)
+        except TypeError as te:
+            if type(self.stepnames)!=type([]):
+                raise te
 
         # 
         step_factory=StepFactory()
@@ -134,7 +149,7 @@ class Pipeline(templated):
     # read the pipeline's .syml file and call templated.load on it:
     def load_template(self):
         vars={}
-        vars.update(self.dict)
+        vars.update(self.__dict__)
         vars.update(RnaseqGlobals.config)
         vars['ID']=self.ID()
 
@@ -357,7 +372,7 @@ class Pipeline(templated):
         if err_filename==None: err_filename=self.err_filename()
         qsub=templated(name='qsub', type='sh_template', suffix='tmpl')
         vars={}
-        vars.update(self.dict)
+        vars.update(self.__dict__)
         vars['name']=path_helpers.sanitize(self.name)
         vars['cmd']=script_filename
         vars['out_filename']=out_filename
@@ -375,8 +390,8 @@ class Pipeline(templated):
     ########################################################################
     # lookup self in db; if not found, store.  Same for all steps.
     # this should be obsolete now if the new code in __init__() works
+    # but it is called by load_pipeline.py
     def store_db(self):
-        return self
         session=RnaseqGlobals.get_session()
         other_self=session.query(Pipeline).filter_by(name=self.name).first()
 
@@ -395,7 +410,7 @@ class Pipeline(templated):
     ########################################################################
     # return a tuple containing a pipeline_run object and a dict of step_run objects (keyed by step name):
     def make_run_objects(self, session):
-        self=self.store_db()
+        #self=self.store_db()
         try: verbose=os.environ['DEBUG']
         except: debug=False
         
@@ -412,13 +427,13 @@ class Pipeline(templated):
                                  working_dir=self.readset.working_dir)
 
         self.pipeline_runs.append(pipeline_run)
-        print "mro: self.pipeline_runs is %s" % ", ".join(str(x.id) for x in self.pipeline_runs)
+        #print "mro: self.pipeline_runs is %s" % ", ".join(str(x.id) for x in self.pipeline_runs)
         session.merge(self)
         session.commit()                
-        self.context.pipeline_run_id=pipeline_run.id
         if pipeline_run.id==None:
             raise ProgrammerGoof("no id in %s" % pipeline_run)
 
+        self.context.pipeline_run_id=pipeline_run.id
         RnaseqGlobals.set_conf_value('pipeline_run_id',pipeline_run.id)
         
         # create step_run objects:
@@ -442,7 +457,6 @@ class Pipeline(templated):
             self.context.step_runs[step.name]=step_run
 
         session.commit()
-        print ">>> Report\n%s\n<<<" % pipeline_run.report() # doesn anything have an id? no.
         return (pipeline_run, step_runs)
 
 
@@ -487,7 +501,7 @@ class Pipeline(templated):
     def convert_io(self):
         context=Context(self.readset)
         debug='DEBUG' in os.environ
-
+        
         errors=[]
         outputs_deferred=[]
         
@@ -498,10 +512,14 @@ class Pipeline(templated):
             except KeyError: errors.append("In pipeline '%s', step %s has no defining section" % (self.name, step.name))
 
             # attempt to set outputs:
-            try: context.outputs[step.name]=step.output_list(stephash)
+            try:
+                context.outputs[step.name]=step.output_list(stephash)
+                if debug: print "convert: outputs[%s] is %s" % (step.name, context.outputs[step.name])
             except AttributeError as ae:
                 if debug: print "pipeline.convert_io: caught ae: %s" % ae
-                if re.search("no attribute 'context'", str(ae)): outputs_deferred.append(step)
+                if re.search("no attribute 'context'", str(ae)):
+                    outputs_deferred.append(step)
+                    print "deferring outputs for step %s" % step.name
                 else: raise ae
                     
             # get the input specifier from the stephash; if not listed, assume no inputs, set outputs according to step, and continue:
@@ -514,17 +532,18 @@ class Pipeline(templated):
             names=re.split('[\s,]+', inputs)
             input_list=[]
             for term in names:
-                mg=re.search('([\w/${}]+)(\[\d+\])?$', term)
+                mg=re.search('([\w/${}]+)(\[\d+\])?$', term) # looking for 'abcd' or 'abcd[1]' or something like that
                 if mg==None:
                     errors.append("step %s: malformed input term '%s'" % (step.name, term))
                     continue
                 
+                # get the "previous" step name and optional index
                 output_step=mg.group(1)
                 index=mg.group(2)      # can be None
 
                 # get the source of the inputs; can be the readset or the output of another step:
                 if output_step == 'readset':
-                    outputs=self.readset.reads_files
+                    outputs=self.readset.reads_files # really? doesn't take into account link to working_dir...
                     if debug: print "  %s: getting outputs from readset" % step.name
 
                 else:

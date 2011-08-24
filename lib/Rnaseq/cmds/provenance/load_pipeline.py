@@ -25,3 +25,4 @@ class LoadPipeline(Command):
 
         pipeline=Pipeline(name=pipeline_name, path=os.path.join(RnaseqGlobals.root_dir(),'templates','pipeline',pipeline_name+'.syml'))
         pipeline.store_db()
+        print "pipeline %s loaded to %s" % (pipeline.name, RnaseqGlobals.get_db_file())

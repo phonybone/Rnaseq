@@ -28,7 +28,8 @@ class TestInputs(unittest.TestCase):
             self.assertIn(rs.reads_file,inputs)
 
             outputs=[self.evoque_something(rs, x) for x in step.output_list()]
-            self.assertIn("%s.fq" % rs.reads_file, outputs)
+            o=re.sub('\.txt$', '.'+rs.format, inputs[0])
+            self.assertIn(o, outputs)
 
     def evoque_something(self, readset, template):
         domain=Domain(os.getcwd(), errors=4) # we actually don't care about the first arg
