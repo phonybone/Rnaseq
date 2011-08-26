@@ -245,29 +245,7 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
         return self
 
 
-    # verify that paired end filenames are of correct form.
-    # throw exception if not so, otherwise return self.
-    def verify_paired_end_filenames(self):
-        '''for paired end reads, verify self.reads_file defines exactly two files'''
-        # Return if self.paired_end not defined or if set to false
-        try:
-            if not self.paired_end:
-                return self
-        except AttributeError: return self 
-
-        # check that there are exactly two files:
-        if len(self.reads_files) != 2:
-            raise ConfigError("reads_file: '%s' is not a list or file glob defining exactly two files" % self.reads_file)
-
-        # reads_file correctly defines two files; are the filenames in the correct format?
-        errors=[]
-        for fn in self.reads_files:
-            if not re.search('_[12]\.[\w_]+$', fn):
-                errors.append("%s is ill-formed: must contain _1 or _2 followed by .<suffix>" % fn)
-        if len(errors) != 0:
-            raise ConfigError("\n".join(errors))
-        return self
-            
+    ########################################################################
 
     # returns a "fixed" version of working_dir
     # guarantees that self.working_dir is set
@@ -330,12 +308,14 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
                 self.ID=ID
             elif len(self.reads_files)==2 and self.paired_end:
                 # check that file names are of proper form:
-                self.verify_paired_end_filenames()
                 mg=re.search('^(.*)_[12]\.[\w_]+$', os.path.basename(self.reads_files[0])) # works of self.reads_files[0]...
+                error_msg="'%s' isn't a well-formed filename for paired_end data: must match '_[12].<ext>'" % self.reads_files[0]
                 try:
                     self.ID=os.path.join(self.working_dir, mg.groups()[0])
                 except IndexError:
-                    raise ConfigError("'%s' isn't a well-formed filename for paired_end data: must match '_[12].ext'" % self.reads_files[0])
+                    raise ConfigError(error_msg)
+                except AttributeError:
+                    raise ConfigError(error_msg)
                 
             else:
                 if RnaseqGlobals.conf_value('verbose') or RnaseqGlobals.conf_value('debug'):
