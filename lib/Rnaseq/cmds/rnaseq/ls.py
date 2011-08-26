@@ -52,6 +52,7 @@ class Ls(Command):
             return
 
         user=RnaseqGlobals.conf_value('user')
+        warn("user is %s" % user)
         pipeline_run=session.query(PipelineRun).filter_by(id=pipeline_run_id, user=user).first()
         if pipeline_run==None:
             raise UserError("no pipeline run with id=%s, user=%s" % (pipeline_run_id, user))
@@ -70,9 +71,12 @@ class Ls(Command):
         print "   description: %s" % pipeline.description
         print "   steps: %s" % ", ".join(pipeline.stepnames)
         
-        s='' if len(pipeline.pipeline_runs)==1 else 's'
-        print "%d run%s of %s" % (len(pipeline.pipeline_runs), s, pipeline.name)
-        for pr in pipeline.pipeline_runs:
+        user=RnaseqGlobals.conf_value('user')
+        prs=[x for x in pipeline.pipeline_runs if x.user==user]
+        s='' if len(prs)==1 else 's'
+        print "%d run%s of %s" % (len(prs), s, pipeline.name)
+        for pr in prs:
+            if pr.user != user: continue
             print "\trun: %s" % pr.summary()
 
 
