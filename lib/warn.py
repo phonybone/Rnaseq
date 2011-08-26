@@ -6,8 +6,8 @@ def warn(*a):
     args=list(a)                        # so we can append to an empty list if need be
     if (len(args)==0):
         args.append("something's wrong")
-    sys.stderr.write("\n".join(map(str,args)))
-    sys.stderr.write("\n")
+    print >>sys.stderr, "\n".join(map(str,args))
+
 
 def die(*args):
     warn(*args)

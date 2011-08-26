@@ -1,65 +1,63 @@
-#!/usr/bin/env python
-#-*-python-*-
+#!/bin/env perl
+#-*-perl-*-
 
-# The main rnaseq entry point
+use warnings;
 
-import sys, os
-if sys.version < '2.6.2':
-    print "version 2.6.2 or better of python required.  You are running %s.  Please see your system administrator about upgrading" % sys.version
-    sys.exit(1)
+sub main {
+    open(P, 'python -V 2>&1 |') or die "Can't open pipe to python -V: $!\n";
+    $py_ver=<P>;
+    chomp $py_ver;
+    close P;
 
-sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../ext_libs"))
-sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../lib"))
-
-from pkg_resources import require
-require("sqlalchemy")
-
-from Rnaseq import *
+    $py_ver=~/\d(\.\d*)/;
+    $ver=$&;
 
 
+    $min_ver=2.7;
+    if (ver_comp($ver, $min_ver) < 0) {
+	warn "Python version $min_ver is required to run the rnaseq pipeline.  You have $ver.  Please upgrade\n";
+	exit 1;
+    }
 
-########################################################################
+    $exe=$0;
+    $exe=~s/rnaseq/rnaseq.py/;
+    unshift @ARGV, $exe;
+    unshift @ARGV, 'python';
 
-def main():
-    usage="usage: %s <cmd> [-p <pipeline>] [-r <readset_file>] [options]" % sys.argv[0] # fixme: form might be different; might be more like git
-    testing='-d' in sys.argv
-    argv=RnaseqGlobals.initialize(usage, testing=testing)       # not to be confused with sys.argv
+    $rc=exec @ARGV;
+    warn "rc is $rc???\n" if $ENV{DEBUG};
+    exit 1;
+}
 
-    # get the command:
-    try: cmd=argv[1]
-    except IndexError as ie: cmd='help'
-        
-    cf=CmdFactory(program='rnaseq')
-    cf.add_cmds(RnaseqGlobals.conf_value('rnaseq','cmds'))
-    cmd=cf.new_cmd(cmd)
+# compare to version numbers in form \d(\.\d)+, in a manner similar to the <=> operator.
+# returns -1 if $v1<$v2, 0 if $v1==$v2, or 1 if $v1>$v2.
+sub ver_comp {
+    my ($v1, $v2)=@_;
+    @v1=split(/\./,$v1);
+    @v2=split(/\./,$v2);
+    while (1) {
+	my $p1=shift @v1;
+	my $p2=shift @v2;
 
-    # run the command 
-    cmd.run(argv, config=RnaseqGlobals.config)
-
-
-########################################################################
-
-try:
-    main()
-
-except UserError as ue:
-    die(ue)
-
-except ProgrammerGoof as pg:
-    warn("An internal error occured:\n")
-    import traceback
-    traceback.print_exc()
-    sys.exit(1)
-
-except ConfigError as ce:
-   warn("A configuration error (or errors) occured:\n")
-   die(ce)
-
-except RnaseqException as re:
-    warn("An unexpected rnaseq exception has occured: %s\n" % re)
-    if re.show_traceback:
-        import traceback
-        traceback.print_exc()
-    die(re)
+	if (!defined $p1 && !defined $p2) { return 0 }
+	elsif (defined $p1 and !defined $p2) { return -1 }
+	elsif (!defined $p1 and defined $p2) { return 1 }
+	
+	if ($p2 <=> $p1) { return $p2 <=> $p1 }
+    }
+    return 0;
+}
 
 
+sub test_ver_comp() {
+    foreach my $pair ([2.2, 2.3], ['2.1.3', 2.1], ['2.1.3', '2.1.3'], [3.0, 2.0], [2.1, '2.1.3']) {
+	my $op={1=>'<', 0=>'==', -1=>'>'}->{ver_comp(@$pair)};
+	warn sprintf("%s %s %s\n", $pair->[0], $op, $pair->[1]);
+	
+	$op={1=>'<', 0=>'==', -1=>'>'}->{ver_comp($pair->[1], $pair->[0])};
+	warn sprintf("%s %s %s\n", $pair->[1], $op, $pair->[0]);
+    }
+}
+
+main();
+#test_ver_comp();

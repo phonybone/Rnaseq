@@ -34,7 +34,7 @@ class TestID1(unittest.TestCase):
         target_ID=re.sub('\..*$', '', target_ID)
         ID=readset.ID
         self.assertEqual(ID, target_ID)
-        print "%s=\n%s" % (ID, target_ID)
+        #print "%s=\n%s" % (ID, target_ID)
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TestID1)
 unittest.TextTestRunner(verbosity=2).run(suite)

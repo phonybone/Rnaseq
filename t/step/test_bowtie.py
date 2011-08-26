@@ -28,7 +28,7 @@ class TestBowtieStep(unittest.TestCase):
 
         expected='''
 export BOWTIE_INDEXES=/proj/hoodlab/share/programs/bowtie-indexes
-bowtie --threads 4 --quiet -k 1 -v 2 -q hg19 -1 ${ID}.${format} %s
+bowtie --threads 4 --quiet -k 1 -v 2 -q hg19 -1 /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/fixtures/readsets/rnaseq/s_1_2_sequence.txt %s
         ''' % output
         #print "expected:\n>>>%s<<<" % expected
 
@@ -43,7 +43,7 @@ bowtie --threads 4 --quiet -k 1 -v 2 -q hg19 -1 ${ID}.${format} %s
         
         expected='''
 export BOWTIE_INDEXES=/proj/hoodlab/share/programs/bowtie-indexes
-bowtie  --threads 4 --quiet -k 1 -v 2 -q hg19 -1 ${ID}_1.${format} -2 ${ID}_2.${format} %s
+bowtie  --threads 4 --quiet -k 1 -v 2 -q hg19 -1 /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/fixtures/readsets/rnaseq/s_1_1_sequence.txt -2 /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/fixtures/readsets/rnaseq/s_1_2_sequence.txt %s
 ''' % output
         #print "script:\n>>>%s<<<" % script
         #print "expected:\n>>>%s<<<" % expected

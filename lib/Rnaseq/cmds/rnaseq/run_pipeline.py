@@ -67,7 +67,8 @@ class RunPipeline(Command):
 
                 # report on success if asked:
                 if not RnaseqGlobals.conf_value('no_run') and \
-                       not RnaseqGlobals.conf_value('silent'):
+                   not RnaseqGlobals.conf_value('use_cluster') and \
+                   not RnaseqGlobals.conf_value('silent'):
                     pipeline_run=session.query(PipelineRun).get(RnaseqGlobals.conf_value('pipeline_run_id'))
                     print pipeline_run.report()
 

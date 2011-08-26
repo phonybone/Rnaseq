@@ -63,6 +63,16 @@ class Step(dict):                     # was Step(templated)
         for key in kwargs:
             if key not in self: self[key] = kwargs[key]
 
+    def update_o(self, *args, **kwargs):
+        if args:
+            if len(args) > 1:
+                raise TypeError("update expected at most 1 arguments, got %d" % len(args))
+            other = dict(args[0])
+            for key in other:
+                self[key] = other[key]
+        for key in kwargs:
+            self[key] = kwargs[key]
+
     ########################################################################
 
     def usage(self, context):
@@ -187,8 +197,7 @@ class Step(dict):                     # was Step(templated)
         except: debug=False
         
         for input in self.input_list_expanded():
-            if debug:
-                print "%s: input checking %s" % (self.name, input)
+            if debug: print "%s: input checking %s" % (self.name, input)
             
             try:
                 mtime=os.stat(input).st_mtime
@@ -202,8 +211,7 @@ class Step(dict):                     # was Step(templated)
 
 
         for output in self.output_list_expanded():
-            if debug:
-                print "%s: checking output %s" % (self.name, output)
+            if debug: print "%s: checking output %s" % (self.name, output)
             try:
                 stat_info=os.stat(output)
                 if (stat_info.st_mtime < earliest_output):

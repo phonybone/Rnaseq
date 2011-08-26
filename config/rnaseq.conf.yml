@@ -1,7 +1,7 @@
 # some general values:
 rnaseq:
   blat_indexes: /proj/hoodlab/share/programs/blat-indexes/not/here
-  bowtie_indexes: /proj/hoodlab/share/programs/bowtie-indexes
+  bowtie_indexes: /proj/hoodlab/share/programs/bowtie-indexes:/proj/hoodlab/share/programs/RNAseq-Pi/data/bowtie-indexes
   path: /tools/bin:/hpc/bin:/bin:/usr/bin/
 
   # Don't edit this section

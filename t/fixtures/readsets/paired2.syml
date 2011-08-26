@@ -3,7 +3,7 @@ description: example readset
 reads_dir: ${root_dir}/t/fixtures/readsets
 working_dir: paired2
 paired_end: True
-bowtie_index: /proj/hoodlab/share/programs/bowtie_indexes
+bowtie_index: /proj/hoodlab/share/programs/bowtie-indexes
 
 readsets:
 - reads_file: s_1_?.txt

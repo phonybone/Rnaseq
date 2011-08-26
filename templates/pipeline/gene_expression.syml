@@ -31,12 +31,13 @@ repeats_consensus:
 
 equalize:
   name: equalize
-  inputs: filterQuality, filterLowComplex, filterVectors, ribosomal_mit, remove_erccs, repeats_consensus
+  inputs: filterQuality, filterLowComplex, filterVectors, ribosomal_mit, remove_erccs, repeats_consensus, header
 
 bowtie:
   name: bowtie
   inputs: equalize
   ewbt: hg19
+  output_format: sam
 
 bowtie2bam:
   name: bowtie2bam
@@ -49,6 +50,7 @@ samtool_copy:
 cufflinks:
   name: cufflinks
   inputs: bowtie2bam
+  genome: hs37.61.fa
 
 footer:
   name: footer

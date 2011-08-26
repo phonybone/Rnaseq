@@ -10,7 +10,4 @@ class filterVectors(align_filter):
         self.blat_index='solexa_primers.2bit'
 
 
-    def output_list(self,*args):
-        return ['${ID}.vector_BAD.${format}']
-
     

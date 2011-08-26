@@ -31,7 +31,7 @@ class TestID2(unittest.TestCase):
             target_ID=readset.working_dir+'/'+os.path.basename(rf)
             target_ID=re.sub('_\d\..*$', '', target_ID)
             ID=readset.ID
-            print "       ID: %s\ntarget ID: %s" % (ID, target_ID)
+            #print "       ID: %s\ntarget ID: %s" % (ID, target_ID)
             self.assertEqual(ID, target_ID)
 
 

@@ -8,10 +8,9 @@ if sys.version < '2.6.2':
     print "version 2.6.2 or better of python required.  You are running %s.  Please see your system administrator about upgrading" % sys.version
     sys.exit(1)
 
-sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../ext_libs"))
-sys.path.append(os.path.abspath(os.path.dirname(__file__)+"/../lib"))
-from pkg_resources import require
-require("sqlalchemy")
+dir=os.path.normpath(os.path.dirname(os.path.abspath(__file__))+"/../..")
+sys.path.append(os.path.join(dir+'/lib'))
+sys.path.append(os.path.join(dir+'/ext_libs'))
 
 from Rnaseq import *
 from RnaseqGlobals import RnaseqGlobals
@@ -26,10 +25,10 @@ def main():
     testing='-d' in sys.argv
     argv=RnaseqGlobals.initialize(usage, testing=testing)       # not to be confused with sys.argv
 
-    try:
-        cmd=argv[1]
-    except IndexError as ie:
-        die(UserError(usage))
+    try: cmd=argv[1]
+    except IndexError: die(UserError(usage))
+        
+
     cf=CmdFactory(program='provenance')
     cf.add_cmds(RnaseqGlobals.conf_value('provenance','cmds'))
     cmd=cf.new_cmd(cmd)

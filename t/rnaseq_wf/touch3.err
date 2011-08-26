@@ -1,9 +1,12 @@
-connected to /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/fixtures/dbs/simple_orm.db
+Traceback (most recent call last):
+  File "/proj/hoodlab/share/vcassen/rna-seq/rnaseq/bin/provenance", line 15, in <module>
+    from Rnaseq import *
+ImportError: No module named Rnaseq
 step header
 
 ****************************************************************
 starting touch3
-Wed Aug 24 13:50:30 PDT 2011
+Thu Aug 25 14:38:09 PDT 2011
 
 connected to /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/fixtures/dbs/simple_orm.db
 step 1 passed

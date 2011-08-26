@@ -103,17 +103,18 @@ class Pipeline(templated):
     # return self
     def load_steps(self):
         assert(hasattr(self,'readset'))
-        
         debug='debug' in os.environ
+        
         name=self.name
         self.load_template()            # this barfs (in ID()) if no self.readset
         assert(hasattr(self,'stepnames'))
+        # check to see if we need to change the name back:
         if self.name!=name: # loading the template changed the name: bad
             old_name=self.name
             self.name=name
             if debug: print >>sys.stderr, "Changed pipeline name back to %s (from %s)" % (name, old_name)
         
-
+        # split up the stepnames field:
         try:
             self.stepnames=re.split('[,\s]+',self.stepnames)
         except AttributeError:
@@ -122,7 +123,7 @@ class Pipeline(templated):
             if type(self.stepnames)!=type([]):
                 raise te
 
-        # 
+        # for each step, create a Step object and append to self.steps:
         step_factory=StepFactory()
         errors=[]
         for stepname in self.stepnames:
@@ -130,7 +131,7 @@ class Pipeline(templated):
             if not stepname in self:
                 errors.append("missing step section for '%s'" % stepname)
                 continue
-            step.update(self[stepname])
+            step.update_o(self[stepname])
             self.steps.append(step)
         
         errors.extend(self.convert_io())
@@ -564,6 +565,7 @@ class Pipeline(templated):
                 context.inputs[step.name]=input_list
 
 
+        #print >>sys.stderr, "context is %s" % yaml.dump(context)
         self.context=context
 
         # set context.outputs[] for each step:

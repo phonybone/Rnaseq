@@ -54,7 +54,11 @@ bowtie ${ewbt} ${args} ${inputs[0]} | perl -lane 'print unless($$F[1] == 4)' > $
         return script
 
 
+    # only outputs one file even if self.pairedEnd() is True:
     def output_list(self,*args):
         output='${ID}.%s_BAD.${format}' % self.name
         return [output]
+
+
+    
     

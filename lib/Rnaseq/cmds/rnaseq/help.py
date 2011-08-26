@@ -12,6 +12,7 @@ class Help(Command):
         RnaseqGlobals.parser.print_help()
 
         prog_name=os.path.basename(sys.argv[0])
+        prog_name=re.sub('\.py$','',prog_name)
         cmds=RnaseqGlobals.conf_value(prog_name,'cmds').keys()
         cmds.sort()
         cf=CmdFactory(program=prog_name)

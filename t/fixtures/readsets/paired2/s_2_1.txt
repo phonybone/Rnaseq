@@ -1,0 +1,1 @@
+/proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/fixtures/readsets/s_2_1.txt
