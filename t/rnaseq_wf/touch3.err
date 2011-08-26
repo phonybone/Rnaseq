@@ -6,11 +6,8 @@ step header
 
 ****************************************************************
 starting touch3
-Thu Aug 25 14:38:09 PDT 2011
+Fri Aug 26 13:36:08 PDT 2011
 
-connected to /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/fixtures/dbs/simple_orm.db
 step 1 passed
 step touch
-connected to /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/fixtures/dbs/simple_orm.db
 step 2 passed
-connected to /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/fixtures/dbs/simple_orm.db

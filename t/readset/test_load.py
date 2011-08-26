@@ -22,7 +22,7 @@ class TestLoad(unittest.TestCase):
         readset_file=RnaseqGlobals.root_dir()+'/t/fixtures/readsets/readset12.syml'
         rlist=Readset.load(readset_file)
         self.assertEqual(type(rlist),type([]))
-        self.assertEqual(len(rlist),12)
+        self.assertEqual(len(rlist),6)
 
         for rs in rlist:
             self.assertEqual(rs.org, 'mouse')

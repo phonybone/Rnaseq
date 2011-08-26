@@ -2,53 +2,30 @@ org: mouse
 readlen: 75
 reads_dir: ${root_dir}/t/fixtures/readsets
 format: fq
+paired_end: True
 
 readsets:
-- reads_file: s_10_1_sequence.txt
-  label: s_10_1
-  description: s_10_1
+- reads_file: s_10_?.txt
+  label: s_10
+  description: s_10
 
-- reads_file: s_10_2_sequence.txt
-  label: s_10_2
-  description: s_10_2
+- reads_file: s_1_?.txt
+  label: s_1
+  description: s_1
 
-- reads_file: s_1_1_sequence.txt
-  label: s_1_1
-  description: s_1_1
+- reads_file: s_2_?.txt
+  label: s_2
+  description: s_2
 
-- reads_file: s_1_2_sequence.txt
-  label: s_1_2
-  description: s_1_2
+- reads_file: s_3_?.txt
+  label: s_3
+  description: s_3
 
-- reads_file: s_2_1_sequence.txt
-  label: s_2_1
-  description: s_2_1
+- reads_file: s_5_?.txt
+  label: s_5
+  description: s_5
 
-- reads_file: s_2_2_sequence.txt
-  label: s_2_2
-  description: s_2_2
-
-- reads_file: s_3_1_sequence.txt
-  label: s_3_1
-  description: s_3_1
-
-- reads_file: s_3_2_sequence.txt
-  label: s_3_2
-  description: s_3_2
-
-- reads_file: s_5_1_sequence.txt
-  label: s_5_1
-  description: s_5_1
-
-- reads_file: s_5_2_sequence.txt
-  label: s_5_2
-  description: s_5_2
-
-- reads_file: s_6_1_sequence.txt
-  label: s_6_1
-  description: s_6_1
-
-- reads_file: s_6_2_sequence.txt
-  label: s_6_2
-  description: s_6_2
+- reads_file: s_6_?.txt
+  label: s_6
+  description: s_6
 

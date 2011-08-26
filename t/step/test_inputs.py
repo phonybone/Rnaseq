@@ -1,4 +1,4 @@
-import unittest, os, sys
+import unittest, os, sys, re
 
 dir=os.path.normpath(os.path.dirname(os.path.abspath(__file__))+"/../..")
 sys.path.append(os.path.join(dir+'/lib'))
@@ -25,10 +25,11 @@ class TestInputs(unittest.TestCase):
 
             self.assertTrue(isinstance(step, Step))
             inputs=[self.evoque_something(rs, x) for x in step.input_list()]
-            self.assertIn(rs.reads_file,inputs)
+            target=re.sub('\.\w+$', '.'+rs.format, rs.reads_file)
+            self.assertIn(target, inputs)
 
             outputs=[self.evoque_something(rs, x) for x in step.output_list()]
-            o=re.sub('\.txt$', '.'+rs.format, inputs[0])
+            o=re.sub('\.\w$', '.'+rs.format, inputs[0])
             self.assertIn(o, outputs)
 
     def evoque_something(self, readset, template):
