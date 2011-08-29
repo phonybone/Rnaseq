@@ -33,6 +33,7 @@ class Pipeline(templated):
         if 'name' in kwargs:
             pipeline=session.query(Pipeline).filter_by(name=kwargs['name']).first()
             if pipeline!=None:
+                warn("get_pipeline: found %s (%s)" % (pipeline.name, pipeline.path))
                 pipeline.type='pipeline'
                 pipeline.suffix='syml'
                 pipeline.steps=[]
@@ -399,8 +400,11 @@ class Pipeline(templated):
         if other_self==None:
             session.add(self)
             session.commit()
+            #if RnaseqGlobals.conf_value('debug'): warn("s_db: added pipeline %s: id=%d" % (self.name, self.id))
+            #if RnaseqGlobals.conf_value('debug'): warn("s_db: %s.path: %s" % (self.name, self.path))
+            
         else:
-            if RnaseqGlobals.conf_value('debug'): print "found pipeline %s: id=%d" % (self.name, other_self.id)
+            #if RnaseqGlobals.conf_value('debug'): warn("s_db: found pipeline %s: id=%d" % (self.name, other_self.id))
             self.id=other_self.id
             self=other_self
 

@@ -93,10 +93,14 @@ class templated(dict):
     def template_file(self):
         try:
             path=path_helpers.sanitize(self.path)
+            warn("pipeline %s: path was %s" % (self.name, self.path))
         except AttributeError:
-            path=path_helpers.sanitize("%s/%s.%s" % (self.type, self.name, self.suffix)) # fixme: self.name is always the name of the template file?
+            # fixme: self.name is always the name of the template file?
+            warn("pipeline %s had no path attribute" % self.name)
+            path=path_helpers.sanitize("%s/%s/%s.%s" % (self.template_dir, self.type, self.name, self.suffix)) 
         except TypeError:               # sometimes self.path is None
-            path=path_helpers.sanitize("%s/%s.%s" % (self.type, self.name, self.suffix)) # fixme: self.name is always the name of the template file?
+            warn("pipeline %s.path was None" % self.name)
+            path=path_helpers.sanitize("%s/%s/%s.%s" % (self.template_dir, self.type, self.name, self.suffix)) 
         self.path=path
         return path
             
@@ -110,8 +114,11 @@ class templated(dict):
         assert hasattr(self,'type')     # before assert even gets to it
 
         # get the template and call evoque() on it.  This should yield a yaml string
+        tf=self.template_file()
+        warn("tf is %s" % tf)
         try:
-            domain=Domain(self.template_dir, errors=4, quoting=str) # errors=4 means raise errors as an exception
+            warn("template_dir is %s" % os.path.dirname(tf))
+            domain=Domain(os.path.dirname(tf), errors=4, quoting=str) # errors=4 means raise errors as an exception
         except ValueError as ve:
             raise ConfigError("Error in setting template directory: "+str(ve))
         

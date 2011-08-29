@@ -1,4 +1,9 @@
-import unittest
+import unittest, sys, os
+
+dir=os.path.normpath(os.path.dirname(os.path.abspath(__file__))+"/../..")
+sys.path.append(os.path.join(dir+'/lib'))
+sys.path.append(os.path.join(dir+'/ext_libs'))
+
 from Rnaseq import *
 from RnaseqGlobals import RnaseqGlobals
 from warn import *
@@ -16,15 +21,12 @@ class TestBase(unittest.TestCase):
         self.pipeline=Pipeline(name='filter', readset=readset)
 
 
-class TestLoad(TestBase):
-    def runTest(self):
+    def test_load(self):
         pipeline=self.pipeline
         pipeline.load_steps()
-
         self.assertEquals(len(pipeline.steps),6)
         
-class TestShScript(TestBase):
-    def runTest(self):
+    def test_sh_script(self):
         pipeline=self.pipeline
         pipeline.load_steps()
         script=pipeline.sh_script()

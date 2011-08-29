@@ -42,7 +42,7 @@ class RnaseqGlobals(object):
         self.fix_align_params()         # ugh (fixme)
         self.add_options_to_conf(values) # converts "__" entries, et al
         self.get_session()
-        #self.read_user_config()
+        self.read_user_config()
         td=self.set_templated_dir()
         self.load_pipeline_templates(td)
         
@@ -195,7 +195,10 @@ class RnaseqGlobals(object):
 
     @classmethod
     def get_db_file(self):
-        db_file=os.path.join(os.path.expanduser('~'+self.conf_value('user')),'.rnaseq','prob.db')
+        if not self.testing:
+            db_file=os.path.join(os.path.expanduser('~'+self.conf_value('user')),'.rnaseq','prob.db')
+        else:
+            db_file=self.conf_value('testing','test_db')
         return db_file
 
 
@@ -298,9 +301,9 @@ class RnaseqGlobals(object):
         from Rnaseq import Pipeline     # stupid class method
         for pl_temp in glob.iglob(pl_glob):
             pipeline_name=re.sub('\.\w+$','',os.path.basename(pl_temp))
-            pipeline=Pipeline(name=pipeline_name, path=os.path.join(RnaseqGlobals.root_dir(),'templates','pipeline',pipeline_name+'.syml'))
+            pipeline=Pipeline(name=pipeline_name, path=pl_temp)
             pipeline.store_db()
-           
+               
             
 
             
