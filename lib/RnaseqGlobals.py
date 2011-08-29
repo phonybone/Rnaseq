@@ -1,5 +1,5 @@
 #-*-python-*-
-import os, sys, optparse, yaml, re
+import os, sys, optparse, yaml, re, glob
 from Rnaseq import *
 from warn import *
 from user_config import *
@@ -42,9 +42,10 @@ class RnaseqGlobals(object):
         self.fix_align_params()         # ugh (fixme)
         self.add_options_to_conf(values) # converts "__" entries, et al
         self.get_session()
-        self.read_user_config()
-        self.set_templated_dir()
-
+        #self.read_user_config()
+        td=self.set_templated_dir()
+        self.load_pipeline_templates(td)
+        
         return argv
 
     @classmethod
@@ -173,8 +174,9 @@ class RnaseqGlobals(object):
             return self.session
         except AttributeError: 
             db_name=self.get_db_file()
+            self.make_db_dir(db_name)
             engine=create_engine('sqlite:///%s' % db_name, echo=False)
-            #print >> sys.stderr, "connected to %s" % db_name
+            #warn("connected to %s" % (db_name))
             metadata=MetaData()
 
             # have to import these explicitly because we're in a classmethod: (or something)
@@ -193,10 +195,23 @@ class RnaseqGlobals(object):
 
     @classmethod
     def get_db_file(self):
+        db_file=os.path.join(os.path.expanduser('~'+self.conf_value('user')),'.rnaseq','prob.db')
+        return db_file
+
+
+        # below is the old code
         db_name=self.conf_value('db','db_name') if not self.testing else self.conf_value('testing','test_db')
         db_file=os.path.join(self.conf_value('rnaseq','root_dir'), db_name)
         #print "get_db_file() returning %s" % db_file
         return db_file
+
+    @classmethod
+    def make_db_dir(self, db_file):
+        try: os.makedirs(os.path.dirname(db_file))
+        except Exception as e:
+            if not re.search('File exists', str(e)):
+                raise UserError("Unable to create directory %s: %s" %(os.path.dirname(db_file),e))
+                         
 
     @classmethod
     def fix_align_params(self):
@@ -267,6 +282,7 @@ class RnaseqGlobals(object):
             template_dir=os.path.join(self.root_dir(),'templates')
         
         templated.template_dir=template_dir
+        return template_dir
         
 
     @classmethod
@@ -274,4 +290,19 @@ class RnaseqGlobals(object):
         rc=os.system('which qsub &> /dev/null')
         return rc==0
 
+
+    ########################################################################
+    @classmethod
+    def load_pipeline_templates(self, template_dir):
+        pl_glob=os.path.join(template_dir, 'pipeline', '*.syml')
+        from Rnaseq import Pipeline     # stupid class method
+        for pl_temp in glob.iglob(pl_glob):
+            pipeline_name=re.sub('\.\w+$','',os.path.basename(pl_temp))
+            pipeline=Pipeline(name=pipeline_name, path=os.path.join(RnaseqGlobals.root_dir(),'templates','pipeline',pipeline_name+'.syml'))
+            pipeline.store_db()
+           
+            
+
+            
+    
 #print __file__,"checking in"
