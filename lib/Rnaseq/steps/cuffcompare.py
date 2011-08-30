@@ -4,14 +4,13 @@ class cuffcompare(Step):
     def __init__(self,**kwargs):
         Step.__init__(self,**kwargs)
         self.name='cuffcompare'
-        self.genome_dir='/proj/hoodlab/share/programs/Ensembl'
         self.genome='hs37.61'
+        self.ensembl_dir=RnaseqGlobals.conf_value('ensembl_dir')
 
     def usage(self, context):
         usage='''
-genome_dir=${genome_dir}
-genome=${genome}
-$${programs}/cuffcompare $${genome_dir}/$${genome}.gtf -s $${genome_dir}/$${genome}.fa -o ${ID}.cuffcompare ${inputs[0]}
+ensembl_dir=${ensembl_dir}
+$${programs}/cuffcompare $${ensembl_dir}/${genome}.gtf -s $${ensembl_dir}/${genome}.fa -o ${ID}.cuffcompare ${inputs[0]}
         '''
         return usage
 

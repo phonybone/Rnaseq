@@ -8,8 +8,14 @@ from dict_helpers import scalar_values
 from evoque_helpers import evoque_template
 from RnaseqGlobals import RnaseqGlobals
 
+
+
 class Readset(dict):
-    required_attrs=['reads_file', 'label', 'ID']
+    '''
+    Readsets define the input data for a pipeline, including both the location of
+    data files and metadata.
+    '''
+    #required_attrs=['reads_file', 'label', 'ID']
     required_attrs=['reads_file', 'label']
     wd_time_format="%H%M%S_%d%b%y"
 

@@ -162,8 +162,10 @@ class Step(dict):                     # was Step(templated)
         for attr in export_list:
             vars[attr]=getattr(self,attr)
 
-        script_part=evoque_template(usage, vars)
-
+        warn("config[ensembl_dir]=%s" % vars['config']['rnaseq']['ensembl_dir'])
+        try: script_part=evoque_template(usage, vars)
+        except Exception as e: raise ConfigError("step %s: %s" % (self.name, e))
+        
         script="\n".join([echo_part,script_part]) # tried using echo_part+sh_script, got weird '>' -> '&gt;' substitutions
 
         return script

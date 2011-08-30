@@ -4,17 +4,17 @@ class cufflinks(Step):
     def __init__(self,**kwargs):
         Step.__init__(self,**kwargs)
         self.genome='hs37.61'
-        self.ensembl='/proj/hoodlab/share/programs/Ensembl'
         
     def usage(self,context):
         try: threads='-p %d' % self.threads
         except AttributeError: threads=''
+        self.ensembl_dir=RnaseqGlobals.conf_value('ensembl_dir')
         
         usage='''
-ensembl=${ensembl}
-mask_file=$${ensembl}/Homo_sapiens.GRCh37.62.PSEUDO.corr.gtf
-gtf_guide=$${ensembl}/Homo_sapiens.GRCh37.62.corr.gtf
-bias_correct=$${ensembl}/${genome}
+ensembl_dir=${ensembl_dir}
+mask_file=$${ensembl_dir}/Homo_sapiens.GRCh37.62.PSEUDO.corr.gtf
+gtf_guide=$${ensembl_dir}/Homo_sapiens.GRCh37.62.corr.gtf
+bias_correct=$${ensembl_dir}/${genome}
 
 $${programs}/cufflinks -o $${ID}.cufflinks %(threads)s --frag-bias-correct $${bias_correct} -u -g $${gtf_guide} -M $${mask_file} $${ID}.sorted.bam
         ''' % {'threads': threads}

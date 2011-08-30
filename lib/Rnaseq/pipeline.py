@@ -33,7 +33,6 @@ class Pipeline(templated):
         if 'name' in kwargs:
             pipeline=session.query(Pipeline).filter_by(name=kwargs['name']).first()
             if pipeline!=None:
-                warn("get_pipeline: found %s (%s)" % (pipeline.name, pipeline.path))
                 pipeline.type='pipeline'
                 pipeline.suffix='syml'
                 pipeline.steps=[]
