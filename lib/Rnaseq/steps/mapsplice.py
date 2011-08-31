@@ -9,7 +9,7 @@ class mapsplice(Step):
 
     def usage(self, context):
         usage='''
-ensembl_dir=${ensembl_dir}
+ensembl_dir=${config['rnaseq']['ensembl_dir']}
 genome=${genome}
 python $${programs}/mapsplice_segments.py -c $${ensembl_dir}/$${genome}.fa -B $${blat_index}/$${genome} -t $${ensembl_dir}/$${genome}.pseudo.gtf -w ${pipeline.readset['readlen']} -L 25 -Q $${format} -X 6  -u ${inputs[0]} -o $${ID}/mapsplice
 '''

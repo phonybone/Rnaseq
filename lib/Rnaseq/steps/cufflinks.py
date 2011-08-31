@@ -8,10 +8,9 @@ class cufflinks(Step):
     def usage(self,context):
         try: threads='-p %d' % self.threads
         except AttributeError: threads=''
-        self.ensembl_dir=RnaseqGlobals.conf_value('ensembl_dir')
-        
+
         usage='''
-ensembl_dir=${ensembl_dir}
+ensembl_dir=${config['rnaseq']['ensembl_dir']}
 mask_file=$${ensembl_dir}/Homo_sapiens.GRCh37.62.PSEUDO.corr.gtf
 gtf_guide=$${ensembl_dir}/Homo_sapiens.GRCh37.62.corr.gtf
 bias_correct=$${ensembl_dir}/${genome}
