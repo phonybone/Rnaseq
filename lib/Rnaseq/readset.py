@@ -261,9 +261,6 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
         try: working_dir=self.working_dir
         except: working_dir=None
 
-        try: label=self.label
-        except: label=''
-
         if os.path.isabs(reads_file):
             if working_dir==None:
                 working_dir=os.path.dirname(reads_file)
@@ -285,6 +282,14 @@ See http://en.wikipedia.org/wiki/YAML#Sample_document for details and examples.
                 pass
             else:
                 working_dir=os.path.join(os.getcwd(),working_dir)
+
+        try: label=self.label
+        except: label=None
+
+
+        # append label if present:
+#        try: working_dir=os.path.join(working_dir, self.label)
+#        except AttributeError: pass
 
         self.working_dir=working_dir
         return self

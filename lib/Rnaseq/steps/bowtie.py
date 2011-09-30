@@ -46,8 +46,13 @@ class bowtie(Step):
                 pass
 
         if not hasattr(self, 'bowtie_index'):
-            self.bowtie_index=RnaseqGlobals.conf_value('rnaseq', 'bowtie_index')
+            self.bowtie_index=RnaseqGlobals.conf_value('rnaseq', 'bowtie_indexes')
             #print "got bowtie_index from RnaseqGlobals"
+
+            # what if still no bowtie_index?  Shouldn't it be caught during evoque?
+            #warn("bowtie step %s: bowtie_index is %s" % (self.name, self.bowtie_index))
+            if not self.bowtie_index:
+                raise ConfigError("no bowtie_index in step %s" % self.name)
         else:
             #print "bowtie had index=%s" % self.bowtie.index
             pass

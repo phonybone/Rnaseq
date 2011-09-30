@@ -1,0 +1,56 @@
+name: gene_expression
+description: gene expression using cufflinks, using fastq inputs (single or paired end)
+stepnames: header, filterQuality, filterLowComplex, filterVectors, ribosomal_mit, remove_erccs, repeats_consensus, equalize, bowtie, bowtie2bam, samtool_copy, cufflinks, footer
+
+header:
+  name: header
+
+filterQuality:
+  name: filterQuality
+  inputs: header
+
+filterLowComplex:
+  name: filterLowComplex
+  inputs: header
+
+filterVectors:
+  name: filterVectors
+  inputs: header
+
+ribosomal_mit:
+  name: ribosomal_mit
+  inputs: header
+
+remove_erccs:
+  name: remove_erccs
+  inputs: header
+
+repeats_consensus:
+  name: repeats_consensus
+  inputs: header
+
+equalize:
+  name: equalize
+  inputs: filterQuality, filterLowComplex, filterVectors, ribosomal_mit, remove_erccs, repeats_consensus, header
+
+bowtie:
+  name: bowtie
+  inputs: equalize
+  ewbt: hg19
+  output_format: sam
+
+bowtie2bam:
+  name: bowtie2bam
+  inputs: bowtie
+
+samtool_copy:
+  name: samtool_copy
+  inputs: bowtie2bam
+
+cufflinks:
+  name: cufflinks
+  inputs: bowtie2bam
+  genome: hs37.61.fa
+
+footer:
+  name: footer

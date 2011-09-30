@@ -119,8 +119,11 @@ class Step(dict):                     # was Step(templated)
         else:
             echo_part=''
             
-        usage=self.usage(context)
+        try: usage=self.usage(context) 
+        except KeyError as ke:
+            raise ConfigError("missing config item '%s'" % ke)
 
+        
         # check for missing attrs after calling step.usage()
         missing_attrs=self.missing_required_attrs()
         if len(missing_attrs) > 0:
@@ -162,7 +165,6 @@ class Step(dict):                     # was Step(templated)
         for attr in export_list:
             vars[attr]=getattr(self,attr)
 
-        warn("config[ensembl_dir]=%s" % vars['config']['rnaseq']['ensembl_dir'])
         try: script_part=evoque_template(usage, vars)
         except Exception as e: raise ConfigError("step %s: %s" % (self.name, e))
         

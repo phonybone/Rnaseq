@@ -13,3 +13,4 @@ TODO
 *.bak
 *.tgz
 docs/example/paired2/*
+indexes/*

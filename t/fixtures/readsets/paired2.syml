@@ -6,8 +6,8 @@ paired_end: True
 bowtie_index: /proj/hoodlab/share/programs/bowtie-indexes
 
 readsets:
-- reads_file: s_1_?.txt
+- reads_file: s_1_?.fq
   label: s_1
 
-- reads_file: s_2_?.txt
+- reads_file: s_2_?.fq
   label: s_2
