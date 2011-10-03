@@ -4,24 +4,23 @@ class equalize(Step):
 
     def usage(self, context):
         inputs=context.inputs['equalize']
-
-        filtered=[x for x in inputs if re.search('BAD',x)]
-        filtered=' '.join(filtered)
-
-        all_reads=[x for x in inputs if x not in filtered]
-        all_reads=' '.join(all_reads)
-
+        inputs=' '.join(context.inputs['equalize'])
+        outputs=' '.join(self.output_list())
         paired_flag='-paired' if self.paired_end() else ''
 
         usage='''
-perl $${programs}/removeBadReads.pl -v %(paired_flag)s %(filtered)s - %(all_reads)s
-''' % {'filtered':filtered, 'all_reads':all_reads, 'paired_flag':paired_flag}
+perl $${programs}/removeBadReads.pl -v %(paired_flag)s %(inputs)s - %(outputs)s
+''' % {'inputs':inputs, 'outputs':outputs, 'paired_flag':paired_flag}
         return usage
 
 
+    # bug: "GOOD" not mentioned anywhere above; rather, usage() above is taking as outputs any input
+    # not containing the string "BAD" (seems fragile, tstl).
+    # Basic problem is that we can't access the input_list to determine the output list
     def output_list(self,*args):
         if self.paired_end():
-            return ['${ID}_1.GOOD.${format}', '${ID}_2.GOOD.${format}']
+            l=['${ID}_1.GOOD.${format}', '${ID}_2.GOOD.${format}']
         else:
-            return ['${ID}_GOOD.${format}']
+            l=['${ID}_GOOD.${format}']
+        return l
     

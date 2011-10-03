@@ -32,7 +32,7 @@ class TestShScript(unittest.TestCase):
 
         expected='''
 
-export BOWTIE_INDEXES=/proj/hoodlab/share/programs/bowtie-indexes
+export BOWTIE_INDEXES=/proj/hoodlab/share/programs/RNAseq-Pi/data/bowtie-indexes
 bowtie ERCC_reference_081215 -1 ${ID}_1.${format} -2 ${ID}_2.${format} --quiet -p 4 -S --sam-nohead -k 1 -v 2 -q | perl -lane 'print unless($F[1] == 4)' > ${ID}.remove_erccs_BAD.${format}
 '''
         fd=first_diff(script, expected)

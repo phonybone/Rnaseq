@@ -31,7 +31,7 @@ repeats_consensus:
 
 equalize:
   name: equalize
-  inputs: filterQuality, filterLowComplex, filterVectors, ribosomal_mit, remove_erccs, repeats_consensus, header
+  inputs: filterQuality, filterLowComplex, filterVectors, ribosomal_mit, remove_erccs, repeats_consensus
 
 bowtie:
   name: bowtie

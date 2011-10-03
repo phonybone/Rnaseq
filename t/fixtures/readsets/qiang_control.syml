@@ -1,0 +1,23 @@
+org: human
+readlen: 101
+reads_dir: /proj/hoodlab/share/vcassen/rna-seq/qiang_data
+format: fq
+paired_reads: True
+
+readsets:
+- reads_file: A172_1_sequence.txt, A172_2_sequence.txt
+  ID: A172
+  label: A172
+  working_dir: rnaseq/A172
+
+- reads_file: DBTRG_1_sequence.txt, DBTRG_2_sequence.txt
+  ID: DBTRG
+  label: DBTRG
+  working_dir: rnaseq/DBTRG
+
+- reads_file: SW1783_1_sequence.txt, SW1783_2_sequence.txt
+  ID: SW1783
+  label: SW1783
+  working_dir: rnaseq/SW1783
+
+

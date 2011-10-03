@@ -1,4 +1,5 @@
 from Rnaseq import *
+import re
 
 class header(Step):
     def __init__(self,**kwargs):
@@ -74,10 +75,25 @@ exit_on_failure()
         link_part=''
         try: format=readset.format
         except AttributeError: format=None
+
         if os.path.dirname(readset.reads_files[0]) != readset.working_dir:
             for rf in readset.reads_files:
-                target=os.path.basename(rf)
-                if format: target=re.sub('\.\w+$','.'+format, target) # change extension if necessary
+                if hasattr(readset, 'ID'):
+                    target=readset.ID
+                    if self.paired_end:
+                        mg=re.search('(_\d)', rf)
+                        target+=mg.group(1)
+                    target=os.path.basename(target)
+                else:
+                    target=os.path.basename(rf)
+                    warn("No ID defined in readset")
+                    
+                if format:
+                    if re.search('\.\w$', target):
+                        target=re.sub('\.\w+$', '.'+format, target) # change extension if necessary
+                    else:
+                        target+=".%s" % format # just append format
+                    
                 link_cmd="ln -fs %s %s/%s\n" % (rf, readset.working_dir, target)
                 link_part+=link_cmd
         template+=link_part

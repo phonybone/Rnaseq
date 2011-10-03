@@ -62,13 +62,15 @@ class RnaseqGlobals(object):
     def define_opts(self):                    
         parser=optparse.OptionParser(self.usage)
         
+        default_config_file=os.path.normpath(os.path.abspath(__file__)+"/../../config/rnaseq.conf.yml")
+
         # special notation: presence of '__' in dest means that options will get assigned to lower sub-hash of config
         # eg 'rnaseq__aligner'->self.config['rnaseq']['aligner']='bowtie'
         parser.add_option('--aligner',       dest='rnaseq__aligner', help="specify aligner", default="bowtie", type="string")
         parser.add_option('--align_suffix',  dest='rnaseq__align_suffix', help="internal use")
         parser.add_option('--fq_cmd',        dest='rnaseq__fq_cmd',  help="internal use")
         parser.add_option('--cluster',       dest='use_cluster',     help="execute operations on a cluster (requires additional config settings)", action='store_true', default=False)
-        parser.add_option("-c","--config",   dest="config_file",     help="specify alternative config file", default=os.path.normpath(os.path.abspath(__file__)+"/../../config/rnaseq.conf.yml"))
+        parser.add_option("-c","--config",   dest="config_file",     help="specify alternative config file", default=os.path.normpath(default_config_file))
         parser.add_option('-d',              dest='debug',           help='toggle debugging', action='store_true', default=False)
         parser.add_option("-f","--force",    dest="force",           help="force execution of pipelines and steps even if targets are up to date", action='store_true', default=False)
         parser.add_option('-l','--label',    dest='label',           help='specify a label for a pipeline run')
@@ -78,6 +80,7 @@ class RnaseqGlobals(object):
         parser.add_option("-r","--readset",  dest="readset_file",    help="readset filename")
         parser.add_option("--pr", "--pipeline-run", dest="pipeline_run_id", help="pipeline run id")
         parser.add_option('-u', "--user_config", dest='user_config_file', help="additional user specified parameters (config file)")
+        parser.add_option("--use_template",  dest="use_template",    help="force generate pipeline from template, not db", action="store_true", default=False)
         parser.add_option('--user',          dest='user',            help='specify alternate user', default=os.environ['USER'])
         parser.add_option('-v','--verbose',  dest='verbose',         help='print addition progress messages', action='store_true', default=False)
 
@@ -176,7 +179,7 @@ class RnaseqGlobals(object):
             db_name=self.get_db_file()
             self.make_db_dir(db_name)
             engine=create_engine('sqlite:///%s' % db_name, echo=False)
-            #warn("connected to %s" % (db_name))
+            warn("connected to %s" % (db_name))
             metadata=MetaData()
 
             # have to import these explicitly because we're in a classmethod: (or something)

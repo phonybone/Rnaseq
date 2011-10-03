@@ -1,0 +1,1 @@
+/proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/s_2_export.txt

@@ -28,18 +28,19 @@ class align_filter(Step):
     # fixme: usage in progress, ill-formed
     def usage(self, context):
         if self.aligner=='bowtie':
+            bowtie_index=RnaseqGlobals.conf_value('rnaseq','bowtie_indexes')
             if self.paired_end():
 
                 script='''
-export BOWTIE_INDEXES=${bowtie_index}
+export BOWTIE_INDEXES=%(bowtie_index)s
 bowtie ${ewbt} -1 ${inputs[0]} -2 ${inputs[1]} ${args} | perl -lane 'print unless($$F[1] == 4)' > $${ID}.${name}_BAD.$${format}
-'''
+''' % {'bowtie_index': bowtie_index}
 
             else:
                 script='''
-export BOWTIE_INDEXES=${config['rnaseq']['bowtie_indexes']}
+export BOWTIE_INDEXES=%(bowtie_index)s
 bowtie ${ewbt} ${args} ${inputs[0]} | perl -lane 'print unless($$F[1] == 4)' > $${ID}.${name}_BAD.$${format}
-'''
+''' % {'bowtie_index': bowtie_index}
                 restore_indent=True
 
                 

@@ -19,7 +19,9 @@ from context import Context
 class Pipeline(templated):
     def __init__(self,*args,**kwargs):
         templated.__init__(self,*args,**kwargs)
+        self.set_defaults()
 
+    def set_defaults(self):
         self.type='pipeline'
         self.suffix='syml'
         self.steps=[]
@@ -29,27 +31,37 @@ class Pipeline(templated):
     @classmethod
     def get_pipeline(self,**kwargs):
         session=RnaseqGlobals.get_session()
+        use_template=RnaseqGlobals.conf_value('use_template')
         found=False
-        if 'name' in kwargs:
-            pipeline=session.query(Pipeline).filter_by(name=kwargs['name']).first()
-            if pipeline!=None:
-                pipeline.type='pipeline'
-                pipeline.suffix='syml'
-                pipeline.steps=[]
-                pipeline.step_exports={}
-                
-                for k,v in kwargs.items():
-                    setattr(pipeline,k,v)
-                found=True
 
-        if not found:
-            pipeline=Pipeline(**kwargs)
-            pipeline.template_file()    # sets pipeline.path
-            session.add(pipeline)
+        assert(kwargs['name'])
+        assert(kwargs['readset'])
+        db_pipeline=session.query(Pipeline).filter_by(name=kwargs['name']).first()
+        found=db_pipeline!=None
+
+        if use_template or not found:   # build pipeline using template
+            t_pipeline=Pipeline(name=kwargs['name'], readset=kwargs['readset']).load()
+
+        if found:
+            if use_template:      # replace existing template with newly generated one:
+                assert(db_pipeline.id != None)
+                session.delete(db_pipeline)
+                session.commit()
+                session.add(t_pipeline)
+                session.commit()
+                pipeline=t_pipeline
+            else:
+                pipeline=db_pipeline
+                pipeline.readset=kwargs['readset']
+
+        else:                           # found==False
+            t_pipeline.template_file()    # sets pipeline.path
+            session.add(t_pipeline)
             session.commit()
-
+            pipeline=t_pipeline
 
         assert(hasattr(pipeline,'readset'))
+        pipeline.set_defaults()
         return pipeline    
         
     def __str__(self):
@@ -431,8 +443,10 @@ class Pipeline(templated):
                                  working_dir=self.readset.working_dir)
 
         self.pipeline_runs.append(pipeline_run)
-        #print "mro: self.pipeline_runs is %s" % ", ".join(str(x.id) for x in self.pipeline_runs)
-        session.merge(self)
+#        print "mro: self.pipeline_runs is %s" % ", ".join(str(x.id) for x in self.pipeline_runs)
+#        try: warn("pipeline.id is %s" % pipeline.id)
+#        except: warn("pipeline has no id")
+        self=session.merge(self)
         session.commit()                
         if pipeline_run.id==None:
             raise ProgrammerGoof("no id in %s" % pipeline_run)
@@ -519,7 +533,7 @@ class Pipeline(templated):
             try:
                 context.outputs[step.name]=step.output_list(stephash)
                 if debug: print "convert: outputs[%s] is %s" % (step.name, context.outputs[step.name])
-            except AttributeError as ae:
+            except AttributeError as ae: # what attribute is missing?
                 if debug: print "pipeline.convert_io: caught ae: %s" % ae
                 if re.search("no attribute 'context'", str(ae)):
                     outputs_deferred.append(step)
