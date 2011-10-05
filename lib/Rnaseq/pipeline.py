@@ -530,6 +530,7 @@ class Pipeline(templated):
             except KeyError: errors.append("In pipeline '%s', step %s has no defining section" % (self.name, step.name))
 
             # attempt to set outputs:
+            context.outputs[step.name]=step.output_list(stephash)
             try:
                 context.outputs[step.name]=step.output_list(stephash)
                 if debug: print "convert: outputs[%s] is %s" % (step.name, context.outputs[step.name])
@@ -562,7 +563,6 @@ class Pipeline(templated):
                 # get the source of the inputs; can be the readset or the output of another step:
                 if output_step == 'readset':
                     outputs=self.readset.reads_files # really? doesn't take into account link to working_dir...
-                    if debug: print "  %s: getting outputs from readset" % step.name
 
                 else:
                     try:
@@ -582,8 +582,7 @@ class Pipeline(templated):
 
                 context.inputs[step.name]=input_list
 
-
-        #print >>sys.stderr, "context is %s" % yaml.dump(context)
+        #warn("context is %s" % yaml.dump(context))
         self.context=context
 
         # set context.outputs[] for each step:

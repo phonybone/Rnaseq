@@ -98,13 +98,15 @@ exit_on_failure()
         for rf in readset.reads_files:
             if hasattr(readset, 'ID'):
                 target=readset.ID
-                if self.paired_end:
-                    mg=re.search('(_\d)', rf)
+                if self.paired_end():
+                    mg=re.search('(_\d)\.', rf)
+                    if not mg:
+                        raise ConfigError("malformed read_file for paired_end dataset: %s" % rf)
                     target+=mg.group(1)
                 target=os.path.basename(target)
             else:
                 target=os.path.basename(rf)
-                warn("No ID defined in readset")
+                print "No ID defined in readset"
                     
             if format:
                 if re.search('\.\w$', target):
@@ -124,5 +126,6 @@ exit_on_failure()
         readset=self.pipeline.readset
         working_dir=readset.working_dir
         lts=[os.path.join(working_dir,t) for t in self.link_targets().values()]
+        lts.sort()
         return lts
         

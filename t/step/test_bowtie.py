@@ -28,7 +28,7 @@ class TestBowtieStep(unittest.TestCase):
 
         expected='''
 export BOWTIE_INDEXES=/proj/hoodlab/share/programs/bowtie-indexes
-bowtie --sam --threads 4 --quiet -k 1 -v 2 -q hg19 -1 /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/fixtures/readsets/rnaseq/s_1_2_sequence.fq %s
+bowtie --sam --threads 4 --quiet -k 1 -v 2 -q hg19 -1 /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/fixtures/readsets/rnaseq/s_1_2.fq %s
         ''' % output
         #print "expected:\n>>>%s<<<" % expected
 
@@ -43,7 +43,7 @@ bowtie --sam --threads 4 --quiet -k 1 -v 2 -q hg19 -1 /proj/hoodlab/share/vcasse
         
         expected='''
 export BOWTIE_INDEXES=/proj/hoodlab/share/programs/bowtie-indexes
-bowtie --sam --threads 4 --quiet -k 1 -v 2 -q hg19 -1 /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/fixtures/readsets/rnaseq/s_1_1_sequence.fq -2 /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/fixtures/readsets/rnaseq/s_1_2_sequence.fq %s
+bowtie --sam --threads 4 --quiet -k 1 -v 2 -q hg19 -1 /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/fixtures/readsets/rnaseq/s_1_1.fq -2 /proj/hoodlab/share/vcassen/rna-seq/rnaseq/t/fixtures/readsets/rnaseq/s_1_2.fq %s
 ''' % output
         #print "script:\n>>>%s<<<" % script
         #print "expected:\n>>>%s<<<" % expected
