@@ -72,33 +72,49 @@ exit_on_failure()
 
         # add link part if necessary:
         # Is necessary if original location of data is different from working_dir:
-        link_part=''
-        try: format=readset.format
-        except AttributeError: format=None
 
+        # create code to link input files to working_dir files if necessary;
+        link_part=''
         if os.path.dirname(readset.reads_files[0]) != readset.working_dir:
-            for rf in readset.reads_files:
-                if hasattr(readset, 'ID'):
-                    target=readset.ID
-                    if self.paired_end:
-                        mg=re.search('(_\d)', rf)
-                        target+=mg.group(1)
-                    target=os.path.basename(target)
-                else:
-                    target=os.path.basename(rf)
-                    warn("No ID defined in readset")
-                    
-                if format:
-                    if re.search('\.\w$', target):
-                        target=re.sub('\.\w+$', '.'+format, target) # change extension if necessary
-                    else:
-                        target+=".%s" % format # just append format
-                    
-                link_cmd="ln -fs %s %s/%s\n" % (rf, readset.working_dir, target)
+            lts=self.link_targets()
+            for rf,target in lts.items():
+                link_cmd="ln -fs %s %s\n" % (rf, os.path.join(readset.working_dir,target))
                 link_part+=link_cmd
         template+=link_part
             
         return template
+
+
+
+    def link_targets(self):
+        try: return self._link_targets
+        except AttributeError: pass
+        
+        readset=self.pipeline.readset
+        self._link_targets={}
+        try: format=readset.format
+        except AttributeError: format=None
+
+        for rf in readset.reads_files:
+            if hasattr(readset, 'ID'):
+                target=readset.ID
+                if self.paired_end:
+                    mg=re.search('(_\d)', rf)
+                    target+=mg.group(1)
+                target=os.path.basename(target)
+            else:
+                target=os.path.basename(rf)
+                warn("No ID defined in readset")
+                    
+            if format:
+                if re.search('\.\w$', target):
+                    target=re.sub('\.\w+$', '.'+format, target) # change extension if necessary
+                else:
+                    target+=".%s" % format # just append format
+                    
+            self._link_targets[rf]=target
+
+        return self._link_targets
         
     ########################################################################
 
@@ -107,16 +123,6 @@ exit_on_failure()
     def output_list(self,*args):
         readset=self.pipeline.readset
         working_dir=readset.working_dir
-        try: format=readset.format
-        except AttributeError: format=None
-
-        list=[]
-        for rf in readset.reads_files:
-            target=os.path.basename(rf)
-            if format:
-                target=re.sub('\.\w+$','.'+format, target)
-            list.append(os.path.join(working_dir, target))
-
-        #print >>sys.stderr, "header outputs: %s" % list
-        return list
+        lts=[os.path.join(working_dir,t) for t in self.link_targets().values()]
+        return lts
         

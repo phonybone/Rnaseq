@@ -565,7 +565,8 @@ class Pipeline(templated):
                     if debug: print "  %s: getting outputs from readset" % step.name
 
                 else:
-                    try: outputs=context.outputs[output_step]
+                    try:
+                        outputs=context.outputs[output_step]
                     except KeyError:
                         if debug: print "context is %s" % yaml.dump(context)
                         raise ConfigError("pipeline %s: unknown step '%s' for inputs '%s'" % (self.name, output_step, step.name))
