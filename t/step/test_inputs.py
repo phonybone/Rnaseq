@@ -22,16 +22,19 @@ class TestInputs(unittest.TestCase):
         for rs in self.rlist:
             pipeline=Pipeline(name='filter', readset=rs).load_steps()
             step=pipeline.step_with_name('export2fq')
-
+            #warn("export2fq.input_list() is %s" % step.input_list())
             self.assertTrue(isinstance(step, Step))
             inputs=[self.evoque_something(rs, x) for x in step.input_list()]
             target=re.sub('\.\w+$', '.'+rs.format, rs.reads_file)
+            #warn("target is %s" % target)
+            #warn("inputs is %s" % inputs)
             self.assertIn(target, inputs)
 
             outputs=[self.evoque_something(rs, x) for x in step.output_list()]
             o=re.sub('\.\w$', '.'+rs.format, inputs[0])
             self.assertIn(o, outputs)
-
+            #warn("\n")
+            
     def evoque_something(self, readset, template):
         domain=Domain(os.getcwd(), errors=4) # we actually don't care about the first arg
         domain.set_template('name', src=template)

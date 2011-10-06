@@ -99,10 +99,11 @@ exit_on_failure()
             if hasattr(readset, 'ID'):
                 target=readset.ID
                 if self.paired_end():
-                    mg=re.search('(_\d)\.', rf)
+                    mg=re.search('.*(_\d)\D', rf) # this regex is a bitch
                     if not mg:
                         raise ConfigError("malformed read_file for paired_end dataset: %s" % rf)
                     target+=mg.group(1)
+                    #warn("header.py: rf is %s, target is %s" % (rf, target))
                 target=os.path.basename(target)
             else:
                 target=os.path.basename(rf)
@@ -116,6 +117,7 @@ exit_on_failure()
                     
             self._link_targets[rf]=target
 
+        #warn("header.py: link_targets returning %s" % self._link_targets)
         return self._link_targets
         
     ########################################################################
@@ -127,5 +129,6 @@ exit_on_failure()
         working_dir=readset.working_dir
         lts=[os.path.join(working_dir,t) for t in self.link_targets().values()]
         lts.sort()
+        #warn("header.py: lts is %s" % lts)
         return lts
         
